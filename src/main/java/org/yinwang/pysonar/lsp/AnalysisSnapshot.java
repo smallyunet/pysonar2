@@ -66,6 +66,10 @@ public final class AnalysisSnapshot {
     }
 
     static AnalysisSnapshot from(Path root, Analyzer analyzer) {
+        return from(root, analyzer, DiagnosticPolicy.conservative());
+    }
+
+    static AnalysisSnapshot from(Path root, Analyzer analyzer, DiagnosticPolicy diagnosticPolicy) {
         Path normalizedRoot = normalize(root);
         Map<Path, String> sources = loadSources(analyzer.getLoadedFiles());
         Map<Path, PositionCodec.LineIndex> positionIndexes = indexSources(sources);
@@ -111,6 +115,9 @@ public final class AnalysisSnapshot {
 
         Map<Path, List<org.eclipse.lsp4j.Diagnostic>> diagnostics = new LinkedHashMap<>();
         for (String filename : analyzer.semanticErrors.keySet()) {
+            if (!diagnosticPolicy.enabled()) {
+                break;
+            }
             Path file = pathOf(filename);
             if (file == null || !sources.containsKey(file) || !file.startsWith(normalizedRoot)) {
                 continue;
@@ -118,19 +125,26 @@ public final class AnalysisSnapshot {
             PositionCodec.LineIndex positionIndex = positionIndexes.get(file);
             List<org.eclipse.lsp4j.Diagnostic> converted = new ArrayList<>();
             for (org.yinwang.pysonar.Diagnostic problem : analyzer.getDiagnosticsForFile(filename)) {
+                if (!diagnosticPolicy.shouldPublish(problem.msg)) {
+                    continue;
+                }
+                if (converted.size() >= diagnosticPolicy.maxPerFile()) {
+                    break;
+                }
                 org.eclipse.lsp4j.Diagnostic diagnostic = new org.eclipse.lsp4j.Diagnostic();
                 diagnostic.setRange(range(positionIndex, problem.start, problem.end));
                 diagnostic.setMessage(problem.msg);
                 diagnostic.setSource("pysonar2");
-                if (problem.msg.startsWith("Unused variable:")) {
-                    diagnostic.setSeverity(DiagnosticSeverity.Hint);
+                DiagnosticSeverity severity = diagnosticPolicy.severity(problem.msg);
+                diagnostic.setSeverity(severity);
+                if (severity == DiagnosticSeverity.Hint) {
                     diagnostic.setTags(Collections.singletonList(DiagnosticTag.Unnecessary));
-                } else {
-                    diagnostic.setSeverity(DiagnosticSeverity.Error);
                 }
                 converted.add(diagnostic);
             }
-            diagnostics.put(file, converted);
+            if (!converted.isEmpty()) {
+                diagnostics.put(file, converted);
+            }
         }
 
         return new AnalysisSnapshot(normalizedRoot, sources, positionIndexes, occurrences, symbols, diagnostics);

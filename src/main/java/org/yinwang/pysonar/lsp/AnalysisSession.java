@@ -40,16 +40,23 @@ public final class AnalysisSession implements AutoCloseable {
     private final AtomicReference<AnalysisSnapshot> snapshot;
     private final ScheduledExecutorService executor;
     private final Consumer<AnalysisProgress> progressListener;
+    private final DiagnosticPolicy diagnosticPolicy;
     private ScheduledFuture<?> scheduled;
 
     public AnalysisSession(Path root, Collection<String> excludeGlobs) {
-        this(root, excludeGlobs, progress -> { });
+        this(root, excludeGlobs, DiagnosticPolicy.conservative(), progress -> { });
     }
 
     public AnalysisSession(Path root, Collection<String> excludeGlobs,
                            Consumer<AnalysisProgress> progressListener) {
+        this(root, excludeGlobs, DiagnosticPolicy.conservative(), progressListener);
+    }
+
+    AnalysisSession(Path root, Collection<String> excludeGlobs, DiagnosticPolicy diagnosticPolicy,
+                    Consumer<AnalysisProgress> progressListener) {
         this.root = realPath(root);
         this.excludeGlobs = Collections.unmodifiableList(new ArrayList<>(excludeGlobs));
+        this.diagnosticPolicy = diagnosticPolicy == null ? DiagnosticPolicy.conservative() : diagnosticPolicy;
         this.progressListener = progressListener == null ? progress -> { } : progressListener;
         this.snapshot = new AtomicReference<>(AnalysisSnapshot.empty(root));
         this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -93,6 +100,9 @@ public final class AnalysisSession implements AutoCloseable {
         boolean finished = false;
         try {
             analyzer.addPath(root.toString());
+            for (Path analysisPath : discoverAnalysisPaths(files)) {
+                analyzer.addPath(analysisPath.toString());
+            }
             int[] current = {0};
             analyzer.analyzeFiles(root.toString(), files, file -> {
                 current[0]++;
@@ -103,7 +113,7 @@ public final class AnalysisSession implements AutoCloseable {
             analyzer.finish();
             finished = true;
             progress.report("snapshot", files.size(), files.size(), "Building editor snapshot", true);
-            AnalysisSnapshot next = AnalysisSnapshot.from(root, analyzer);
+            AnalysisSnapshot next = AnalysisSnapshot.from(root, analyzer, diagnosticPolicy);
             snapshot.set(next);
             return next;
         } finally {
@@ -112,6 +122,43 @@ public final class AnalysisSession implements AutoCloseable {
             }
             analyzer.releaseGlobalReference();
         }
+    }
+
+    private Set<Path> discoverAnalysisPaths(List<String> files) {
+        Set<Path> paths = new HashSet<>();
+        for (String filename : files) {
+            Path directory = Path.of(filename).toAbsolutePath().normalize().getParent();
+            Path packageDirectory = directory;
+            boolean inPackage = false;
+            while (packageDirectory != null && packageDirectory.startsWith(root)
+                    && Files.isRegularFile(packageDirectory.resolve("__init__.py"))) {
+                inPackage = true;
+                packageDirectory = packageDirectory.getParent();
+            }
+            if (inPackage && packageDirectory != null && packageDirectory.startsWith(root)) {
+                paths.add(packageDirectory);
+            }
+
+            Path project = directory;
+            while (project != null && project.startsWith(root)) {
+                if (Files.isRegularFile(project.resolve("pyproject.toml"))
+                        || Files.isRegularFile(project.resolve("setup.py"))
+                        || Files.isRegularFile(project.resolve("setup.cfg"))) {
+                    paths.add(project);
+                    Path src = project.resolve("src");
+                    if (Files.isDirectory(src)) {
+                        paths.add(src);
+                    }
+                    break;
+                }
+                if (project.equals(root)) {
+                    break;
+                }
+                project = project.getParent();
+            }
+        }
+        paths.remove(root);
+        return paths;
     }
 
     private List<String> collectPythonFiles(ProgressReporter progress) throws IOException {

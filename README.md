@@ -40,7 +40,7 @@ whole-project analysis model:
 - an explicit [Python support matrix](docs/python-support.md) separating inference, navigation, and
   traversal-only coverage.
 
-### VS Code extension 0.1.1
+### VS Code extension 0.1.3
 
 [PySonar2 Code Intelligence](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
 is the first stable Marketplace release. It adds a Java Language Server and a TypeScript VS Code client
@@ -49,11 +49,12 @@ with:
 - go to definition and find all references;
 - inferred-type and docstring hovers;
 - document and workspace symbols;
-- semantic diagnostics;
+- conservative semantic diagnostics that suppress unknown-type cascades;
 - one isolated server per workspace folder;
 - save-triggered workspace reindexing with atomic snapshots;
 - detailed discovery and file-level indexing progress; and
-- configurable Java, Python, server, and exclusion settings.
+- automatic nested Python project/package-root discovery; and
+- configurable Java, Python, server, diagnostics, and exclusion settings.
 
 The server JAR is bundled in the extension. There is no hosted PySonar2 service to deploy: analysis runs
 where the VS Code workspace extension runs. For Remote SSH, Java and Python must therefore be available
@@ -92,7 +93,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.1.1.jar demo_project ./demo-html
+java -jar target/pysonar-3.1.2.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -102,7 +103,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.1.1.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.1.2.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -198,7 +199,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.1.1.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.1.2.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.

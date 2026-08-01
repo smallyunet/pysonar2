@@ -2,6 +2,8 @@ package org.yinwang.pysonar.lsp;
 
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -13,6 +15,7 @@ import java.nio.file.Files;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -87,5 +90,72 @@ public class AnalysisSessionTest {
                 && item.getTotal() == 2 && item.getCurrent() == 2 && item.getPath().endsWith("second.py")));
         assertTrue(progress.stream().anyMatch(item -> "finalizing".equals(item.getPhase())));
         assertTrue(progress.stream().anyMatch(item -> "snapshot".equals(item.getPhase())));
+    }
+
+    @Test
+    public void discoversNestedPythonProjectRootsInMonorepos() throws Exception {
+        File root = temporary.newFolder("monorepo");
+        File project = new File(root, "child-project");
+        File packageDirectory = new File(project, "sample_app");
+        assertTrue(packageDirectory.mkdirs());
+        Files.write(new File(project, "pyproject.toml").toPath(),
+                "[build-system]\nrequires = []\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(packageDirectory, "__init__.py").toPath(), new byte[0]);
+        File model = new File(packageDirectory, "model.py");
+        File main = new File(packageDirectory, "main.py");
+        Files.write(model.toPath(), "class Thing:\n    pass\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(main.toPath(), (
+                "from sample_app.model import Thing\n" +
+                "value = Thing()\n").getBytes(StandardCharsets.UTF_8));
+
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList())) {
+            AnalysisSnapshot snapshot = session.rebuildNow();
+            List<Location> definitions = snapshot.definitions(main.toPath(), new Position(1, 9));
+            assertFalse(definitions.isEmpty());
+            assertTrue(definitions.get(0).getUri().endsWith("model.py"));
+        }
+    }
+
+    @Test
+    public void conservativeDiagnosticsSuppressUnknownTypeCascades() throws Exception {
+        File root = temporary.newFolder("diagnostic-workspace");
+        File main = new File(root, "main.py");
+        Files.write(main.toPath(), (
+                "from missing_dependency import External\n" +
+                "value: External = External()\n" +
+                "value.attribute = 1\n").getBytes(StandardCharsets.UTF_8));
+
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList())) {
+            Map<String, List<Diagnostic>> diagnostics = session.rebuildNow().diagnosticsByUri();
+            assertTrue(diagnostics.isEmpty());
+        }
+    }
+
+    @Test
+    public void diagnosticsCanBeDisabledOrCapped() throws Exception {
+        File root = temporary.newFolder("diagnostic-policy-workspace");
+        File main = new File(root, "main.py");
+        Files.write(main.toPath(), "first\nsecond\nthird\n".getBytes(StandardCharsets.UTF_8));
+
+        DiagnosticPolicy capped = new DiagnosticPolicy(DiagnosticPolicy.Mode.ALL, 2);
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList(), capped,
+                progress -> { })) {
+            Map<String, List<Diagnostic>> diagnostics = session.rebuildNow().diagnosticsByUri();
+            assertEquals(1, diagnostics.size());
+            List<Diagnostic> findings = diagnostics.values().iterator().next();
+            assertEquals(2, findings.size());
+            assertEquals(DiagnosticSeverity.Warning, findings.get(0).getSeverity());
+        }
+
+        DiagnosticPolicy disabled = new DiagnosticPolicy(DiagnosticPolicy.Mode.OFF, 100);
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList(), disabled,
+                progress -> { })) {
+            assertTrue(session.rebuildNow().diagnosticsByUri().isEmpty());
+        }
+
+        DiagnosticPolicy conservative = DiagnosticPolicy.conservative();
+        assertTrue(conservative.shouldPublish("Incorrect number of arguments for isinstance"));
+        assertFalse(conservative.shouldPublish("unbound variable Optional"));
+        assertFalse(conservative.shouldPublish("Attribute is not found in type: get"));
     }
 }

@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.1.3
+
+- Default to conservative diagnostics that show only high-confidence findings and suppress inference uncertainty.
+- Report analyzer uncertainty as warnings instead of presenting every finding as a red error.
+- Cap diagnostics per file and add `conservative`, `all`, and `off` modes.
+- Discover nested Python project/package roots in multi-repository workspaces.
+- Bind unresolved imports as unknown values to prevent thousands of cascading name, attribute, and call errors.
+- Stop treating type annotations as runtime expressions until annotation-aware inference is implemented.
+
 ## 0.1.2
 
 - Report discovery, file-level analysis progress, current paths, elapsed time, and finalization phases.

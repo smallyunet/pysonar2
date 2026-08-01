@@ -111,6 +111,11 @@ function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClie
   const maxHeapMb = Math.max(0, Math.floor(configuration.get<number>("java.maxHeapMb", 0)));
   const pythonPath = configuration.get<string>("python.path", "").trim();
   const exclude = configuration.get<string[]>("analysis.exclude", []);
+  const diagnosticsMode = configuration.get<string>("diagnostics.mode", "conservative");
+  const diagnosticsMaxPerFile = Math.max(
+    0,
+    Math.floor(configuration.get<number>("diagnostics.maxPerFile", 100)),
+  );
   const environment = { ...process.env };
   if (pythonPath) {
     environment.PYSONAR_PYTHON = pythonPath;
@@ -147,6 +152,8 @@ function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClie
     },
     initializationOptions: {
       exclude,
+      diagnosticsMode,
+      diagnosticsMaxPerFile,
     },
   };
 
@@ -166,7 +173,7 @@ function resolveServerJar(context: vscode.ExtensionContext): string | undefined 
   const candidates = [
     configured,
     context.asAbsolutePath(path.join("server", "pysonar-lsp.jar")),
-    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.1.1.jar"),
+    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.1.2.jar"),
   ].filter(Boolean);
   return candidates.find((candidate) => fs.existsSync(candidate));
 }

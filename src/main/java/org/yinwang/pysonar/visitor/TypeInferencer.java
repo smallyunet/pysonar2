@@ -65,7 +65,8 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(AnnAssign node, State s)
     {
-        visit(node.annotation, s);
+        // Type annotations are not inference inputs yet. Resolving them as runtime
+        // expressions creates false unbound-name findings for typing constructs.
         Type valueType = node.value == null ? Types.UNKNOWN : visit(node.value, s);
         bind(s, node.target, valueType);
         return Types.CONT;
@@ -512,11 +513,8 @@ public class TypeInferencer implements Visitor1<Type, State>
     public Type visit(FunctionDef node, State s)
     {
         visit(node.decorators, s);
-        visit(node.annotations, s);
-        if (node.returnAnnotation != null)
-        {
-            visit(node.returnAnnotation, s);
-        }
+        // Do not treat annotations as executable expressions until generics and
+        // forward references are interpreted by the type engine.
         State env = s.getForwarding();
         FunType fun = new FunType(node, env);
         fun.table.setParent(s);
@@ -736,6 +734,8 @@ public class TypeInferencer implements Visitor1<Type, State>
             if (mod == null)
             {
                 addWarningToNode(node, "Cannot load module");
+                Name importedName = a.asname != null ? a.asname : a.name.get(0);
+                s.insert(importedName.id, importedName, Types.UNKNOWN, VARIABLE);
             }
             else if (a.asname != null)
             {
@@ -759,6 +759,14 @@ public class TypeInferencer implements Visitor1<Type, State>
         if (mod == null)
         {
             addWarningToNode(node, "Cannot load module");
+            if (!node.isImportStar())
+            {
+                for (Alias alias : node.names)
+                {
+                    Name importedName = alias.asname != null ? alias.asname : alias.name.get(0);
+                    s.insert(importedName.id, importedName, Types.UNKNOWN, VARIABLE);
+                }
+            }
         }
         else if (node.isImportStar())
         {
@@ -802,6 +810,11 @@ public class TypeInferencer implements Visitor1<Type, State>
                             s.update(first.id, binding);
                             Analyzer.self.putRef(first, binding);
                         }
+                    }
+                    else
+                    {
+                        Name importedName = a.asname != null ? a.asname : first;
+                        s.insert(importedName.id, importedName, Types.UNKNOWN, VARIABLE);
                     }
                 }
             }
@@ -1293,7 +1306,6 @@ public class TypeInferencer implements Visitor1<Type, State>
     {
         if (targetType.isUnknownType())
         {
-            addWarningToNode(node, "Can't set attribute for UnknownType");
             return;
         }
 
@@ -1314,6 +1326,10 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     public Type getAttrType(Attribute node, @NotNull Type targetType)
     {
+        if (targetType.isUnknownType())
+        {
+            return Types.UNKNOWN;
+        }
         Set<Binding> bs = targetType.table.lookupAttr(node.attr.id);
         if (bs == null)
         {
@@ -1351,7 +1367,10 @@ public class TypeInferencer implements Visitor1<Type, State>
         }
         else
         {
-            addWarningToNode(node, "calling non-function and non-class: " + fun);
+            if (!fun.isUnknownType())
+            {
+                addWarningToNode(node, "calling non-function and non-class: " + fun);
+            }
             return Types.UNKNOWN;
         }
     }

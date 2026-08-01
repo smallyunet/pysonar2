@@ -27,7 +27,7 @@ The extension currently provides:
 - find all references;
 - inferred-type and docstring hovers;
 - document and workspace symbols;
-- semantic diagnostics; and
+- conservative semantic diagnostics with cascade suppression; and
 - one isolated language-server process per workspace folder.
 
 PySonar2 complements existing Python extensions. It does not provide formatting, debugging, completion,
@@ -50,6 +50,8 @@ new index. Navigation remains available from the previous completed snapshot whi
 
 Unsaved changes are marked as `stale` in the status bar. Save the document to refresh semantic results.
 Common virtual-environment, dependency, cache, build, and generated directories are excluded by default.
+Nested Python package roots and directories containing `pyproject.toml`, `setup.py`, or `setup.cfg` are
+added to module resolution automatically, including when the VS Code workspace is a larger monorepo.
 
 During a rebuild, the PySonar2 output channel reports the active phase, elapsed time, discovered file
 count, analysis percentage, and current workspace-relative path. The status bar shows the current
@@ -67,6 +69,8 @@ can avoid indexing code that cannot contribute to application navigation:
 ```json
 {
   "pysonar2.analysis.exclude": ["tests/**", "scripts/**", "alembic/**"],
+  "pysonar2.diagnostics.mode": "conservative",
+  "pysonar2.diagnostics.maxPerFile": 100,
   "pysonar2.java.maxHeapMb": 2048
 }
 ```
@@ -88,6 +92,8 @@ optimized snapshot path normally stays well below that limit.
 | `pysonar2.python.path` | Optional Python 3.10+ interpreter. |
 | `pysonar2.server.path` | Development override for the bundled server JAR. |
 | `pysonar2.analysis.exclude` | Workspace-relative glob patterns omitted from indexing. |
+| `pysonar2.diagnostics.mode` | `conservative` shows only high-confidence findings; `all` exposes analyzer warnings; `off` disables diagnostics. |
+| `pysonar2.diagnostics.maxPerFile` | Maximum findings published for one file; `0` disables diagnostics. |
 
 Changing a PySonar2 setting restarts the language server so the new runtime and file-selection settings
 take effect consistently.
@@ -127,7 +133,7 @@ npm install
 npm run package
 ```
 
-The prepublish step builds the Java project, copies `target/pysonar-3.1.1.jar` to the extension package as
+The prepublish step builds the Java project, copies `target/pysonar-3.1.2.jar` to the extension package as
 `server/pysonar-lsp.jar`, bundles the TypeScript client, and produces `pysonar2-code-intelligence.vsix`.
 Set `PYSONAR_MAVEN_REPO_LOCAL` when the build needs to use a non-default Maven dependency cache.
 
@@ -140,5 +146,7 @@ the `smallyu` Marketplace publisher; a local build does not contact or depend on
 - Rebuilds are whole-workspace rather than dependency-graph incremental.
 - Python 3.11+ syntax may parse successfully even when a feature only has navigation or traversal-level
   semantics in PySonar2.
+- Type annotations are parsed for navigation but are not yet used as complete inference inputs. Conservative
+  diagnostics avoid treating unresolved annotation and dependency types as definite code errors.
 - Web extensions are not supported because the analyzer starts Java and CPython processes and reads a
   local or remote workspace filesystem.

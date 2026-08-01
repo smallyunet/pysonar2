@@ -42,7 +42,8 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         Path root = workspaceRoot(params);
-        session = new AnalysisSession(root, excludeGlobs(params.getInitializationOptions()), this::reportProgress);
+        Object options = params.getInitializationOptions();
+        session = new AnalysisSession(root, excludeGlobs(options), diagnosticPolicy(options), this::reportProgress);
 
         ServerCapabilities capabilities = new ServerCapabilities();
         TextDocumentSyncOptions sync = new TextDocumentSyncOptions();
@@ -57,7 +58,7 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
         capabilities.setWorkspaceSymbolProvider(true);
 
         InitializeResult result = new InitializeResult(capabilities);
-        result.setServerInfo(new ServerInfo("PySonar2 Language Server", "3.1.1"));
+        result.setServerInfo(new ServerInfo("PySonar2 Language Server", "3.1.2"));
         return CompletableFuture.completedFuture(result);
     }
 
@@ -257,6 +258,14 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
             }
         }
         return result;
+    }
+
+    private static DiagnosticPolicy diagnosticPolicy(Object initializationOptions) {
+        if (!(initializationOptions instanceof Map)) {
+            return DiagnosticPolicy.conservative();
+        }
+        Map<?, ?> options = (Map<?, ?>) initializationOptions;
+        return DiagnosticPolicy.from(options.get("diagnosticsMode"), options.get("diagnosticsMaxPerFile"));
     }
 
     private static String rootCauseMessage(Throwable error) {
