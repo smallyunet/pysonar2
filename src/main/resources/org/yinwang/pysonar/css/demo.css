@@ -359,6 +359,17 @@ pre a.active {
 .section-heading { margin: 44px 0 16px; }
 .section-heading h2 { margin: 0 0 5px; font-size: 24px; letter-spacing: -0.025em; }
 .section-heading p { margin: 0; color: var(--muted); }
+.project-root {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--accent-strong);
+    font: 600 13px/1.2 var(--mono);
+    vertical-align: 3px;
+}
 
 .file-grid {
     display: grid;

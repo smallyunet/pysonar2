@@ -39,6 +39,7 @@ public class Analyzer {
     private AstCache astCache;
     public String cacheDir;
     public Set<String> failedToParse = new HashSet<>();
+    public Set<String> unsupportedNodeTypes = new TreeSet<>();
     public Stats stats = new Stats();
     public Builtins builtins;
     private Progress loadingProgress = null;
@@ -570,6 +571,10 @@ public class Analyzer {
         sb.append("\n- modules loaded: ").append(loadedFiles.size());
         sb.append("\n- semantic problems: ").append(semanticErrors.size());
         sb.append("\n- failed to parse: ").append(failedToParse.size());
+        sb.append("\n- unsupported AST node types: ").append(unsupportedNodeTypes.size());
+        if (!unsupportedNodeTypes.isEmpty()) {
+            sb.append(" ").append(unsupportedNodeTypes);
+        }
 
         // calculate number of defs, refs, xrefs
         int nDef = 0, nXRef = 0;

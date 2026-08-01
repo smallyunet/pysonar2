@@ -24,7 +24,9 @@ Major users include:
 
 ### Supported runtimes
 
-PySonar2 3.x supports Python 3.10 and newer. Python 2 is not supported.
+PySonar2 3.x runs with Python 3.10 and newer. Python 2 is not supported. Language features have
+different semantic coverage levels; see the [Python support matrix](docs/python-support.md) for the
+difference between full inference, navigation support, and traversal fallback.
 
 The analyzer runs CPython's built-in `ast` parser in a persistent `python3` process. If your
 supported interpreter has a different executable name, set `PYSONAR_PYTHON` to its path.
@@ -44,7 +46,7 @@ class and collection inference, branching, recursion, and async syntax. Build it
 with:
 
     mvn package
-    java -jar target/pysonar-3.0.0.jar demo_project ./demo-html
+    java -jar target/pysonar-3.1.0.jar demo_project ./demo-html
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type,
 and follow links between definitions and references. The generated site is responsive, self-contained,

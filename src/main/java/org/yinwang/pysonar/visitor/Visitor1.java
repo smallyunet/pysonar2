@@ -16,6 +16,8 @@ public interface Visitor1<T, P> {
         switch (node.nodeType) {
             case ALIAS:
                 return visit((Alias)node, param);
+            case ANNASSIGN:
+                return visit((AnnAssign)node, param);
             case ASSERT:
                 return visit((Assert)node, param);
             case ASSIGN:
@@ -56,6 +58,8 @@ public interface Visitor1<T, P> {
                 return visit((ExtSlice)node, param);
             case FOR:
                 return visit((For)node, param);
+            case FORMATTEDVALUE:
+                return visit((FormattedValue)node, param);
             case FUNCTIONDEF:
                 return visit((FunctionDef)node, param);
             case GENERATOREXP:
@@ -76,12 +80,22 @@ public interface Visitor1<T, P> {
                 return visit((Index)node, param);
             case KEYWORD:
                 return visit((Keyword)node, param);
+            case JOINEDSTR:
+                return visit((JoinedStr)node, param);
             case LISTCOMP:
                 return visit((ListComp)node, param);
             case MODULE:
                 return visit((PyModule)node, param);
+            case MATCH:
+                return visit((Match)node, param);
+            case MATCHCASE:
+                return visit((MatchCase)node, param);
+            case MATCHPATTERN:
+                return visit((MatchPattern)node, param);
             case NAME:
                 return visit((Name)node, param);
+            case NAMEDEXPR:
+                return visit((NamedExpr)node, param);
             case NODE:
                 return visit((Node)node, param);
             case PASS:
@@ -158,6 +172,7 @@ public interface Visitor1<T, P> {
     }
 
     T visit(Alias node, P param);
+    T visit(AnnAssign node, P param);
     T visit(Assert node, P param);
     T visit(Assign node, P param);
     T visit(Attribute node, P param);
@@ -178,6 +193,7 @@ public interface Visitor1<T, P> {
     T visit(Expr node, P param);
     T visit(ExtSlice node, P param);
     T visit(For node, P param);
+    T visit(FormattedValue node, P param);
     T visit(FunctionDef node, P param);
     T visit(GeneratorExp node, P param);
     T visit(Global node, P param);
@@ -188,9 +204,14 @@ public interface Visitor1<T, P> {
     T visit(ImportFrom node, P param);
     T visit(Index node, P param);
     T visit(Keyword node, P param);
+    T visit(JoinedStr node, P param);
     T visit(ListComp node, P param);
     T visit(PyModule node, P param);
+    T visit(Match node, P param);
+    T visit(MatchCase node, P param);
+    T visit(MatchPattern node, P param);
     T visit(Name node, P param);
+    T visit(NamedExpr node, P param);
     T visit(Pass node, P param);
     T visit(PyComplex node, P param);
     T visit(PyFloat node, P param);

@@ -25,6 +25,7 @@ public class FunType extends Type {
     public ClassType cls = null;
     public State env;
     public List<Type> defaultTypes;       // types for default parameters (evaluated at def time)
+    public List<Type> kwDefaultTypes;
 
 
     public FunType() {
@@ -80,6 +81,10 @@ public class FunType extends Type {
 
     public void setDefaultTypes(List<Type> defaultTypes) {
         this.defaultTypes = defaultTypes;
+    }
+
+    public void setKwDefaultTypes(List<Type> kwDefaultTypes) {
+        this.kwDefaultTypes = kwDefaultTypes;
     }
 
 

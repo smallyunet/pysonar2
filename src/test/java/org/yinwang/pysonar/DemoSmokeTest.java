@@ -20,7 +20,7 @@ public class DemoSmokeTest
     @Test
     public void generatesSelfContainedLinkedHtml() throws Exception
     {
-        File inputDir = temporaryFolder.newFolder("input");
+        File inputDir = temporaryFolder.newFolder("demo_project");
         File source = new File(inputDir, "sample.py");
         Files.write(source.toPath(), (
                 "from helper import answer\n\n" +
@@ -42,6 +42,7 @@ public class DemoSmokeTest
         assertTrue(html.contains("class='symbol-tooltip'"));
         assertTrue(html.contains("data-tooltip="));
         assertTrue(html.contains("aria-describedby='symbol-tooltip'"));
+        assertTrue(html.contains("class='topbar-path'>demo_project/sample.py</span>"));
         assertTrue(html.contains("answer"));
         assertTrue(html.contains("helper.py.html#helper.answer"));
         assertFalse("native title tooltips should not be generated", html.contains(" title='"));
@@ -52,7 +53,48 @@ public class DemoSmokeTest
         assertTrue("demo index was not generated", indexFile.isFile());
         String index = new String(Files.readAllBytes(indexFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(index.contains("Code intelligence"));
+        assertTrue(index.contains("class='project-root'>demo_project/</code>"));
         assertTrue(index.contains("sample.py.html"));
+        assertFalse("the project root is a label, not a duplicated output directory",
+                index.contains("demo_project/sample.py.html"));
         assertFalse(index.contains(inputDir.getAbsolutePath()));
+    }
+
+    @Test
+    public void generatesNavigationForModernPythonSyntax() throws Exception
+    {
+        File inputDir = temporaryFolder.newFolder("modern_demo");
+        File source = new File(inputDir, "modern.py");
+        Files.write(source.toPath(), (
+                "class Item:\n" +
+                "    value: int\n\n" +
+                "def render(item, /, *, prefix=''):\n" +
+                "    text = f'{prefix}{item.value}'\n" +
+                "    if (size := len(text)) > 0:\n" +
+                "        match {'text': text}:\n" +
+                "            case {'text': captured}:\n" +
+                "                return f'{captured}:{size}'\n" +
+                "    return text\n").getBytes(StandardCharsets.UTF_8));
+        File outputDir = temporaryFolder.newFolder("modern_output");
+
+        Demo.main(new String[]{inputDir.getAbsolutePath(), outputDir.getAbsolutePath()});
+
+        String html = new String(
+                Files.readAllBytes(new File(outputDir, "modern.py.html").toPath()),
+                StandardCharsets.UTF_8);
+        assertTrue(html.contains("class='topbar-path'>modern_demo/modern.py</span>"));
+        assertTrue("walrus targets should be linkable definitions", html.contains("id='modern.render.size'"));
+        assertTrue("walrus references should link back to their definition",
+                html.contains("href='#modern.render.size'"));
+        assertTrue("match captures should be linkable definitions",
+                html.contains("id='modern.render.captured'"));
+        assertTrue("match capture references should link back to their definition",
+                html.contains("href='#modern.render.captured'"));
+        assertTrue("f-string expressions should retain navigation", html.contains("href='#modern.render.prefix'"));
+
+        String index = new String(
+                Files.readAllBytes(new File(outputDir, "index.html").toPath()),
+                StandardCharsets.UTF_8);
+        assertTrue(index.contains("class='project-root'>modern_demo/</code>"));
     }
 }

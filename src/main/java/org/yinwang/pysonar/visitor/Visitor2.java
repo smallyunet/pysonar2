@@ -13,6 +13,8 @@ public interface Visitor2<T, P, Q> {
         switch (node.nodeType) {
             case ALIAS:
                 return visit((Alias)node, param1, param2);
+            case ANNASSIGN:
+                return visit((AnnAssign)node, param1, param2);
             case ASSERT:
                 return visit((Assert)node, param1, param2);
             case ASSIGN:
@@ -53,6 +55,8 @@ public interface Visitor2<T, P, Q> {
                 return visit((ExtSlice)node, param1, param2);
             case FOR:
                 return visit((For)node, param1, param2);
+            case FORMATTEDVALUE:
+                return visit((FormattedValue)node, param1, param2);
             case FUNCTIONDEF:
                 return visit((FunctionDef)node, param1, param2);
             case GENERATOREXP:
@@ -73,12 +77,22 @@ public interface Visitor2<T, P, Q> {
                 return visit((Index)node, param1, param2);
             case KEYWORD:
                 return visit((Keyword)node, param1, param2);
+            case JOINEDSTR:
+                return visit((JoinedStr)node, param1, param2);
             case LISTCOMP:
                 return visit((ListComp)node, param1, param2);
             case MODULE:
                 return visit((PyModule)node, param1, param2);
+            case MATCH:
+                return visit((Match)node, param1, param2);
+            case MATCHCASE:
+                return visit((MatchCase)node, param1, param2);
+            case MATCHPATTERN:
+                return visit((MatchPattern)node, param1, param2);
             case NAME:
                 return visit((Name)node, param1, param2);
+            case NAMEDEXPR:
+                return visit((NamedExpr)node, param1, param2);
             case PASS:
                 return visit((Pass)node, param1, param2);
             case PYCOMPLEX:
@@ -153,6 +167,7 @@ public interface Visitor2<T, P, Q> {
     }
 
     T visit(Alias node, P param1, Q param2);
+    T visit(AnnAssign node, P param1, Q param2);
     T visit(Assert node, P param1, Q param2);
     T visit(Assign node, P param1, Q param2);
     T visit(Attribute node, P param1, Q param2);
@@ -173,6 +188,7 @@ public interface Visitor2<T, P, Q> {
     T visit(Expr node, P param1, Q param2);
     T visit(ExtSlice node, P param1, Q param2);
     T visit(For node, P param1, Q param2);
+    T visit(FormattedValue node, P param1, Q param2);
     T visit(FunctionDef node, P param1, Q param2);
     T visit(GeneratorExp node, P param1, Q param2);
     T visit(Global node, P param1, Q param2);
@@ -183,9 +199,14 @@ public interface Visitor2<T, P, Q> {
     T visit(ImportFrom node, P param1, Q param2);
     T visit(Index node, P param1, Q param2);
     T visit(Keyword node, P param1, Q param2);
+    T visit(JoinedStr node, P param1, Q param2);
     T visit(ListComp node, P param1, Q param2);
     T visit(PyModule node, P param1, Q param2);
+    T visit(Match node, P param1, Q param2);
+    T visit(MatchCase node, P param1, Q param2);
+    T visit(MatchPattern node, P param1, Q param2);
     T visit(Name node, P param1, Q param2);
+    T visit(NamedExpr node, P param1, Q param2);
     T visit(Pass node, P param1, Q param2);
     T visit(PyComplex node, P param1, Q param2);
     T visit(PyFloat node, P param1, Q param2);

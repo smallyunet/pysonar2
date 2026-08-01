@@ -1,7 +1,9 @@
 package org.yinwang.pysonar.ast;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionDef extends Node {
@@ -11,7 +13,13 @@ public class FunctionDef extends Node {
     public List<Node> defaults;
     public Name vararg;  // *args
     public Name kwarg;   // **kwarg
-    private final List<Node> decorators;
+    public final List<Node> decorators;
+    public final List<Node> kwOnlyArgs;
+    public final List<Node> kwDefaults;
+    public final List<Node> annotations;
+    @Nullable
+    public final Node returnAnnotation;
+    public final int posOnlyArgCount;
     public List<Node> afterRest = null;   // after rest arg of Ruby
     public Node body;
     public boolean called = false;
@@ -20,6 +28,16 @@ public class FunctionDef extends Node {
 
     public FunctionDef(Name name, List<Node> args, Node body, List<Node> defaults,
         Name vararg, Name kwarg, List<Node> decorators, String file, boolean isAsync, int start, int end, int line, int col) {
+        this(name, args, body, defaults, vararg, kwarg, decorators,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), null, 0,
+                file, isAsync, start, end, line, col);
+    }
+
+    public FunctionDef(Name name, List<Node> args, Node body, List<Node> defaults,
+        Name vararg, Name kwarg, List<Node> decorators,
+        List<Node> kwOnlyArgs, List<Node> kwDefaults, List<Node> annotations,
+        @Nullable Node returnAnnotation, int posOnlyArgCount,
+        String file, boolean isAsync, int start, int end, int line, int col) {
         super(NodeType.FUNCTIONDEF, file, start, end, line, col);
         if (name != null) {
             this.name = name;
@@ -36,10 +54,20 @@ public class FunctionDef extends Node {
         this.vararg = vararg;
         this.kwarg = kwarg;
         this.decorators = decorators;
+        this.kwOnlyArgs = kwOnlyArgs;
+        this.kwDefaults = kwDefaults;
+        this.annotations = annotations;
+        this.returnAnnotation = returnAnnotation;
+        this.posOnlyArgCount = posOnlyArgCount;
         this.isAsync = isAsync;
         addChildren(name);
         addChildren(args);
         addChildren(defaults);
+        addChildren(kwOnlyArgs);
+        addChildren(kwDefaults);
+        addChildren(decorators);
+        addChildren(annotations);
+        addChildren(returnAnnotation);
         addChildren(vararg, kwarg, this.body);
     }
 
@@ -48,12 +76,16 @@ public class FunctionDef extends Node {
         argExpr.append("(");
         boolean first = true;
 
-        for (Node n : args) {
+        for (int i = 0; i < args.size(); i++) {
+            Node n = args.get(i);
             if (!first) {
                 argExpr.append(", ");
             }
             first = false;
             argExpr.append(n.toDisplay());
+            if (posOnlyArgCount > 0 && i + 1 == posOnlyArgCount) {
+                argExpr.append(", /");
+            }
         }
 
         if (vararg != null) {
@@ -62,6 +94,20 @@ public class FunctionDef extends Node {
             }
             first = false;
             argExpr.append("*").append(vararg.toDisplay());
+        } else if (!kwOnlyArgs.isEmpty()) {
+            if (!first) {
+                argExpr.append(", ");
+            }
+            first = false;
+            argExpr.append("*");
+        }
+
+        for (Node n : kwOnlyArgs) {
+            if (!first) {
+                argExpr.append(", ");
+            }
+            first = false;
+            argExpr.append(n.toDisplay());
         }
 
         if (kwarg != null) {

@@ -154,6 +154,13 @@ public class Parser {
             }
         }
 
+        if (type.equals("AnnAssign")) {
+            Node target = convert(map.get("target"));
+            Node annotation = convert(map.get("annotation"));
+            Node value = convert(map.get("value"));
+            return new AnnAssign(target, annotation, value, file, start, end, line, col);
+        }
+
         if (type.equals("Attribute")) {
             Node value = convert(map.get("value"));
             Name attr = (Name) convert(map.get("attr_name"));
@@ -321,11 +328,22 @@ public class Parser {
             return new For(target, iter, body, orelse, type.equals("AsyncFor"), file, start, end, line, col);
         }
 
+        if (type.equals("FormattedValue")) {
+            Node value = convert(map.get("value"));
+            Node formatSpec = convert(map.get("format_spec"));
+            int conversion = ((Double) map.get("conversion")).intValue();
+            return new FormattedValue(value, formatSpec, conversion, file, start, end, line, col);
+        }
+
         if (type.equals("FunctionDef") || type.equals("Lambda") || type.equals("AsyncFunctionDef")) {
             Name name = type.equals("Lambda") ? null : (Name) convert(map.get("name_node"));
             Map<String, Object> argsMap = (Map<String, Object>) map.get("args");
-            List<Node> args = convertList(argsMap.get("args"));
+            List<Node> posOnlyArgs = nonNullList(convertList(argsMap.get("posonlyargs")));
+            List<Node> args = new ArrayList<>(posOnlyArgs);
+            args.addAll(nonNullList(convertList(argsMap.get("args"))));
             List<Node> defaults = convertList(argsMap.get("defaults"));
+            List<Node> kwOnlyArgs = nonNullList(convertList(argsMap.get("kwonlyargs")));
+            List<Node> kwDefaults = convertNullableList(argsMap.get("kw_defaults"));
             Node body = type.equals("Lambda") ? convert(map.get("body")) : convertBlock(map.get("body"));
 
             // handle vararg depending on different python versions
@@ -334,8 +352,7 @@ public class Parser {
             if (varargObj instanceof String) {
                 vararg = new Name((String) argsMap.get("vararg"));
             } else if (varargObj instanceof Map) {
-                String argName = (String) ((Map) varargObj).get("arg");
-                vararg = new Name(argName);
+                vararg = (Name) convert(varargObj);
             }
 
             // handle kwarg depending on different python versions
@@ -344,8 +361,7 @@ public class Parser {
             if (kwargObj instanceof String) {
                 kwarg = new Name((String) argsMap.get("kwarg"));
             } else if (kwargObj instanceof Map) {
-                String argName = (String) ((Map) kwargObj).get("arg");
-                kwarg = new Name(argName);
+                kwarg = (Name) convert(kwargObj);
             }
 
             boolean isAsync = type.equals("AsyncFunctionDef");
@@ -355,7 +371,17 @@ public class Parser {
                 decors = convertList(map.get("decorator_list"));
             }
 
-            return new FunctionDef(name, args, body, defaults, vararg, kwarg, decors, file, isAsync, start, end, line, col);
+            List<Node> annotations = new ArrayList<>();
+            collectArgumentAnnotations(argsMap.get("posonlyargs"), annotations);
+            collectArgumentAnnotations(argsMap.get("args"), annotations);
+            collectArgumentAnnotations(argsMap.get("kwonlyargs"), annotations);
+            collectArgumentAnnotation(varargObj, annotations);
+            collectArgumentAnnotation(kwargObj, annotations);
+            Node returnAnnotation = convert(map.get("returns"));
+
+            return new FunctionDef(name, args, body, nonNullList(defaults), vararg, kwarg,
+                    nonNullList(decors), kwOnlyArgs, kwDefaults, annotations, returnAnnotation,
+                    posOnlyArgs.size(), file, isAsync, start, end, line, col);
         }
 
         if (type.equals("GeneratorExp")) {
@@ -423,6 +449,10 @@ public class Parser {
             return new Keyword(arg, value, file, start, end, line, col);
         }
 
+        if (type.equals("JoinedStr")) {
+            return new JoinedStr(nonNullList(convertList(map.get("values"))), file, start, end, line, col);
+        }
+
         if (type.equals("List")) {
             List<Node> elts = convertList(map.get("elts"));
             return new PyList(elts, file, start, end, line, col);
@@ -439,9 +469,46 @@ public class Parser {
             return new ListComp(elt, generators, file, start, end, line, col);
         }
 
+        if (type.equals("Match")) {
+            Node subject = convert(map.get("subject"));
+            List<MatchCase> cases = convertList(map.get("cases"));
+            return new Match(subject, cases, file, start, end, line, col);
+        }
+
+        if (type.equals("match_case")) {
+            MatchPattern pattern = (MatchPattern) convert(map.get("pattern"));
+            Node guard = convert(map.get("guard"));
+            Block body = convertBlock(map.get("body"));
+            return new MatchCase(pattern, guard, body, file, start, end, line, col);
+        }
+
+        if (type.startsWith("Match")) {
+            List<Node> valueExpressions = new ArrayList<>();
+            addConverted(valueExpressions, map.get("value"));
+            addConverted(valueExpressions, map.get("cls"));
+            addConvertedList(valueExpressions, map.get("keys"));
+
+            List<MatchPattern> patterns = new ArrayList<>();
+            addConvertedPattern(patterns, map.get("pattern"));
+            addConvertedPatterns(patterns, map.get("patterns"));
+            addConvertedPatterns(patterns, map.get("kwd_patterns"));
+
+            List<Name> captures = new ArrayList<>();
+            addCapture(captures, map.get("name"), start, end, line, col);
+            addCapture(captures, map.get("rest"), start, end, line, col);
+            return new MatchPattern(type, valueExpressions, patterns, captures,
+                    file, start, end, line, col);
+        }
+
         if (type.equals("Name")) {
             String id = (String) map.get("id");
             return new Name(id, file, start, end, line, col);
+        }
+
+        if (type.equals("NamedExpr")) {
+            Node target = convert(map.get("target"));
+            Node value = convert(map.get("value"));
+            return new NamedExpr(target, value, file, start, end, line, col);
         }
 
         if (type.equals("NameConstant")) {
@@ -489,9 +556,7 @@ public class Parser {
                 return convert(map);
             }
             else {
-                $.msg("\n[Please report issue]: Unexpected Constant node: " + type
-                        + "\nnode: " + o + "\nfile: " + file);
-                return new Unsupported(file, start, end, line, col);
+                return unsupported(type, map, start, end, line, col);
             }
         }
 
@@ -661,10 +726,129 @@ public class Parser {
             return new YieldFrom(value, file, start, end, line, col);
         }
 
-        $.msg("\n[Please report issue]: Unexpected ast node type: " + type
-                + "\nnode: " + o + "\nfile: " + file);
+        return unsupported(type, map, start, end, line, col);
+    }
 
-        return new Unsupported(file, start, end, line, col);
+    @NotNull
+    private <T> List<T> nonNullList(@Nullable List<T> list) {
+        return list == null ? new ArrayList<>() : list;
+    }
+
+    private void collectArgumentAnnotations(@Nullable Object value, @NotNull List<Node> annotations) {
+        if (!(value instanceof List)) {
+            return;
+        }
+        for (Object arg : (List<?>) value) {
+            collectArgumentAnnotation(arg, annotations);
+        }
+    }
+
+    private void collectArgumentAnnotation(@Nullable Object value, @NotNull List<Node> annotations) {
+        if (!(value instanceof Map)) {
+            return;
+        }
+        Node annotation = convert(((Map<?, ?>) value).get("annotation"));
+        if (annotation != null) {
+            annotations.add(annotation);
+        }
+    }
+
+    @NotNull
+    private List<Node> convertNullableList(@Nullable Object value) {
+        List<Node> result = new ArrayList<>();
+        if (value instanceof List) {
+            for (Object element : (List<?>) value) {
+                result.add(convert(element));
+            }
+        }
+        return result;
+    }
+
+    private void addConverted(@NotNull List<Node> result, @Nullable Object value) {
+        Node converted = convert(value);
+        if (converted != null) {
+            result.add(converted);
+        }
+    }
+
+    private void addConvertedList(@NotNull List<Node> result, @Nullable Object value) {
+        List<Node> converted = convertList(value);
+        if (converted != null) {
+            result.addAll(converted);
+        }
+    }
+
+    private void addConvertedPattern(@NotNull List<MatchPattern> result, @Nullable Object value) {
+        Node converted = convert(value);
+        if (converted instanceof MatchPattern) {
+            result.add((MatchPattern) converted);
+        }
+    }
+
+    private void addConvertedPatterns(@NotNull List<MatchPattern> result, @Nullable Object value) {
+        List<MatchPattern> converted = convertList(value);
+        if (converted != null) {
+            result.addAll(converted);
+        }
+    }
+
+    private void addCapture(@NotNull List<Name> captures, @Nullable Object value,
+                            int start, int end, int line, int col) {
+        if (!(value instanceof String)) {
+            return;
+        }
+        String id = (String) value;
+        int searchEnd = content == null ? -1 : Math.min(content.length() - 1, Math.max(start, end - 1));
+        int captureStart = content == null ? -1 : content.lastIndexOf(id, searchEnd);
+        if (captureStart < start || (end > start && captureStart + id.length() > end)) {
+            captureStart = start;
+        }
+        captures.add(new Name(id, file, captureStart, captureStart + id.length(), line, col));
+    }
+
+    @NotNull
+    private Unsupported unsupported(@NotNull String type, @NotNull Map<String, Object> map,
+                                    int start, int end, int line, int col) {
+        boolean firstOccurrence = Analyzer.self.unsupportedNodeTypes.add(type);
+        if (firstOccurrence && !Analyzer.self.hasOption("quiet")) {
+            $.msg("\nUnsupported ast node type: " + type + "\nfile: " + file);
+        }
+        List<Node> children = new ArrayList<>();
+        for (Object value : map.values()) {
+            collectUnsupportedChildren(value, children);
+        }
+        return new Unsupported(type, children, file, start, end, line, col);
+    }
+
+    private void collectUnsupportedChildren(@Nullable Object value, @NotNull List<Node> children) {
+        if (value instanceof Map) {
+            Map<String, Object> childMap = (Map<String, Object>) value;
+            String childType = (String) childMap.get("pysonar_node_type");
+            if (childType != null && !isAstMetadataType(childType)) {
+                Node child = convert(childMap);
+                if (child != null) {
+                    children.add(child);
+                }
+            }
+        } else if (value instanceof List) {
+            for (Object element : (List<?>) value) {
+                collectUnsupportedChildren(element, children);
+            }
+        }
+    }
+
+    private boolean isAstMetadataType(@NotNull String type) {
+        switch (type) {
+            case "Load": case "Store": case "Del": case "Param":
+            case "And": case "Or": case "Add": case "Sub": case "Mult": case "MatMult":
+            case "Div": case "FloorDiv": case "Mod": case "Pow": case "LShift": case "RShift":
+            case "BitOr": case "BitXor": case "BitAnd": case "Invert": case "Not": case "UAdd":
+            case "USub": case "Eq": case "NotEq": case "Lt": case "LtE": case "Gt": case "GtE":
+            case "Is": case "IsNot": case "In": case "NotIn":
+                return true;
+            default:
+                return false;
+        }
     }
 
 

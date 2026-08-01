@@ -115,6 +115,7 @@ public class Demo {
         String styledSource = new StyleApplier(path, source, styles).apply();
         String outline = new HtmlOutline(analyzer, linker).generate(path);
         String relativePath = relativeSourcePath(path);
+        String displayPath = projectRootName() + "/" + relativePath;
         String homeHref = homeHref(relativePath);
 
         StringBuilder sb = new StringBuilder();
@@ -129,7 +130,7 @@ public class Demo {
             .append("<header class='topbar'>")
             .append("<a class='brand' href='").append(escapeAttribute(homeHref)).append("'>")
             .append("<span class='brand-mark'>P2</span><span>PySonar2</span></a>")
-            .append("<span class='topbar-path'>").append(escapeText(relativePath)).append("</span>")
+            .append("<span class='topbar-path'>").append(escapeText(displayPath)).append("</span>")
             .append("<a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>View source</a>")
             .append("</header>\n")
             .append("<main id='main-content' class='browser-shell'>")
@@ -156,6 +157,7 @@ public class Demo {
     @NotNull
     private String landingMarkup(@NotNull List<String> files) {
         String entryHref = files.isEmpty() ? "#files" : sourceHref(preferredEntry(files));
+        String projectRoot = projectRootName() + "/";
         StringBuilder cards = new StringBuilder();
         for (String path : files) {
             String relative = relativeSourcePath(path);
@@ -188,14 +190,15 @@ public class Demo {
                 + "<header class='topbar'><a class='brand' href='index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a>"
                 + "<a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>GitHub repository</a></header>"
                 + "<main id='main-content' class='landing'><section class='hero'>"
-                + "<span class='release-pill'>Python 3-only · v3.0.0</span>"
+                + "<span class='release-pill'>Python 3-only · v3.1.0</span>"
                 + "<h1>Code intelligence,<br>rendered as static HTML.</h1>"
                 + "<p>Explore a realistic multi-file Python project. Hover or focus a symbol for its inferred type, then follow links between definitions and references—no server required.</p>"
                 + "<div class='hero-actions'><a class='button primary' href='" + escapeAttribute(entryHref) + "'>Open the code browser</a>"
                 + "<a class='button' href='https://github.com/smallyunet/pysonar2/tree/main/demo_project'>Browse demo source</a></div>"
                 + "</section><section class='metrics' aria-label='Analysis summary'>"
                 + metric(files.size(), "Python files") + metric(definitions, "Definitions") + metric(references, "Cross references")
-                + "</section><div class='section-heading'><h2>Demo project</h2>"
+                + "</section><div class='section-heading'><h2>Project files "
+                + "<code class='project-root'>" + escapeText(projectRoot) + "</code></h2>"
                 + "<p>" + resolution + "% of names resolved across this generated project. Choose a file to inspect its symbols and inferred types.</p></div>"
                 + "<section id='files' class='file-grid' aria-label='Demo source files'>" + cards + "</section>"
                 + "<footer class='landing-footer'>Generated locally by PySonar2 with Python 3.14 · Static output published on GitHub Pages.</footer>"
@@ -255,6 +258,12 @@ public class Demo {
     }
 
 
+    private String projectRootName() {
+        String name = new File(rootPath).getName();
+        return name.isEmpty() ? "project" : name;
+    }
+
+
     private String homeHref(String relativePath) {
         int depth = 0;
         for (int i = 0; i < relativePath.length(); i++) {
@@ -296,9 +305,9 @@ public class Demo {
 
 
     private static void usage() {
-        $.msg("Usage:  java -jar pysonar-3.0.0.jar <file-or-dir> <output-dir>");
+        $.msg("Usage:  java -jar pysonar-3.1.0.jar <file-or-dir> <output-dir>");
         $.msg("Example that generates an index for a Python 3 standard library:");
-        $.msg(" java -jar pysonar-3.0.0.jar /usr/lib/python3 ./html");
+        $.msg(" java -jar pysonar-3.1.0.jar /usr/lib/python3 ./html");
         System.exit(0);
     }
 

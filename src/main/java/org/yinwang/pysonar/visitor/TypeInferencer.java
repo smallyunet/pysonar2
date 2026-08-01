@@ -63,6 +63,16 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     @NotNull
     @Override
+    public Type visit(AnnAssign node, State s)
+    {
+        visit(node.annotation, s);
+        Type valueType = node.value == null ? Types.UNKNOWN : visit(node.value, s);
+        bind(s, node.target, valueType);
+        return Types.CONT;
+    }
+
+    @NotNull
+    @Override
     public Type visit(Assert node, State s)
     {
         if (node.test != null)
@@ -487,13 +497,37 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     @NotNull
     @Override
+    public Type visit(FormattedValue node, State s)
+    {
+        visit(node.value, s);
+        if (node.formatSpec != null)
+        {
+            visit(node.formatSpec, s);
+        }
+        return Types.StrInstance;
+    }
+
+    @NotNull
+    @Override
     public Type visit(FunctionDef node, State s)
     {
+        visit(node.decorators, s);
+        visit(node.annotations, s);
+        if (node.returnAnnotation != null)
+        {
+            visit(node.returnAnnotation, s);
+        }
         State env = s.getForwarding();
         FunType fun = new FunType(node, env);
         fun.table.setParent(s);
         fun.table.setPath(s.extendPath(node.name.id));
         fun.setDefaultTypes(visit(node.defaults, s));
+        List<Type> kwDefaultTypes = new ArrayList<>();
+        for (Node defaultNode : node.kwDefaults)
+        {
+            kwDefaultTypes.add(defaultNode == null ? null : visit(defaultNode, s));
+        }
+        fun.setKwDefaultTypes(kwDefaultTypes);
         Analyzer.self.addUncalled(fun);
         Binding.Kind funkind;
 
@@ -540,6 +574,14 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     @NotNull
     @Override
+    public Type visit(JoinedStr node, State s)
+    {
+        visit(node.values, s);
+        return Types.StrInstance;
+    }
+
+    @NotNull
+    @Override
     public Type visit(Global node, State s)
     {
         return Types.CONT;
@@ -573,11 +615,13 @@ public class TypeInferencer implements Visitor1<Type, State>
     public Type visit(If node, State s)
     {
         Type type1, type2;
-        State s1 = s.copy();
-        State s2 = s.copy();
 
         // Ignore result because Python can treat anything as bool
         visit(node.test, s);
+        // The test may bind names (for example, an assignment expression). Branches
+        // must start from that updated state.
+        State s1 = s.copy();
+        State s2 = s.copy();
         inferInstance(node.test, s, s1);
 
         if (node.body != null)
@@ -790,6 +834,75 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     @NotNull
     @Override
+    public Type visit(Match node, State s)
+    {
+        visit(node.subject, s);
+        Type result = Types.UNKNOWN;
+        boolean exhaustive = false;
+        for (MatchCase matchCase : node.cases)
+        {
+            State caseState = s.copy();
+            result = UnionType.union(result, visit(matchCase, caseState));
+            s.merge(caseState);
+            if (matchCase.guard == null && matchCase.pattern.isIrrefutable())
+            {
+                exhaustive = true;
+            }
+        }
+        return exhaustive ? result : UnionType.union(result, Types.CONT);
+    }
+
+    @NotNull
+    @Override
+    public Type visit(MatchCase node, State s)
+    {
+        visit(node.pattern, s);
+        if (node.guard != null)
+        {
+            visit(node.guard, s);
+        }
+        return visit(node.body, s);
+    }
+
+    @NotNull
+    @Override
+    public Type visit(MatchPattern node, State s)
+    {
+        visit(node.valueExpressions, s);
+        if ("MatchOr".equals(node.patternKind))
+        {
+            State alternatives = null;
+            for (MatchPattern pattern : node.patterns)
+            {
+                State alternative = s.copy();
+                visit(pattern, alternative);
+                if (alternatives == null)
+                {
+                    alternatives = alternative;
+                }
+                else
+                {
+                    alternatives.merge(alternative);
+                }
+            }
+            if (alternatives != null)
+            {
+                s.overwrite(alternatives);
+            }
+        }
+        else
+        {
+            visit(node.patterns, s);
+        }
+        for (Name capture : node.captures)
+        {
+            bind(s, capture, Types.UNKNOWN, VARIABLE);
+        }
+        return Types.CONT;
+    }
+
+    @NotNull
+    @Override
     public Type visit(Name node, State s)
     {
         Set<Binding> b = s.lookup(node.id);
@@ -808,6 +921,15 @@ public class TypeInferencer implements Visitor1<Type, State>
             t.table.setPath(s.extendPath(node.id));
             return t;
         }
+    }
+
+    @NotNull
+    @Override
+    public Type visit(NamedExpr node, State s)
+    {
+        Type valueType = visit(node.value, s);
+        bind(s, node.target, valueType);
+        return valueType;
     }
 
     @NotNull
@@ -1047,7 +1169,8 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(Unsupported node, State s)
     {
-        return Types.NoneInstance;
+        visit(node.children, s);
+        return Types.UNKNOWN;
     }
 
     @NotNull
@@ -1356,7 +1479,8 @@ public class TypeInferencer implements Visitor1<Type, State>
             callState.setPath(func.func.name.id);
         }
 
-        Type fromType = bindParams(callState, func.func, argTypes, func.defaultTypes, kwTypes, kwArg, starArg);
+        Type fromType = bindParams(callState, func.func, argTypes, func.defaultTypes,
+                func.kwDefaultTypes, kwTypes, kwArg, starArg);
         Type cachedTo = func.getMapping(fromType);
 
         if (cachedTo != null)
@@ -1402,6 +1526,7 @@ public class TypeInferencer implements Visitor1<Type, State>
                             @NotNull FunctionDef func,
                             @Nullable List<Type> pTypes,
                             @Nullable List<Type> dTypes,
+                            @Nullable List<Type> kwDefaultTypes,
                             @Nullable Map<String, Type> hash,
                             @Nullable Type kw,
                             @Nullable Type star)
@@ -1436,7 +1561,7 @@ public class TypeInferencer implements Visitor1<Type, State>
             }
             else
             {
-                if (hash != null && args.get(i) instanceof Name &&
+                if (i >= func.posOnlyArgCount && hash != null && args.get(i) instanceof Name &&
                     hash.containsKey(((Name) args.get(i)).id))
                 {
                     aType = hash.get(((Name) args.get(i)).id);
@@ -1458,6 +1583,27 @@ public class TypeInferencer implements Visitor1<Type, State>
             }
             bind(state, arg, aType, PARAMETER);
             fromType.add(aType);
+        }
+
+        for (int i = 0; i < func.kwOnlyArgs.size(); i++)
+        {
+            Node arg = func.kwOnlyArgs.get(i);
+            Type argType = null;
+            if (hash != null && arg instanceof Name && hash.containsKey(((Name) arg).id))
+            {
+                argType = hash.remove(((Name) arg).id);
+            }
+            else if (kwDefaultTypes != null && i < kwDefaultTypes.size())
+            {
+                argType = kwDefaultTypes.get(i);
+            }
+            if (argType == null)
+            {
+                argType = Types.UNKNOWN;
+                addWarningToNode(arg, "unable to bind keyword-only argument:" + arg);
+            }
+            bind(state, arg, argType, PARAMETER);
+            fromType.add(argType);
         }
 
         if (restKw != null)

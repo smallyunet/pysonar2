@@ -13,6 +13,8 @@ public interface Visitor0<T> {
         switch (node.nodeType) {
             case ALIAS:
                 return visit((Alias)node);
+            case ANNASSIGN:
+                return visit((AnnAssign)node);
             case ASSERT:
                 return visit((Assert)node);
             case ASSIGN:
@@ -53,6 +55,8 @@ public interface Visitor0<T> {
                 return visit((ExtSlice)node);
             case FOR:
                 return visit((For)node);
+            case FORMATTEDVALUE:
+                return visit((FormattedValue)node);
             case FUNCTIONDEF:
                 return visit((FunctionDef)node);
             case GENERATOREXP:
@@ -73,12 +77,22 @@ public interface Visitor0<T> {
                 return visit((Index)node);
             case KEYWORD:
                 return visit((Keyword)node);
+            case JOINEDSTR:
+                return visit((JoinedStr)node);
             case LISTCOMP:
                 return visit((ListComp)node);
             case MODULE:
                 return visit((PyModule)node);
+            case MATCH:
+                return visit((Match)node);
+            case MATCHCASE:
+                return visit((MatchCase)node);
+            case MATCHPATTERN:
+                return visit((MatchPattern)node);
             case NAME:
                 return visit((Name)node);
+            case NAMEDEXPR:
+                return visit((NamedExpr)node);
             case NODE:
                 return visit((Node)node);
             case PASS:
@@ -155,6 +169,7 @@ public interface Visitor0<T> {
     }
 
     T visit(Alias node);
+    T visit(AnnAssign node);
     T visit(Assert node);
     T visit(Assign node);
     T visit(Attribute node);
@@ -175,6 +190,7 @@ public interface Visitor0<T> {
     T visit(Expr node);
     T visit(ExtSlice node);
     T visit(For node);
+    T visit(FormattedValue node);
     T visit(FunctionDef node);
     T visit(GeneratorExp node);
     T visit(Global node);
@@ -185,9 +201,14 @@ public interface Visitor0<T> {
     T visit(ImportFrom node);
     T visit(Index node);
     T visit(Keyword node);
+    T visit(JoinedStr node);
     T visit(ListComp node);
     T visit(PyModule node);
+    T visit(Match node);
+    T visit(MatchCase node);
+    T visit(MatchPattern node);
     T visit(Name node);
+    T visit(NamedExpr node);
     T visit(Pass node);
     T visit(PyComplex node);
     T visit(PyFloat node);
