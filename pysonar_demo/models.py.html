@@ -366,6 +366,17 @@ pre a.active {
 .section-heading { margin: 44px 0 16px; }
 .section-heading h2 { margin: 0 0 5px; font-size: 24px; letter-spacing: -0.025em; }
 .section-heading p { margin: 0; color: var(--muted); }
+.project-root {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--accent-strong);
+    font: 600 13px/1.2 var(--mono);
+    vertical-align: 3px;
+}
 
 .file-grid {
     display: grid;
@@ -405,7 +416,7 @@ pre a.active {
 </style>
 </head>
 <body class='code-page'>
-<a class='skip-link' href='#main-content'>Skip to source code</a><header class='topbar'><a class='brand' href='../index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a><span class='topbar-path'>pysonar_demo/models.py</span><a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>View source</a></header>
+<a class='skip-link' href='#main-content'>Skip to source code</a><header class='topbar'><a class='brand' href='../index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a><span class='topbar-path'>demo_project/pysonar_demo/models.py</span><a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>View source</a></header>
 <main id='main-content' class='browser-shell'><aside class='outline-panel'><div class='panel-heading'><span class='eyebrow'>Outline</span></div><nav class='outline-nav' aria-label='Symbols in this file'><ul class='outline-list'>
 <li><a href='#pysonar_demo.models.Market' xid='pysonar_demo.models.Market'>Market</a><ul class='outline-list'>
 <li><a href='#pysonar_demo.models.Market.__init__' xid='pysonar_demo.models.Market.__init__'>__init__</a></li><li><a href='#pysonar_demo.models.Market.liquidity_label' xid='pysonar_demo.models.Market.liquidity_label'>liquidity_label</a></li></ul>
@@ -424,9 +435,9 @@ pre a.active {
 <span class='lineno'>   8</span>         <a href='#pysonar_demo.models.Market.__init__.self' xid='pysonar_demo.models.Market.__init__.self' data-tooltip='Market' aria-describedby='symbol-tooltip'>self</a>.<a id='pysonar_demo.models.Market.volume' xid='pysonar_demo.models.Market.volume' data-tooltip='{float | int | str}' aria-describedby='symbol-tooltip'>volume</a> = <a href='#pysonar_demo.models.Market.__init__.volume' xid='pysonar_demo.models.Market.__init__.volume' data-tooltip='{float | int | str}' aria-describedby='symbol-tooltip'>volume</a>
 <span class='lineno'>   9</span>
 <span class='lineno'>  10</span>     def <a id='pysonar_demo.models.Market.liquidity_label' xid='pysonar_demo.models.Market.liquidity_label' data-tooltip='Market -&gt; str' aria-describedby='symbol-tooltip'>liquidity_label</a>(<a id='pysonar_demo.models.Market.liquidity_label.self' xid='pysonar_demo.models.Market.liquidity_label.self' data-tooltip='Market' aria-describedby='symbol-tooltip'>sel</a>f):
-<span class='lineno'>  11</span>         if <a href='#pysonar_demo.models.Market.liquidity_label.self' xid='pysonar_demo.models.Market.liquidity_label.self' data-tooltip='Market' aria-describedby='symbol-tooltip'>self</a>.<a href='#pysonar_demo.models.Market.volume' xid='pysonar_demo.models.Market.volume' data-tooltip='?' aria-describedby='symbol-tooltip'>volume</a> &gt;= 100000:
+<span class='lineno'>  11</span>         if <a href='#pysonar_demo.models.Market.liquidity_label.self' xid='pysonar_demo.models.Market.liquidity_label.self' data-tooltip='Market' aria-describedby='symbol-tooltip'>self</a>.<a href='#pysonar_demo.models.Market.volume' xid='pysonar_demo.models.Market.volume' data-tooltip='{float | int | str}' aria-describedby='symbol-tooltip'>volume</a> &gt;= 100000:
 <span class='lineno'>  12</span>             return &quot;deep&quot;
-<span class='lineno'>  13</span>         if <a href='#pysonar_demo.models.Market.liquidity_label.self' xid='pysonar_demo.models.Market.liquidity_label.self' data-tooltip='Market' aria-describedby='symbol-tooltip'>self</a>.<a href='#pysonar_demo.models.Market.volume' xid='pysonar_demo.models.Market.volume' data-tooltip='?' aria-describedby='symbol-tooltip'>volume</a> &gt;= 50000:
+<span class='lineno'>  13</span>         if <a href='#pysonar_demo.models.Market.liquidity_label.self' xid='pysonar_demo.models.Market.liquidity_label.self' data-tooltip='Market' aria-describedby='symbol-tooltip'>self</a>.<a href='#pysonar_demo.models.Market.volume' xid='pysonar_demo.models.Market.volume' data-tooltip='{float | int | str}' aria-describedby='symbol-tooltip'>volume</a> &gt;= 50000:
 <span class='lineno'>  14</span>             return &quot;active&quot;
 <span class='lineno'>  15</span>         return &quot;emerging&quot;
 <span class='lineno'>  16</span>
