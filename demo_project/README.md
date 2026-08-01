@@ -12,3 +12,19 @@ java -jar target/pysonar-3.1.0.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser or publish the directory on any static host.
+
+## VS Code language-server demo
+
+The same project is used by the repository's VS Code extension demo. From `editors/vscode`, install and
+build the extension, then press `F5` using the **Run PySonar2 Extension Demo** launch configuration:
+
+```sh
+cd editors/vscode
+npm install
+npm run build
+code .
+```
+
+In the Extension Development Host, hover over inferred values in `main.py`, follow `DemoApp` and
+`build_report` across modules, find references to `Market` or `weighted_signal`, and save a file to watch
+the workspace index refresh.

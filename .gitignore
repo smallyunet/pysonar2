@@ -2,3 +2,8 @@
 /dependency-reduced-pom.xml
 __pycache__/
 *.py[cod]
+/editors/vscode/node_modules/
+/editors/vscode/out/
+/editors/vscode/server/*.jar
+/editors/vscode/*.vsix
+/editors/vscode/LICENSE

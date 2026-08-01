@@ -1,0 +1,105 @@
+{
+  "name": "pysonar2-code-intelligence",
+  "displayName": "PySonar2 Code Intelligence",
+  "description": "Whole-project Python type inference, navigation, references, symbols, and diagnostics powered by PySonar2.",
+  "version": "0.1.0",
+  "publisher": "smallyunet",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smallyunet/pysonar2.git"
+  },
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "python",
+    "static analysis",
+    "type inference",
+    "language server",
+    "code intelligence"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onCommand:pysonar2.restartServer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pysonar2.restartServer",
+        "title": "PySonar2: Reindex Workspace"
+      },
+      {
+        "command": "pysonar2.showOutput",
+        "title": "PySonar2: Show Output"
+      }
+    ],
+    "configuration": {
+      "title": "PySonar2",
+      "properties": {
+        "pysonar2.java.command": {
+          "type": "string",
+          "default": "java",
+          "scope": "machine-overridable",
+          "description": "Java 11+ executable used to start the bundled PySonar2 language server."
+        },
+        "pysonar2.python.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "description": "Optional Python 3.10+ executable. When empty, PySonar2 uses python3 from PATH."
+        },
+        "pysonar2.server.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "description": "Optional path to a development PySonar2 JAR. The bundled server is used when empty."
+        },
+        "pysonar2.analysis.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/.venv/**",
+            "**/venv/**",
+            "**/node_modules/**",
+            "**/build/**",
+            "**/dist/**",
+            "**/target/**"
+          ],
+          "scope": "resource",
+          "description": "Workspace-relative glob patterns excluded from PySonar2 analysis."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build:server": "node ./scripts/build-server.mjs",
+    "compile": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --sourcemap",
+    "build": "npm run build:server && npm run compile",
+    "check": "tsc -p . --noEmit",
+    "smoke": "node ./scripts/smoke-server.mjs",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package --out pysonar2-code-intelligence.vsix"
+  },
+  "dependencies": {
+    "vscode-languageclient": "10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.0",
+    "@types/vscode": "1.91.0",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "0.28.1",
+    "typescript": "5.9.3"
+  }
+}

@@ -97,6 +97,22 @@ public class Analyzer {
     }
 
 
+    /**
+     * Analyze an explicit list of files while keeping a stable project root.
+     *
+     * IDE integrations use this entry point so they can apply workspace exclude
+     * rules before analysis instead of recursively indexing virtual environments,
+     * generated sources, and build output.
+     */
+    public void analyzeFiles(@NotNull String root, @NotNull Collection<String> files) {
+        projectDir = $.unifyPath(root);
+        loadingProgress = new Progress(files.size(), 50);
+        for (String file : files) {
+            loadFile(file);
+        }
+    }
+
+
     public void setCWD(String cd) {
         if (cd != null) {
             cwd = $.unifyPath(cd);

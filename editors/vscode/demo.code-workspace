@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "name": "PySonar2 VS Code Extension",
+      "path": "."
+    },
+    {
+      "name": "Python Demo",
+      "path": "../../demo_project"
+    }
+  ],
+  "settings": {
+    "pysonar2.analysis.exclude": [
+      "**/__pycache__/**"
+    ]
+  }
+}

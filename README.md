@@ -34,6 +34,31 @@ supported interpreter has a different executable name, set `PYSONAR_PYTHON` to i
 PySonar2 itself targets Java 11 and can be built with Java 11 or newer.
 
 
+### VS Code extension
+
+This repository also contains a VS Code extension backed by a Java Language Server. It exposes
+PySonar2's whole-project index as go-to-definition, references, inferred-type hovers, document/workspace
+symbols, and diagnostics while keeping analysis work outside the VS Code extension host.
+
+The extension is a separate TypeScript project in [`editors/vscode`](editors/vscode), but it lives in
+this repository so the client, language-server protocol adapter, and analyzer can be developed and
+released together.
+
+Build and run the extension demo with:
+
+```sh
+cd editors/vscode
+npm install
+npm run build
+code .
+```
+
+Press `F5` and select **Run PySonar2 Extension Demo**. A new Extension Development Host opens the
+repository's `demo_project`, where you can try hover, definition, references, symbols, diagnostics, and
+save-triggered reindexing. See the [extension README](editors/vscode/README.md) for settings, packaging,
+architecture, and current limitations.
+
+
 ### How to build
 
     mvn package -DskipTests

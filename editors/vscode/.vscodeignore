@@ -1,0 +1,9 @@
+**/.vscode/**
+**/src/**
+**/scripts/**
+**/*.map
+**/tsconfig.json
+**/package-lock.json
+node_modules/**
+demo.code-workspace
+server/.gitkeep

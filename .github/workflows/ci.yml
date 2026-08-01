@@ -38,3 +38,32 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: mvn --batch-mode verify
+
+  vscode-extension:
+    name: VS Code extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+        working-directory: editors/vscode
+      - run: npm run check
+        working-directory: editors/vscode
+      - run: npm run build
+        working-directory: editors/vscode
+      - run: npm run smoke
+        working-directory: editors/vscode
+      - run: npm run package
+        working-directory: editors/vscode
