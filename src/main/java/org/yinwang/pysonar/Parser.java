@@ -464,8 +464,17 @@ public class Parser {
         // Just convert to other types and call convert again
         if (type.equals("Constant")) {
             Object value = map.get("value");
+            String constantKind = (String) map.get("constant_kind");
 
-            if (map.containsKey("num_type")) {
+            if ("bytes".equals(constantKind)) {
+                map.put("pysonar_node_type", "Bytes");
+                map.put("s", value);
+                return convert(map);
+            }
+            else if ("ellipsis".equals(constantKind)) {
+                return new Ellipsis(file, start, end, line, col);
+            }
+            else if (map.containsKey("num_type")) {
                 map.put("pysonar_node_type", "Num");
                 map.put("n", map.get("value"));
                 return convert(map);
@@ -475,7 +484,7 @@ public class Parser {
                 map.put("s", value);
                 return convert(map);
             }
-            else if (value instanceof Boolean) {
+            else if (value == null || value instanceof Boolean) {
                 map.put("pysonar_node_type", "NameConstant");
                 return convert(map);
             }
@@ -545,7 +554,7 @@ public class Parser {
 
         if (type.equals("Await")) {
             Node value = convert(map.get("value"));
-            return new Return(value, file, start, end, line, col);
+            return new Await(value, file, start, end, line, col);
         }
 
         if (type.equals("Set")) {
@@ -649,7 +658,7 @@ public class Parser {
 
         if (type.equals("YieldFrom")) {
             Node value = convert(map.get("value"));
-            return new Yield(value, file, start, end, line, col);
+            return new YieldFrom(value, file, start, end, line, col);
         }
 
         $.msg("\n[Please report issue]: Unexpected ast node type: " + type

@@ -1,4 +1,5 @@
 import ast
+import builtins
 import tokenize
 
 from json import JSONEncoder
@@ -183,6 +184,9 @@ def find_end(node, s):
             i += 1
 
         the_end = end_seq(s, q, i)
+
+    elif isinstance(node, Constant) and isinstance(node.value, bytes):
+        the_end = find_start(node, s) + len(repr(node.value))
 
     elif isinstance(node, Name):
         the_end = find_start(node, s) + len(node.id)
@@ -374,6 +378,14 @@ def add_missing_names(node, s):
         if ops != []:
             node.op_node = ops[0]
             node._fields += ('op_node',)
+
+    elif isinstance(node, Constant) and isinstance(node.value, bytes):
+        node.constant_kind = 'bytes'
+        node._fields += ('constant_kind',)
+
+    elif isinstance(node, Constant) and node.value is builtins.Ellipsis:
+        node.constant_kind = 'ellipsis'
+        node._fields += ('constant_kind',)
 
     elif (isinstance(node, Constant) and
           isinstance(node.value, (int, float, complex)) and
