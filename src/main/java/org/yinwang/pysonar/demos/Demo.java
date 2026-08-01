@@ -285,8 +285,10 @@ public class Demo {
         for (String line : source.split("\n")) {
             result.append("<span class='lineno'>");
             result.append(String.format("%1$4d", count++));
-            result.append("</span> ");
-            result.append(line);
+            result.append("</span>");
+            if (!line.isEmpty()) {
+                result.append(" ").append(line);
+            }
             result.append("\n");
         }
         return result.toString();
