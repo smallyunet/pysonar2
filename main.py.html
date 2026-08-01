@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset="utf-8">
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>main.py · PySonar2</title>
+<style type='text/css'>
+:root {
+    color-scheme: dark;
+    --bg: #08111f;
+    --surface: #0e1a2b;
+    --surface-raised: #132238;
+    --surface-hover: #192b45;
+    --border: #263a55;
+    --border-strong: #395474;
+    --text: #e8f0fb;
+    --muted: #91a4bc;
+    --subtle: #60758f;
+    --accent: #53d6c7;
+    --accent-strong: #75eee0;
+    --accent-soft: rgba(83, 214, 199, 0.14);
+    --blue: #79b8ff;
+    --purple: #c6a0f6;
+    --yellow: #f6c177;
+    --red: #ff7b89;
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    --sans: "IBM Plex Sans", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 85% -10%, rgba(61, 106, 170, 0.22), transparent 34rem),
+        var(--bg);
+    color: var(--text);
+    font: 16px/1.55 var(--sans);
+}
+
+a { color: var(--accent); cursor: pointer; text-decoration: none; touch-action: manipulation; }
+a:hover { color: var(--accent-strong); }
+a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.skip-link {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 100;
+    padding: 9px 12px;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #061512;
+    font-weight: 700;
+    transform: translateY(-150%);
+}
+
+.skip-link:focus { transform: translateY(0); color: #061512; }
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    min-height: 58px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8, 17, 31, 0.94);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.brand-mark {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #061512;
+    font: 700 14px/1 var(--mono);
+}
+
+.topbar-path {
+    min-width: 0;
+    margin-left: 18px;
+    padding-left: 18px;
+    overflow: hidden;
+    border-left: 1px solid var(--border);
+    color: var(--muted);
+    font: 13px/1.4 var(--mono);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar-link {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.browser-shell {
+    display: grid;
+    grid-template-columns: minmax(230px, 290px) minmax(0, 1fr);
+    gap: 16px;
+    width: min(1600px, 100%);
+    margin: 0 auto;
+    padding: 18px;
+}
+
+.outline-panel,
+.editor-panel {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.outline-panel {
+    position: sticky;
+    top: 76px;
+    align-self: start;
+    max-height: calc(100vh - 94px);
+}
+
+.panel-heading,
+.editor-heading {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-raised);
+}
+
+.panel-heading {
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.eyebrow {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.outline-nav {
+    max-height: calc(100vh - 143px);
+    padding: 12px 10px 18px;
+    overflow: auto;
+}
+
+.outline-list {
+    margin: 0;
+    padding-left: 18px;
+    list-style: none;
+}
+
+.outline-list .outline-list {
+    margin-top: 4px;
+    padding-left: 16px;
+    border-left: 1px solid var(--border);
+}
+
+.outline-list li { margin: 2px 0; }
+
+.outline-list a {
+    display: block;
+    padding: 5px 8px;
+    overflow: hidden;
+    border-radius: 6px;
+    color: var(--muted);
+    font: 13px/1.4 var(--mono);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.outline-list a:hover,
+.outline-list a.active {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.editor-heading { padding: 0 16px; }
+
+.file-dot {
+    width: 9px;
+    height: 9px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.file-name {
+    color: var(--text);
+    font: 600 13px/1 var(--mono);
+}
+
+.static-badge {
+    margin-left: auto;
+    padding: 3px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.code-scroll {
+    min-height: calc(100vh - 126px);
+    overflow: auto;
+}
+
+pre {
+    min-width: max-content;
+    margin: 0;
+    padding: 18px 22px 36px 0;
+    color: #c8d6e8;
+    font: 14px/1.72 var(--mono);
+    tab-size: 4;
+}
+
+pre a {
+    border-radius: 3px;
+    color: var(--blue);
+    transition: color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+}
+
+pre a:hover,
+pre a.active {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.lineno {
+    display: inline-block;
+    width: 54px;
+    margin-right: 14px;
+    color: var(--subtle);
+    text-align: right;
+    user-select: none;
+}
+
+.builtin { color: var(--yellow); }
+.comment, .block-comment, .doc-string { color: #6f849d; font-style: italic; }
+.constant, .number { color: var(--purple); }
+.decorator { color: #e6a8d7; }
+.error { border-bottom: 1px solid var(--red); }
+.field-name, .identifier, .parameter { color: #b8c7da; }
+.function, .type-name { color: var(--blue); }
+.info { border-bottom: 1px dotted var(--blue); }
+.keyword { color: #ff8f9c; }
+.string { color: #a8d291; }
+.warning { border-bottom: 1px solid var(--yellow); padding-bottom: 1px; }
+
+.symbol-tooltip {
+    position: fixed;
+    z-index: 100;
+    width: max-content;
+    max-width: min(420px, calc(100vw - 24px));
+    padding: 8px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: #17283f;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+    color: var(--text);
+    font: 12px/1.45 var(--mono);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease;
+}
+
+.symbol-tooltip.is-visible { opacity: 1; }
+
+.landing {
+    width: min(1160px, calc(100% - 36px));
+    margin: 0 auto;
+    padding: 72px 0 84px;
+}
+
+.hero { max-width: 780px; }
+
+.release-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--accent-strong);
+    font: 600 12px/1 var(--mono);
+}
+
+.hero h1 {
+    margin: 20px 0 16px;
+    font-size: clamp(42px, 8vw, 76px);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+}
+
+.hero p {
+    max-width: 700px;
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(17px, 2vw, 20px);
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+
+.button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text);
+    font-weight: 650;
+    transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.button:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--text); }
+.button.primary { border-color: var(--accent); background: var(--accent); color: #061512; }
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 54px 0 20px;
+}
+
+.metric,
+.file-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(14, 26, 43, 0.82);
+}
+
+.metric { padding: 18px; }
+.metric strong { display: block; font: 700 24px/1.2 var(--mono); }
+.metric span { color: var(--muted); font-size: 13px; }
+
+.section-heading { margin: 44px 0 16px; }
+.section-heading h2 { margin: 0 0 5px; font-size: 24px; letter-spacing: -0.025em; }
+.section-heading p { margin: 0; color: var(--muted); }
+
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.file-card {
+    display: block;
+    min-height: 116px;
+    padding: 18px;
+    color: var(--text);
+    transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.file-card:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--surface-raised); color: var(--text); }
+.file-card code { display: block; color: var(--accent-strong); font: 600 14px/1.5 var(--mono); }
+.file-card span { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }
+
+.landing-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+
+@media (max-width: 760px) {
+    .topbar { padding: 0 14px; }
+    .topbar-path { margin-left: 12px; padding-left: 12px; }
+    .topbar-link { display: none; }
+    .browser-shell { grid-template-columns: 1fr; padding: 10px; }
+    .outline-panel { position: static; max-height: 250px; }
+    .outline-nav { max-height: 200px; }
+    .code-scroll { min-height: 60vh; }
+    .landing { padding-top: 48px; }
+    .metrics { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body class='code-page'>
+<a class='skip-link' href='#main-content'>Skip to source code</a><header class='topbar'><a class='brand' href='index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a><span class='topbar-path'>main.py</span><a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>View source</a></header>
+<main id='main-content' class='browser-shell'><aside class='outline-panel'><div class='panel-heading'><span class='eyebrow'>Outline</span></div><nav class='outline-nav' aria-label='Symbols in this file'><ul class='outline-list'>
+<li><a href='#main.run_demo' xid='main.run_demo'>run_demo</a></li><li><a href='#main.REPORT' xid='main.REPORT'>REPORT</a></li></ul>
+</nav></aside><section class='editor-panel' aria-label='Analyzed source code'><div class='editor-heading'><span class='file-dot'></span><span class='file-name'>main.py</span><span class='static-badge'>Static analysis</span></div><div class='code-scroll'><pre><span class='lineno'>   1</span> &quot;&quot;&quot;Entry point for the PySonar2 code intelligence demo.&quot;&quot;&quot;
+<span class='lineno'>   2</span>
+<span class='lineno'>   3</span> from <a href='pysonar_demo/__init__.py.html#pysonar_demo' xid='pysonar_demo' data-tooltip='pysonar_demo' aria-describedby='symbol-tooltip'>pysonar_demo</a> import <a href='pysonar_demo/service.py.html#pysonar_demo.service.DemoApp' xid='pysonar_demo.service.DemoApp' data-tooltip='&lt;DemoApp&gt;' aria-describedby='symbol-tooltip'>DemoApp</a>
+<span class='lineno'>   4</span>
+<span class='lineno'>   5</span>
+<span class='lineno'>   6</span> def <a id='main.run_demo' xid='main.run_demo' data-tooltip='() -&gt; Report' aria-describedby='symbol-tooltip'>run_demo</a>():
+<span class='lineno'>   7</span>     <a id='main.run_demo.app' xid='main.run_demo.app' data-tooltip='DemoApp' aria-describedby='symbol-tooltip'>app</a> = <a href='pysonar_demo/service.py.html#pysonar_demo.service.DemoApp' xid='pysonar_demo.service.DemoApp' data-tooltip='&lt;DemoApp&gt;' aria-describedby='symbol-tooltip'>DemoApp</a>(&quot;Prediction Lab&quot;)
+<span class='lineno'>   8</span>     <a id='main.run_demo.markets' xid='main.run_demo.markets' data-tooltip='[dict]' aria-describedby='symbol-tooltip'>markets</a> = [
+<span class='lineno'>   9</span>         {
+<span class='lineno'>  10</span>             &quot;question&quot;: &quot;Will Python remain the most popular AI language?&quot;,
+<span class='lineno'>  11</span>             &quot;yes_price&quot;: 0.72,
+<span class='lineno'>  12</span>             &quot;volume&quot;: 125000,
+<span class='lineno'>  13</span>         },
+<span class='lineno'>  14</span>         {
+<span class='lineno'>  15</span>             &quot;question&quot;: &quot;Will a static analyzer find this reference?&quot;,
+<span class='lineno'>  16</span>             &quot;yes_price&quot;: 0.91,
+<span class='lineno'>  17</span>             &quot;volume&quot;: 42000,
+<span class='lineno'>  18</span>         },
+<span class='lineno'>  19</span>         {
+<span class='lineno'>  20</span>             &quot;question&quot;: &quot;Will type inference improve developer tools?&quot;,
+<span class='lineno'>  21</span>             &quot;yes_price&quot;: 0.64,
+<span class='lineno'>  22</span>             &quot;volume&quot;: 88000,
+<span class='lineno'>  23</span>         },
+<span class='lineno'>  24</span>     ]
+<span class='lineno'>  25</span>
+<span class='lineno'>  26</span>     <a id='main.run_demo.report' xid='main.run_demo.report' data-tooltip='Report' aria-describedby='symbol-tooltip'>report</a> = <a href='#main.run_demo.app' xid='main.run_demo.app' data-tooltip='DemoApp' aria-describedby='symbol-tooltip'>app</a>.<a href='pysonar_demo/service.py.html#pysonar_demo.service.DemoApp.build_report' xid='pysonar_demo.service.DemoApp.build_report' data-tooltip='(DemoApp, [dict]) -&gt; Report' aria-describedby='symbol-tooltip'>build_report</a>(<a href='#main.run_demo.markets' xid='main.run_demo.markets' data-tooltip='[dict]' aria-describedby='symbol-tooltip'>markets</a>)
+<span class='lineno'>  27</span>     print(<a href='#main.run_demo.report' xid='main.run_demo.report' data-tooltip='Report' aria-describedby='symbol-tooltip'>report</a>.<a href='pysonar_demo/models.py.html#pysonar_demo.models.Report.title' xid='pysonar_demo.models.Report.title' data-tooltip='str' aria-describedby='symbol-tooltip'>title</a>)
+<span class='lineno'>  28</span>     for <a id='main.run_demo.prediction' xid='main.run_demo.prediction' data-tooltip='Prediction' aria-describedby='symbol-tooltip'>prediction</a> in <a href='#main.run_demo.report' xid='main.run_demo.report' data-tooltip='Report' aria-describedby='symbol-tooltip'>report</a>.<a href='pysonar_demo/models.py.html#pysonar_demo.models.Report.predictions' xid='pysonar_demo.models.Report.predictions' data-tooltip='[Prediction]' aria-describedby='symbol-tooltip'>predictions</a>:
+<span class='lineno'>  29</span>         print(<a href='#main.run_demo.prediction' xid='main.run_demo.prediction' data-tooltip='Prediction' aria-describedby='symbol-tooltip'>prediction</a>.<a href='pysonar_demo/models.py.html#pysonar_demo.models.Prediction.summary' xid='pysonar_demo.models.Prediction.summary' data-tooltip='Prediction -&gt; str' aria-describedby='symbol-tooltip'>summary</a>())
+<span class='lineno'>  30</span>     return <a href='#main.run_demo.report' xid='main.run_demo.report' data-tooltip='Report' aria-describedby='symbol-tooltip'>report</a>
+<span class='lineno'>  31</span>
+<span class='lineno'>  32</span>
+<span class='lineno'>  33</span> <a id='main.REPORT' xid='main.REPORT' data-tooltip='Report' aria-describedby='symbol-tooltip'>REPORT</a> = <a href='#main.run_demo' xid='main.run_demo' data-tooltip='() -&gt; Report' aria-describedby='symbol-tooltip'>run_demo</a>()
+</pre></div></section></main><div id='symbol-tooltip' class='symbol-tooltip' role='tooltip' aria-hidden='true'></div>
+<script>
+(function () {
+    "use strict";
+
+    var highlighted = [];
+    var tooltip;
+    var tooltipTimer;
+
+    function symbolElements(symbolId) {
+        if (!symbolId) {
+            return [];
+        }
+        return Array.prototype.filter.call(
+            document.querySelectorAll("[xid]"),
+            function (element) {
+                return element.getAttribute("xid") === symbolId;
+            }
+        );
+    }
+
+    function clearHighlight() {
+        highlighted.forEach(function (element) {
+            element.classList.remove("active");
+        });
+        highlighted = [];
+    }
+
+    window.highlight = function (symbolId) {
+        clearHighlight();
+        highlighted = symbolElements(symbolId);
+        highlighted.forEach(function (element) {
+            element.classList.add("active");
+        });
+    };
+
+    function hideTooltip() {
+        window.clearTimeout(tooltipTimer);
+        tooltip.classList.remove("is-visible");
+        tooltip.setAttribute("aria-hidden", "true");
+    }
+
+    function positionTooltip(target) {
+        var rect = target.getBoundingClientRect();
+        var margin = 12;
+        var left = rect.left + rect.width / 2;
+        var top = rect.bottom + 10;
+
+        tooltip.style.left = left + "px";
+        tooltip.style.top = top + "px";
+        tooltip.style.transform = "translateX(-50%)";
+
+        var tipRect = tooltip.getBoundingClientRect();
+        if (tipRect.right > window.innerWidth - margin) {
+            tooltip.style.left = window.innerWidth - margin - tipRect.width / 2 + "px";
+        }
+        if (tipRect.left < margin) {
+            tooltip.style.left = margin + tipRect.width / 2 + "px";
+        }
+        if (tipRect.bottom > window.innerHeight - margin) {
+            tooltip.style.top = rect.top - tipRect.height - 10 + "px";
+        }
+    }
+
+    function showTooltip(target) {
+        var message = target.getAttribute("data-tooltip");
+        if (!message) {
+            return;
+        }
+        window.clearTimeout(tooltipTimer);
+        tooltip.textContent = message;
+        tooltip.setAttribute("aria-hidden", "false");
+        positionTooltip(target);
+        tooltipTimer = window.setTimeout(function () {
+            tooltip.classList.add("is-visible");
+            positionTooltip(target);
+        }, 60);
+    }
+
+    function interactiveTarget(event) {
+        return event.target.closest("a[xid]");
+    }
+
+    window.addEventListener("DOMContentLoaded", function () {
+        tooltip = document.getElementById("symbol-tooltip");
+
+        document.addEventListener("mouseover", function (event) {
+            var target = interactiveTarget(event);
+            if (!target) {
+                return;
+            }
+            window.highlight(target.getAttribute("xid"));
+            showTooltip(target);
+        });
+
+        document.addEventListener("mouseout", function (event) {
+            var target = interactiveTarget(event);
+            if (target && !target.contains(event.relatedTarget)) {
+                hideTooltip();
+                clearHighlight();
+            }
+        });
+
+        document.addEventListener("focusin", function (event) {
+            var target = interactiveTarget(event);
+            if (target) {
+                window.highlight(target.getAttribute("xid"));
+                showTooltip(target);
+            }
+        });
+
+        document.addEventListener("focusout", function (event) {
+            if (interactiveTarget(event)) {
+                hideTooltip();
+                clearHighlight();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                hideTooltip();
+                clearHighlight();
+            }
+        });
+
+        window.addEventListener("scroll", hideTooltip, true);
+        window.addEventListener("resize", hideTooltip);
+    });
+}());
+</script>
+</body></html>
