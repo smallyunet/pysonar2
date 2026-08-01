@@ -3,11 +3,14 @@ package org.yinwang.pysonar.demos;
 import org.jetbrains.annotations.NotNull;
 import org.yinwang.pysonar.$;
 import org.yinwang.pysonar.Analyzer;
+import org.yinwang.pysonar.Binding;
 import org.yinwang.pysonar.Options;
 import org.yinwang.pysonar.Progress;
+import org.yinwang.pysonar.ast.Node;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -67,33 +70,32 @@ public class Demo {
         linker = new Linker(rootPath, OUTPUT_DIR);
         linker.findLinks(analyzer);
 
-        int rootLength = rootPath.length();
-
-        int total = 0;
+        List<String> files = new ArrayList<>();
         for (String path : analyzer.getLoadedFiles()) {
             if (path.startsWith(rootPath)) {
-                total++;
+                files.add(path);
+            }
+        }
+        Collections.sort(files);
+
+        Progress progress = new Progress(files.size(), 50);
+
+        for (String path : files) {
+            progress.tick();
+            File destFile = new File(OUTPUT_DIR, relativeSourcePath(path));
+            destFile.getParentFile().mkdirs();
+            String destPath = destFile.getAbsolutePath() + ".html";
+            String html = markup(path);
+            try {
+                $.writeFile(destPath, html);
+            } catch (Exception e) {
+                $.msg("Failed to write: " + destPath);
             }
         }
 
-        Progress progress = new Progress(total, 50);
+        $.writeFile(new File(OUTPUT_DIR, "index.html").getAbsolutePath(), landingMarkup(files));
 
-        for (String path : analyzer.getLoadedFiles()) {
-            if (path.startsWith(rootPath)) {
-                progress.tick();
-                File destFile = $.joinPath(OUTPUT_DIR, path.substring(rootLength));
-                destFile.getParentFile().mkdirs();
-                String destPath = destFile.getAbsolutePath() + ".html";
-                String html = markup(path);
-                try {
-                    $.writeFile(destPath, html);
-                } catch (Exception e) {
-                    $.msg("Failed to write: " + destPath);
-                }
-            }
-        }
-
-        $.msg("\nWrote " + analyzer.getLoadedFiles().size() + " files to " + OUTPUT_DIR);
+        $.msg("\nWrote " + files.size() + " source pages and an index to " + OUTPUT_DIR);
     }
 
 
@@ -111,26 +113,168 @@ public class Demo {
         List<Style> styles = new ArrayList<>(linker.getStyles(path));
 
         String styledSource = new StyleApplier(path, source, styles).apply();
-        String outline = new HtmlOutline(analyzer).generate(path);
+        String outline = new HtmlOutline(analyzer, linker).generate(path);
+        String relativePath = relativeSourcePath(path);
+        String homeHref = homeHref(relativePath);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<html>\n")
+        sb.append("<!doctype html>\n<html lang='en'>\n")
             .append("<head>\n")
             .append("<meta charset=\"utf-8\">\n")
-            .append("<title>").append(path).append("</title>\n")
+            .append("<meta name='viewport' content='width=device-width, initial-scale=1'>\n")
+            .append("<title>").append(escapeText(relativePath)).append(" · PySonar2</title>\n")
             .append("<style type='text/css'>\n").append(CSS).append("\n</style>\n")
-            .append("<script language=\"JavaScript\" type=\"text/javascript\">\n")
-            .append(Analyzer.self.hasOption("debug") ? JS_DEBUG : JS)
-            .append("</script>\n")
-            .append("</head>\n<body>\n")
-            .append("<table width=100% border='1px solid gray'><tr><td valign='top'>")
-            .append(outline)
-            .append("</td><td>")
-            .append("<pre>")
+            .append("</head>\n<body class='code-page'>\n")
+            .append("<a class='skip-link' href='#main-content'>Skip to source code</a>")
+            .append("<header class='topbar'>")
+            .append("<a class='brand' href='").append(escapeAttribute(homeHref)).append("'>")
+            .append("<span class='brand-mark'>P2</span><span>PySonar2</span></a>")
+            .append("<span class='topbar-path'>").append(escapeText(relativePath)).append("</span>")
+            .append("<a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>View source</a>")
+            .append("</header>\n")
+            .append("<main id='main-content' class='browser-shell'>")
+            .append("<aside class='outline-panel'>")
+            .append("<div class='panel-heading'><span class='eyebrow'>Outline</span></div>")
+            .append("<nav class='outline-nav' aria-label='Symbols in this file'>").append(outline).append("</nav>")
+            .append("</aside>")
+            .append("<section class='editor-panel' aria-label='Analyzed source code'>")
+            .append("<div class='editor-heading'><span class='file-dot'></span>")
+            .append("<span class='file-name'>").append(escapeText(relativePath)).append("</span>")
+            .append("<span class='static-badge'>Static analysis</span></div>")
+            .append("<div class='code-scroll'><pre>")
             .append(addLineNumbers(styledSource))
-            .append("</pre>")
-            .append("</td></tr></table></body></html>");
+            .append("</pre></div></section></main>")
+            .append("<div id='symbol-tooltip' class='symbol-tooltip' role='tooltip' aria-hidden='true'></div>\n")
+            .append("<script>\n")
+            .append(Analyzer.self.hasOption("debug") ? JS_DEBUG : JS)
+            .append("\n</script>\n")
+            .append("</body></html>");
         return sb.toString();
+    }
+
+
+    @NotNull
+    private String landingMarkup(@NotNull List<String> files) {
+        String entryHref = files.isEmpty() ? "#files" : sourceHref(preferredEntry(files));
+        StringBuilder cards = new StringBuilder();
+        for (String path : files) {
+            String relative = relativeSourcePath(path);
+            cards.append("<a class='file-card' href='").append(escapeAttribute(sourceHref(path))).append("'>")
+                    .append("<code>").append(escapeText(relative)).append("</code>")
+                    .append("<span>").append(escapeText(describeFile(relative))).append("</span></a>");
+        }
+
+        int references = 0;
+        for (Node reference : analyzer.references.keys()) {
+            if (reference.file != null && reference.file.startsWith(rootPath)) {
+                references++;
+            }
+        }
+        int definitions = 0;
+        for (Binding binding : analyzer.getAllBindings()) {
+            if (binding.getFile() != null && binding.getFile().startsWith(rootPath) && binding.start >= 0) {
+                definitions++;
+            }
+        }
+        int names = analyzer.resolved.size() + analyzer.unresolved.size();
+        int resolution = names == 0 ? 100 : Math.round(analyzer.resolved.size() * 100f / names);
+
+        return "<!doctype html>\n<html lang='en'><head>"
+                + "<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>"
+                + "<title>PySonar2 · Interactive code intelligence demo</title>"
+                + "<meta name='description' content='Explore a static, cross-referenced Python code browser generated by PySonar2.'>"
+                + "<style>" + CSS + "</style></head><body>"
+                + "<a class='skip-link' href='#main-content'>Skip to demo content</a>"
+                + "<header class='topbar'><a class='brand' href='index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a>"
+                + "<a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>GitHub repository</a></header>"
+                + "<main id='main-content' class='landing'><section class='hero'>"
+                + "<span class='release-pill'>Python 3-only · v3.0.0</span>"
+                + "<h1>Code intelligence,<br>rendered as static HTML.</h1>"
+                + "<p>Explore a realistic multi-file Python project. Hover or focus a symbol for its inferred type, then follow links between definitions and references—no server required.</p>"
+                + "<div class='hero-actions'><a class='button primary' href='" + escapeAttribute(entryHref) + "'>Open the code browser</a>"
+                + "<a class='button' href='https://github.com/smallyunet/pysonar2/tree/main/demo_project'>Browse demo source</a></div>"
+                + "</section><section class='metrics' aria-label='Analysis summary'>"
+                + metric(files.size(), "Python files") + metric(definitions, "Definitions") + metric(references, "Cross references")
+                + "</section><div class='section-heading'><h2>Demo project</h2>"
+                + "<p>" + resolution + "% of names resolved across this generated project. Choose a file to inspect its symbols and inferred types.</p></div>"
+                + "<section id='files' class='file-grid' aria-label='Demo source files'>" + cards + "</section>"
+                + "<footer class='landing-footer'>Generated locally by PySonar2 with Python 3.14 · Static output published on GitHub Pages.</footer>"
+                + "</main></body></html>";
+    }
+
+
+    private String metric(int value, String label) {
+        return "<div class='metric'><strong>" + value + "</strong><span>" + escapeText(label) + "</span></div>";
+    }
+
+
+    private String preferredEntry(List<String> files) {
+        for (String path : files) {
+            if (relativeSourcePath(path).equals("main.py")) {
+                return path;
+            }
+        }
+        return files.get(0);
+    }
+
+
+    private String sourceHref(String path) {
+        return relativeSourcePath(path).replace(" ", "%20") + ".html";
+    }
+
+
+    private String describeFile(String relativePath) {
+        if (relativePath.equals("main.py")) {
+            return "Application entry point and cross-module calls.";
+        }
+        if (relativePath.endsWith("models.py")) {
+            return "Domain classes, constructors, and computed state.";
+        }
+        if (relativePath.endsWith("service.py")) {
+            return "Orchestration, branching, and collection inference.";
+        }
+        if (relativePath.endsWith("scoring.py")) {
+            return "Functions, recursion, and numeric type flow.";
+        }
+        if (relativePath.endsWith("feed.py")) {
+            return "Async functions and external data normalization.";
+        }
+        if (relativePath.endsWith("__init__.py")) {
+            return "Package exports and cross-file references.";
+        }
+        return "Analyzed Python source with linked symbols.";
+    }
+
+
+    private String relativeSourcePath(String path) {
+        String relative = path.substring(rootPath.length());
+        while (relative.startsWith("/") || relative.startsWith("\\")) {
+            relative = relative.substring(1);
+        }
+        return relative.replace(File.separatorChar, '/');
+    }
+
+
+    private String homeHref(String relativePath) {
+        int depth = 0;
+        for (int i = 0; i < relativePath.length(); i++) {
+            if (relativePath.charAt(i) == '/') {
+                depth++;
+            }
+        }
+        return "../".repeat(depth) + "index.html";
+    }
+
+
+    private String escapeText(String value) {
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
+
+    private String escapeAttribute(String value) {
+        return escapeText(value).replace("'", "&#39;").replace("\"", "&quot;");
     }
 
 

@@ -12,12 +12,14 @@ import java.util.List;
 class HtmlOutline {
 
     private Analyzer analyzer;
+    private Linker linker;
     @Nullable
     private StringBuilder buffer;
 
 
-    public HtmlOutline(Analyzer idx) {
+    public HtmlOutline(Analyzer idx, Linker linker) {
         this.analyzer = idx;
+        this.linker = linker;
     }
 
 
@@ -39,7 +41,7 @@ class HtmlOutline {
 
 
     private void addOutline(@NotNull List<Outliner.Entry> entries) {
-        add("<ul>\n");
+        add("<ul class='outline-list'>\n");
         for (Outliner.Entry e : entries) {
             addEntry(e);
         }
@@ -69,10 +71,13 @@ class HtmlOutline {
                 break;
         }
 
+        String qname = linker.localQname(e.getQname());
         add("<a href='#");
-        add(e.getQname());
-        add("', xid='" + e.getQname() + "'>");
-        add(e.getName());
+        add(escapeAttribute(qname));
+        add("' xid='");
+        add(escapeAttribute(qname));
+        add("'>");
+        add(escapeText(e.getName()));
         add("</a>");
 
         if (e.isBranch()) {
@@ -84,5 +89,13 @@ class HtmlOutline {
 
     private void add(String text) {
         buffer.append(text);
+    }
+
+    private String escapeAttribute(String text) {
+        return escapeText(text).replace("'", "&#39;").replace("\"", "&quot;");
+    }
+
+    private String escapeText(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

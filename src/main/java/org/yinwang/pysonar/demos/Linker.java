@@ -28,6 +28,7 @@ class Linker {
 
     private File outDir;  // where we're generating the output html
     private String rootPath;
+    private String rootQname;
 
     // prevent duplication in def and ref links
     Set<Object> seenDef = new HashSet<>();
@@ -42,7 +43,22 @@ class Linker {
      */
     public Linker(String root, File outdir) {
         rootPath = root;
+        rootQname = $.moduleQname(root);
         outDir = outdir;
+    }
+
+    String localQname(String qname) {
+        if (qname == null || rootQname == null) {
+            return qname;
+        }
+        if (qname.equals(rootQname)) {
+            return new File(rootPath).getName();
+        }
+        String prefix = rootQname + ".";
+        if (qname.startsWith(prefix)) {
+            return qname.substring(prefix.length());
+        }
+        return qname;
     }
 
     public void findLinks(@NotNull Analyzer analyzer) {
@@ -84,7 +100,7 @@ class Linker {
 
     private void processDef(@NotNull List<Binding> bindings) {
         Binding first = bindings.get(0);
-        String qname = first.qname;
+        String qname = localQname(first.qname);
 
         if (first.isURL() || first.start < 0) {
             return;
@@ -93,7 +109,7 @@ class Linker {
         List<Type> types = bindings.stream().map(b -> b.type).collect(Collectors.toList());
         Style style = new Style(Style.Type.ANCHOR, first.start, first.end);
         style.message = UnionType.union(types).toString();
-        style.url = first.qname;
+        style.url = qname;
         style.id = qname;
         addFileStyle(first.getFile(), style);
     }
@@ -124,7 +140,7 @@ class Linker {
 
 
     void processRef(@NotNull Node ref, @NotNull List<Binding> bindings) {
-        String qname = bindings.iterator().next().qname;
+        String qname = localQname(bindings.iterator().next().qname);
         int hash = ref.hashCode();
 
         if (!seenRef.contains(hash)) {
@@ -279,7 +295,7 @@ class Linker {
             return null;
         }
 
-        String anchor = "#" + binding.qname;
+        String anchor = "#" + localQname(binding.qname);
         if (binding.getFirstFile().equals(filename)) {
             return anchor;
         }
@@ -297,9 +313,8 @@ class Linker {
             } else {
                 return anchor;
             }
-        } else {
-            return "file://" + destPath + anchor;
         }
+        return null;
     }
 
 }

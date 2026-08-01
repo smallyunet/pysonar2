@@ -67,19 +67,19 @@ class StyleApplier {
             if (Analyzer.self.hasOption("debug")) {
                 switch (style.type) {
                     case ANCHOR:
-                        buffer.append("<a name='").append(style.url).append("'");
-                        buffer.append(", id ='").append(style.id).append("'");
+                        buffer.append("<a id='").append(escapeAttribute(style.url)).append("'");
+                        buffer.append(" data-symbol-id='").append(escapeAttribute(style.id)).append("'");
                         if (style.highlight != null && !style.highlight.isEmpty()) {
                             String ids = $.joinWithSep(style.highlight, "\",\"", "\"", "\"");
-                            buffer.append(", onmouseover='highlight(").append(ids).append(")'");
+                            buffer.append(" onmouseover='highlight(").append(ids).append(")'");
                         }
                         break;
                     case LINK:
-                        buffer.append("<a href='").append(style.url).append("'");
-                        buffer.append(", id ='").append(style.id).append("'");
+                        buffer.append("<a href='").append(escapeAttribute(style.url)).append("'");
+                        buffer.append(" data-symbol-id='").append(escapeAttribute(style.id)).append("'");
                         if (style.highlight != null && !style.highlight.isEmpty()) {
                             String ids = $.joinWithSep(style.highlight, "\",\"", "\"", "\"");
-                            buffer.append(", onmouseover='highlight(").append(ids).append(")'");
+                            buffer.append(" onmouseover='highlight(").append(ids).append(")'");
                         }
                         break;
                     default:
@@ -90,12 +90,12 @@ class StyleApplier {
             } else {
                 switch (style.type) {
                     case ANCHOR:
-                        buffer.append("<a name='").append(style.url).append("'");
-                        buffer.append(", xid ='").append(style.id).append("'");
+                        buffer.append("<a id='").append(escapeAttribute(style.url)).append("'");
+                        buffer.append(" xid='").append(escapeAttribute(style.id)).append("'");
                         break;
                     case LINK:
-                        buffer.append("<a href='").append(style.url).append("'");
-                        buffer.append(", xid ='").append(style.id).append("'");
+                        buffer.append("<a href='").append(escapeAttribute(style.url)).append("'");
+                        buffer.append(" xid='").append(escapeAttribute(style.id)).append("'");
                         break;
                     default:
                         buffer.append("<span class='");
@@ -104,9 +104,9 @@ class StyleApplier {
                 }
             }
             if (style.message != null) {
-                buffer.append(", title='");
-                buffer.append(style.message);
-                buffer.append("'");
+                String message = escapeAttribute(style.message);
+                buffer.append(" data-tooltip='").append(message).append("'");
+                buffer.append(" aria-describedby='symbol-tooltip'");
             }
             buffer.append(">");
         }
@@ -190,6 +190,13 @@ class StyleApplier {
                 .replace("\"", "&quot;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;");
+    }
+
+    private String escapeAttribute(String value) {
+        if (value == null) {
+            return "";
+        }
+        return escape(value);
     }
 
 

@@ -39,14 +39,19 @@ PySonar2 itself targets Java 11 and can be built with Java 11 or newer.
 
 ### Demo
 
-To have a feel of what PySonar2 produces, you can build a simple code browser of a Python 3
-standard library with the following command line:
+The repository includes a dedicated multi-file project that demonstrates cross-module navigation,
+class and collection inference, branching, recursion, and async syntax. Build its static code browser
+with:
 
-    java -jar target/pysonar-<version>.jar /usr/lib/python3 ./html
+    mvn package
+    java -jar target/pysonar-3.0.0.jar demo_project ./demo-html
 
-This may take a few minutes depending on your machine. You should find some interactive HTML files
-inside the _html_ directory after this process. You can move your mouse on the variables and click
-on them to jump to definitions etc.
+Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type,
+and follow links between definitions and references. The generated site is responsive, self-contained,
+and can be hosted on any static file server.
+
+You can use the same command with another Python file or directory to generate a browser for your own
+code. Large trees, such as a Python standard library, may take a few minutes to analyze.
 
 Note that this is just a simple demo program based on the library. PySonar2 is not meant to be an
 end-user tool. It is mainly designed as a library for Python IDEs, developer tools and code search
