@@ -7,5 +7,5 @@ class A:
 a1 = A()
 a1.y = "hi"
 
-print a1.x
-print a1.y
+print(a1.x)
+print(a1.y)

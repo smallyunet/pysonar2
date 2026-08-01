@@ -11,4 +11,4 @@ if 1.5 < x and x < 10:
 else:
     w = x # (-∞, 1] [10, +∞)
 
-print w
+print(w)

@@ -435,25 +435,6 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     @NotNull
     @Override
-    public Type visit(Exec node, State s)
-    {
-        if (node.body != null)
-        {
-            visit(node.body, s);
-        }
-        if (node.globals != null)
-        {
-            visit(node.globals, s);
-        }
-        if (node.locals != null)
-        {
-            visit(node.locals, s);
-        }
-        return Types.CONT;
-    }
-
-    @NotNull
-    @Override
     public Type visit(Expr node, State s)
     {
         if (node.value != null)
@@ -838,21 +819,6 @@ public class TypeInferencer implements Visitor1<Type, State>
 
     @NotNull
     @Override
-    public Type visit(Print node, State s)
-    {
-        if (node.dest != null)
-        {
-            visit(node.dest, s);
-        }
-        if (node.values != null)
-        {
-            visit(node.values, s);
-        }
-        return Types.CONT;
-    }
-
-    @NotNull
-    @Override
     public Type visit(PyComplex node, State s)
     {
         return Types.ComplexInstance;
@@ -936,17 +902,6 @@ public class TypeInferencer implements Visitor1<Type, State>
             visit(node.traceback, s);
         }
         return Types.CONT;
-    }
-
-    @NotNull
-    @Override
-    public Type visit(Repr node, State s)
-    {
-        if (node.value != null)
-        {
-            visit(node.value, s);
-        }
-        return Types.StrInstance;
     }
 
     @NotNull

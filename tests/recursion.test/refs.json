@@ -1,69 +1,6 @@
 [
   {
     "ref": {
-      "name": "Base",
-      "file": "test1.py",
-      "start": 56,
-      "end": 60,
-      "line": 5,
-      "col": 9
-    },
-    "dests": [
-      {
-        "name": "Base",
-        "file": "test1.py",
-        "start": 6,
-        "end": 10,
-        "line": 1,
-        "col": 7,
-        "type": "<Base>"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "Base",
-      "file": "test1.py",
-      "start": 108,
-      "end": 112,
-      "line": 9,
-      "col": 9
-    },
-    "dests": [
-      {
-        "name": "Base",
-        "file": "test1.py",
-        "start": 6,
-        "end": 10,
-        "line": 1,
-        "col": 7,
-        "type": "<Base>"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "f1",
-      "file": "test1.py",
-      "start": 252,
-      "end": 254,
-      "line": 21,
-      "col": 5
-    },
-    "dests": [
-      {
-        "name": "f1",
-        "file": "test1.py",
-        "start": 156,
-        "end": 158,
-        "line": 13,
-        "col": 5,
-        "type": "int -> {A | str}"
-      }
-    ]
-  },
-  {
-    "ref": {
       "name": "n",
       "file": "test1.py",
       "start": 170,
@@ -76,52 +13,10 @@
         "name": "n",
         "file": "test1.py",
         "start": 159,
-        "end": 160,
+        "end": 162,
         "line": 13,
         "col": 8,
         "type": "int"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "A",
-      "file": "test1.py",
-      "start": 190,
-      "end": 191,
-      "line": 15,
-      "col": 13
-    },
-    "dests": [
-      {
-        "name": "A",
-        "file": "test1.py",
-        "start": 54,
-        "end": 55,
-        "line": 5,
-        "col": 7,
-        "type": "<A>"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "a",
-      "file": "test1.py",
-      "start": 209,
-      "end": 210,
-      "line": 16,
-      "col": 16
-    },
-    "dests": [
-      {
-        "name": "a",
-        "file": "test1.py",
-        "start": 186,
-        "end": 187,
-        "line": 15,
-        "col": 9,
-        "type": "A"
       }
     ]
   },
@@ -148,6 +43,48 @@
   },
   {
     "ref": {
+      "name": "Base",
+      "file": "test1.py",
+      "start": 56,
+      "end": 60,
+      "line": 5,
+      "col": 9
+    },
+    "dests": [
+      {
+        "name": "Base",
+        "file": "test1.py",
+        "start": 6,
+        "end": 10,
+        "line": 1,
+        "col": 7,
+        "type": "<Base>"
+      }
+    ]
+  },
+  {
+    "ref": {
+      "name": "a",
+      "file": "test1.py",
+      "start": 209,
+      "end": 210,
+      "line": 16,
+      "col": 16
+    },
+    "dests": [
+      {
+        "name": "a",
+        "file": "test1.py",
+        "start": 186,
+        "end": 187,
+        "line": 15,
+        "col": 9,
+        "type": "A"
+      }
+    ]
+  },
+  {
+    "ref": {
       "name": "x",
       "file": "test1.py",
       "start": 242,
@@ -169,6 +106,27 @@
   },
   {
     "ref": {
+      "name": "f1",
+      "file": "test1.py",
+      "start": 252,
+      "end": 254,
+      "line": 21,
+      "col": 5
+    },
+    "dests": [
+      {
+        "name": "f1",
+        "file": "test1.py",
+        "start": 156,
+        "end": 158,
+        "line": 13,
+        "col": 5,
+        "type": "int -> {A | str}"
+      }
+    ]
+  },
+  {
+    "ref": {
       "name": "k",
       "file": "test1.py",
       "start": 264,
@@ -185,6 +143,48 @@
         "line": 21,
         "col": 1,
         "type": "{A | str}"
+      }
+    ]
+  },
+  {
+    "ref": {
+      "name": "Base",
+      "file": "test1.py",
+      "start": 108,
+      "end": 112,
+      "line": 9,
+      "col": 9
+    },
+    "dests": [
+      {
+        "name": "Base",
+        "file": "test1.py",
+        "start": 6,
+        "end": 10,
+        "line": 1,
+        "col": 7,
+        "type": "<Base>"
+      }
+    ]
+  },
+  {
+    "ref": {
+      "name": "A",
+      "file": "test1.py",
+      "start": 190,
+      "end": 191,
+      "line": 15,
+      "col": 13
+    },
+    "dests": [
+      {
+        "name": "A",
+        "file": "test1.py",
+        "start": 54,
+        "end": 55,
+        "line": 5,
+        "col": 7,
+        "type": "<A>"
       }
     ]
   }

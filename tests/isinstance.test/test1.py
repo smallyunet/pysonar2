@@ -12,4 +12,4 @@ if isinstance(x, foo()):
 else:
     z = x
 
-print(y, z)
+print((y, z))

@@ -5,4 +5,4 @@ if x:
 else:
     w = 'hi'
 
-print w
+print(w)

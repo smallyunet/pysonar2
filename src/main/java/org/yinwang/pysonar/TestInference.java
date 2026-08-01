@@ -29,15 +29,17 @@ public class TestInference
         if (new File(testFile).isDirectory())
         {
             expecteRefsFile = $.makePathString(testFile, "refs.json");
-            missingRefsFile = $.makePathString(testFile, "missing_refs");
-            wrongTypeFile = $.makePathString(testFile, "wrong_types");
         }
         else
         {
             expecteRefsFile = $.makePathString(testFile + ".refs.json");
-            missingRefsFile = $.makePathString(testFile + ".missing_refs");
-            wrongTypeFile = $.makePathString(testFile + ".wrong_types");
         }
+
+        String reportName = testFile.replace(File.separatorChar, '_').replace('/', '_').replace('\\', '_');
+        String reportDir = $.makePathString("target", "test-diffs", reportName);
+        new File(reportDir).mkdirs();
+        missingRefsFile = $.makePathString(reportDir, "missing_refs");
+        wrongTypeFile = $.makePathString(reportDir, "wrong_types");
     }
 
     public Analyzer runAnalysis(String dir)

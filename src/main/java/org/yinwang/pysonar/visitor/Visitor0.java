@@ -47,8 +47,6 @@ public interface Visitor0<T> {
                 return visit((Dummy)node);
             case ELLIPSIS:
                 return visit((Ellipsis)node);
-            case EXEC:
-                return visit((Exec)node);
             case EXPR:
                 return visit((Expr)node);
             case EXTSLICE:
@@ -85,8 +83,6 @@ public interface Visitor0<T> {
                 return visit((Node)node);
             case PASS:
                 return visit((Pass)node);
-            case PRINT:
-                return visit((Print)node);
             case PYCOMPLEX:
                 return visit((PyComplex)node);
             case PYFLOAT:
@@ -99,8 +95,6 @@ public interface Visitor0<T> {
                 return visit((PySet)node);
             case RAISE:
                 return visit((Raise)node);
-            case REPR:
-                return visit((Repr)node);
             case RETURN:
                 return visit((Return)node);
             case SEQUENCE:
@@ -178,7 +172,6 @@ public interface Visitor0<T> {
     T visit(DictComp node);
     T visit(Dummy node);
     T visit(Ellipsis node);
-    T visit(Exec node);
     T visit(Expr node);
     T visit(ExtSlice node);
     T visit(For node);
@@ -196,14 +189,12 @@ public interface Visitor0<T> {
     T visit(PyModule node);
     T visit(Name node);
     T visit(Pass node);
-    T visit(Print node);
     T visit(PyComplex node);
     T visit(PyFloat node);
     T visit(PyInt node);
     T visit(PyList node);
     T visit(PySet node);
     T visit(Raise node);
-    T visit(Repr node);
     T visit(Return node);
     T visit(SetComp node);
     T visit(Slice node);

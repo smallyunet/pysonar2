@@ -22,6 +22,16 @@ Major users include:
 </a>
 
 
+### Supported runtimes
+
+PySonar2 3.x supports Python 3.10 and newer. Python 2 is not supported.
+
+The analyzer runs CPython's built-in `ast` parser in a persistent `python3` process. If your
+supported interpreter has a different executable name, set `PYSONAR_PYTHON` to its path.
+
+PySonar2 itself targets Java 11 and can be built with Java 11 or newer.
+
+
 ### How to build
 
     mvn package -DskipTests
@@ -29,10 +39,10 @@ Major users include:
 
 ### Demo
 
-To have a feel of what PySonar2 produce, you can build a simple code browser of the Python 2.7
+To have a feel of what PySonar2 produces, you can build a simple code browser of a Python 3
 standard library with the following command line:
 
-    java -jar target/pysonar-<version>.jar /usr/lib/python2.7 ./html
+    java -jar target/pysonar-<version>.jar /usr/lib/python3 ./html
 
 This may take a few minutes depending on your machine. You should find some interactive HTML files
 inside the _html_ directory after this process. You can move your mouse on the variables and click
@@ -47,22 +57,22 @@ If you have problems with it, please feel free to contact me.
 
 ### System requirements
 
-* Python 2.7.x
-* Python 3.x
-* Java 8+
+* Python 3.10+
+* Java 11+
 * maven
 
 
 ### Environment variables
 
-PySonar2 uses CPython's built-in `ast` package to parse Python code, so please make sure you have
-`python` or `python3` installed and pointed to by the `PATH` environment variable. If you have them
-in different names, please make symbol links.
+PySonar2 uses CPython's built-in `ast` package to parse Python code, so make sure `python3` points
+to Python 3.10 or newer. Alternatively, select an interpreter explicitly:
+
+    export PYSONAR_PYTHON=/path/to/python3
 
 `PYTHONPATH` environment variable is used for locating the Python standard libraries. It is
 important to point it to the correct Python library, for example
 
-    export PYTHONPATH=/usr/lib/python2.7
+    export PYTHONPATH=/usr/lib/python3
 
 If this is not set up correctly, references to library code will not be found.
 

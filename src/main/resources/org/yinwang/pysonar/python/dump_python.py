@@ -1,45 +1,26 @@
 import ast
-import re
-import sys
-import codecs
+import tokenize
 
 from json import JSONEncoder
 from ast import *
-
-
-# Is it Python 3?
-python3 = hasattr(sys.version_info, 'major') and (sys.version_info.major == 3)
 
 
 class AstEncoder(JSONEncoder):
     def default(self, obj):
         if hasattr(obj, '__dict__'):
             dic = obj.__dict__
-            # workaround: decode strings if it's not Python3 code
-            if not python3:
-                for key in dic:
-                    if isinstance(dic[key], str):
-                        if key == 's':
-                            dic[key] = lines[dic['start']:dic['end']]
-                        else:
-                            dic[key] = dic[key].decode(enc)
             dic['pysonar_node_type'] = obj.__class__.__name__
             return dic
         else:
             return str(obj)
 
 
-enc = 'latin1'
 lines = ''
 
 
 def parse_dump(filename, output, end_mark):
     try:
-        if python3:
-            encoder = AstEncoder()
-        else:
-            encoder = AstEncoder(encoding=enc)
-
+        encoder = AstEncoder()
         tree = parse_file(filename)
         encoded = encoder.encode(tree)
         f = open(output, "w")
@@ -52,21 +33,9 @@ def parse_dump(filename, output, end_mark):
 
 
 def parse_file(filename):
-    global enc, lines
-    enc, enc_len = detect_encoding(filename)
-    f = codecs.open(filename, 'r', enc)
-    lines = f.read()
-
-    # remove BOM
-    lines = re.sub(u'\ufeff', ' ', lines)
-
-    # replace the encoding decl by spaces to fool python parser
-    # otherwise you get 'encoding decl in unicode string' syntax error
-    # print('enc:', enc, 'enc_len', enc_len)
-    if enc_len > 0:
-        lines = re.sub('#.*coding\s*[:=]\s*[\w\d\-]+', '#' + ' ' * (enc_len - 1), lines)
-
-    f.close()
+    global lines
+    with tokenize.open(filename) as f:
+        lines = f.read()
     return parse_string(lines, filename)
 
 
@@ -81,24 +50,6 @@ def parse_string(string, filename=None):
 # short function for experiments
 def p(filename):
     parse_dump(filename, "json1", "end1")
-
-
-def detect_encoding(path):
-    fin = open(path, 'rb')
-    prefix = str(fin.read(80))
-    encs = re.findall('#.*coding\s*[:=]\s*([\w\d\-]+)', prefix)
-    decl = re.findall('#.*coding\s*[:=]\s*[\w\d\-]+', prefix)
-
-    if encs:
-        enc1 = encs[0]
-        enc_len = len(decl[0])
-        try:
-            codecs.lookup(enc1)
-        except LookupError:
-            return 'latin1', enc_len
-        return enc1, enc_len
-    else:
-        return 'latin1', -1
 
 
 #-------------------------------------------------------------
@@ -213,7 +164,7 @@ def find_end(node, s):
     elif isinstance(node, Expr):
         the_end = find_end(node.value, s)
 
-    elif isinstance(node, Str):
+    elif isinstance(node, Constant) and isinstance(node.value, str):
         i = find_start(node, s)
         while s[i] != '"' and s[i] != "'":
             i += 1
@@ -227,15 +178,11 @@ def find_end(node, s):
         elif s[i] == '"':
             q = '"'
             i += 1
-        elif s[i] == "'":
+        else:
             q = "'"
             i += 1
-        else:
-            print("illegal quote:", i, s[i])
-            q = ''
 
-        if q != '':
-            the_end = end_seq(s, q, i)
+        the_end = end_seq(s, q, i)
 
     elif isinstance(node, Name):
         the_end = find_start(node, s) + len(node.id)
@@ -243,7 +190,7 @@ def find_end(node, s):
     elif isinstance(node, Attribute):
         the_end = end_seq(s, node.attr, find_end(node.value, s))
 
-    elif isinstance(node, FunctionDef) or (python3 and isinstance(node, AsyncFunctionDef)):
+    elif isinstance(node, (FunctionDef, AsyncFunctionDef)):
         the_end = find_end(node.body, s)
 
     elif isinstance(node, Lambda):
@@ -251,10 +198,6 @@ def find_end(node, s):
 
     elif isinstance(node, ClassDef):
         the_end = find_end(node.body, s)
-
-    # print will be a Call in Python 3
-    elif not python3 and isinstance(node, Print):
-        the_end = start_seq(s, '\n', find_start(node, s))
 
     elif isinstance(node, Call):
         start = find_end(node.func, s)
@@ -294,8 +237,10 @@ def find_end(node, s):
     elif isinstance(node, UnaryOp):
         the_end = find_end(node.operand, s)
 
-    elif isinstance(node, Num):
-        the_end = find_start(node, s) + len(str(node.n))
+    elif (isinstance(node, Constant) and
+          isinstance(node.value, (int, float, complex)) and
+          not isinstance(node.value, bool)):
+        the_end = find_start(node, s) + len(str(node.value))
 
     elif isinstance(node, List):
         the_end = match_paren(s, '[', ']', find_start(node, s))
@@ -310,8 +255,7 @@ def find_end(node, s):
     elif isinstance(node, Dict):
         the_end = match_paren(s, '{', '}', find_start(node, s))
 
-    elif ((not python3 and isinstance(node, TryExcept)) or
-          (python3 and isinstance(node, Try))):
+    elif isinstance(node, Try):
         if node.orelse != []:
             the_end = find_end(node.orelse, s)
         elif node.handlers != []:
@@ -366,7 +310,7 @@ def add_missing_names(node, s):
             node.name_node = str_to_name(s, start)
             node._fields += ('name_node',)
 
-    elif isinstance(node, FunctionDef) or (python3 and isinstance(node, AsyncFunctionDef)):
+    elif isinstance(node, (FunctionDef, AsyncFunctionDef)):
         # skip to "def" because it may contain decorators like @property
         head = find_start(node, s)
         start = s.find("def", head) + len("def")
@@ -431,17 +375,20 @@ def add_missing_names(node, s):
             node.op_node = ops[0]
             node._fields += ('op_node',)
 
-    elif isinstance(node, Num):
-        if isinstance(node.n, int) or (not python3 and isinstance(node.n, long)):
+    elif (isinstance(node, Constant) and
+          isinstance(node.value, (int, float, complex)) and
+          not isinstance(node.value, bool)):
+        value = node.value
+        if isinstance(value, int):
             num_type = 'int'
-            node.n = str(node.n)
-        elif isinstance(node.n, float):
+            node.value = str(value)
+        elif isinstance(value, float):
             num_type = 'float'
-            node.n = str(node.n)
-        elif isinstance(node.n, complex):
+            node.value = str(value)
+        elif isinstance(value, complex):
             num_type = 'complex'
-            node.real = node.n.real
-            node.imag = node.n.imag
+            node.real = value.real
+            node.imag = value.imag
             node._fields += ('real', 'imag')
         else:
             num_type = 'unsupported'
@@ -581,8 +528,7 @@ ops_map = {
     UAdd: '+',
 }
 
-if python3:
-    ops_map[MatMult] = '@'
+ops_map[MatMult] = '@'
 
 
 # get list of fields from a node
@@ -628,4 +574,4 @@ def is_alpha(c):
             ('A' <= c <= 'Z'))
 
 
-# p('/System/Library/Frameworks/Python.framework/Versions/2.5/lib/python2.5/lib-tk/Tix.py')
+# p('/path/to/a/python/module.py')

@@ -1,6 +1,66 @@
 [
   {
     "ref": {
+      "name": "x",
+      "file": "test1.py",
+      "start": 68,
+      "end": 69,
+      "line": 7,
+      "col": 12
+    },
+    "dests": [
+      {
+        "name": "x",
+        "file": "test1.py",
+        "start": 53,
+        "end": 56,
+        "line": 6,
+        "col": 8,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "file": "test1.py",
+        "start": 53,
+        "end": 56,
+        "line": 6,
+        "col": 8,
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "ref": {
+      "name": "x",
+      "file": "test1.py",
+      "start": 68,
+      "end": 69,
+      "line": 7,
+      "col": 12
+    },
+    "dests": [
+      {
+        "name": "x",
+        "file": "test1.py",
+        "start": 53,
+        "end": 56,
+        "line": 6,
+        "col": 8,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "file": "test1.py",
+        "start": 53,
+        "end": 56,
+        "line": 6,
+        "col": 8,
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "ref": {
       "name": "foo",
       "file": "test1.py",
       "start": 75,
@@ -17,6 +77,48 @@
         "line": 3,
         "col": 5,
         "type": "bool -> bool / int -> int -> (int, bool)"
+      }
+    ]
+  },
+  {
+    "ref": {
+      "name": "f",
+      "file": "test1.py",
+      "start": 31,
+      "end": 32,
+      "line": 4,
+      "col": 12
+    },
+    "dests": [
+      {
+        "name": "f",
+        "file": "test1.py",
+        "start": 16,
+        "end": 19,
+        "line": 3,
+        "col": 9,
+        "type": "bool -> bool / int -> int"
+      }
+    ]
+  },
+  {
+    "ref": {
+      "name": "a",
+      "file": "test1.py",
+      "start": 89,
+      "end": 90,
+      "line": 10,
+      "col": 7
+    },
+    "dests": [
+      {
+        "name": "a",
+        "file": "test1.py",
+        "start": 71,
+        "end": 72,
+        "line": 9,
+        "col": 1,
+        "type": "(int, bool)"
       }
     ]
   },
@@ -45,57 +147,6 @@
     "ref": {
       "name": "f",
       "file": "test1.py",
-      "start": 31,
-      "end": 32,
-      "line": 4,
-      "col": 12
-    },
-    "dests": [
-      {
-        "name": "f",
-        "file": "test1.py",
-        "start": 16,
-        "end": 17,
-        "line": 3,
-        "col": 9,
-        "type": "bool -> bool / int -> int"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "x",
-      "file": "test1.py",
-      "start": 68,
-      "end": 69,
-      "line": 7,
-      "col": 12
-    },
-    "dests": [
-      {
-        "name": "x",
-        "file": "test1.py",
-        "start": 53,
-        "end": 54,
-        "line": 6,
-        "col": 8,
-        "type": "int"
-      },
-      {
-        "name": "x",
-        "file": "test1.py",
-        "start": 53,
-        "end": 54,
-        "line": 6,
-        "col": 8,
-        "type": "bool"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "f",
-      "file": "test1.py",
       "start": 37,
       "end": 38,
       "line": 4,
@@ -106,31 +157,10 @@
         "name": "f",
         "file": "test1.py",
         "start": 16,
-        "end": 17,
+        "end": 19,
         "line": 3,
         "col": 9,
         "type": "bool -> bool / int -> int"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "a",
-      "file": "test1.py",
-      "start": 89,
-      "end": 90,
-      "line": 10,
-      "col": 7
-    },
-    "dests": [
-      {
-        "name": "a",
-        "file": "test1.py",
-        "start": 71,
-        "end": 72,
-        "line": 9,
-        "col": 1,
-        "type": "(int, bool)"
       }
     ]
   }

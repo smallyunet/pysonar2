@@ -3,7 +3,7 @@
 from kitchen.oven import *
 
 pizza = Pizza()
-print(pizza.size)
+print((pizza.size))
 
 bread1 = Bread()
 size1 = bread1.size

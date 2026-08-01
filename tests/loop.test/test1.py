@@ -4,8 +4,8 @@ a = "hello"
 k = 2
 while k <= 3:
     b = a
-    print b
+    print(b)
     k = k + 1
     a = 1
 
-print a, b
+print(a, b)

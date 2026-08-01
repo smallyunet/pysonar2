@@ -5,7 +5,7 @@ def test1(x):
     a = "hi"
     if x > 1:
         a = 3
-    print a
+    print(a)
 
 
 def test2(x):
@@ -14,7 +14,7 @@ def test2(x):
         a = 3
     else:
         a = True
-    print a
+    print(a)
 
 
 def test3(x):
@@ -26,7 +26,7 @@ def test3(x):
             a = True
         else:
             a = "hi"
-    print a
+    print(a)
 
 
 def test4(x):
@@ -41,4 +41,4 @@ def test4(x):
         else:
             a = "hi"
             b = False
-    print a, b
+    print(a, b)

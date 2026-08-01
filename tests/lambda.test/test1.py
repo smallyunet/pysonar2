@@ -6,7 +6,7 @@ def foo(f):
     return y
 
 z = foo(lambda a,b: [a,b])
-print z
+print(z)
 
 w = (lambda f: f(1))(lambda x: x+1)
-print w
+print(w)

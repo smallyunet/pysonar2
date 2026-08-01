@@ -3,7 +3,7 @@
 from kitchen import oven
 
 pizza = oven.Pizza()
-print pizza.size
+print(pizza.size)
 
 bread = oven.Bread()
-print bread.size
+print(bread.size)

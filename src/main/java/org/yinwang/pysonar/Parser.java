@@ -18,12 +18,12 @@ import com.google.gson.GsonBuilder;
 
 public class Parser {
 
-    private static final String PYTHON2_EXE = "python";
-    private static final String PYTHON3_EXE = "python3";
+    private static final String DEFAULT_PYTHON_EXE = "python3";
+    private static final int MIN_PYTHON_MAJOR = 3;
+    private static final int MIN_PYTHON_MINOR = 10;
     private static final int TIMEOUT = 30000;
 
-    Process python2Process;
-    Process python3Process;
+    Process pythonProcess;
     private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private static final String dumpPythonResource = "org/yinwang/pysonar/python/dump_python.py";
     private String exchangeFile;
@@ -40,20 +40,16 @@ public class Parser {
         jsonizer = $.getTempFile("dump_python");
         parserLog = $.getTempFile("parser_log");
 
-        startPythonProcesses();
+        startPythonProcess();
     }
 
 
-    // start or restart python processes
-    private void startPythonProcesses()
+    // start or restart the supported Python 3 interpreter
+    private void startPythonProcess()
     {
-        if (python2Process != null)
+        if (pythonProcess != null)
         {
-            python2Process.destroy();
-        }
-        if (python3Process != null)
-        {
-            python3Process.destroy();
+            pythonProcess.destroy();
         }
 
         // copy dump_python.py to temp dir
@@ -66,34 +62,27 @@ public class Parser {
             $.die("Failed to copy resource file:" + dumpPythonResource);
         }
 
-        python2Process = startInterpreter(PYTHON2_EXE);
-        if (python2Process != null)
+        String pythonExe = System.getenv("PYSONAR_PYTHON");
+        if (pythonExe == null || pythonExe.trim().isEmpty())
         {
-            $.msg("started: " + PYTHON2_EXE);
+            pythonExe = DEFAULT_PYTHON_EXE;
         }
 
-        python3Process = startInterpreter(PYTHON3_EXE);
-        if (python3Process != null)
+        pythonProcess = startInterpreter(pythonExe);
+        if (pythonProcess == null)
         {
-            $.msg("started: " + PYTHON3_EXE);
+            $.die("PySonar2 requires Python " + MIN_PYTHON_MAJOR + "." + MIN_PYTHON_MINOR
+                    + "+. Set PYSONAR_PYTHON to a supported interpreter if python3 is not on PATH.");
         }
 
-        if (python2Process == null && python3Process == null)
-        {
-            $.die("You don't seem to have either of Python or Python3 on PATH");
-        }
+        $.msg("started: " + pythonExe);
     }
 
 
     public void close() {
-        if (python2Process != null)
+        if (pythonProcess != null)
         {
-            python2Process.destroy();
-        }
-
-        if (python3Process != null)
-        {
-            python3Process.destroy();
+            pythonProcess.destroy();
         }
 
         if (!Analyzer.self.hasOption("debug")) {
@@ -319,13 +308,6 @@ public class Parser {
             return new Handler(exceptions, binder, body, file, start, end, line, col);
         }
 
-        if (type.equals("Exec")) {
-            Node body = convert(map.get("body"));
-            Node globals = convert(map.get("globals"));
-            Node locals = convert(map.get("locals"));
-            return new Exec(body, globals, locals, file, start, end, line, col);
-        }
-
         if (type.equals("Expr")) {
             Node value = convert(map.get("value"));
             return new Expr(value, file, start, end, line, col);
@@ -549,22 +531,11 @@ public class Parser {
             return new Pass(file, start, end, line, col);
         }
 
-        if (type.equals("Print")) {
-            List<Node> values = convertList(map.get("values"));
-            Node destination = convert(map.get("dest"));
-            return new Print(destination, values, file, start, end, line, col);
-        }
-
         if (type.equals("Raise")) {
             Node exceptionType = convert(map.get("type"));
             Node inst = convert(map.get("inst"));
             Node tback = convert(map.get("tback"));
             return new Raise(exceptionType, inst, tback, file, start, end, line, col);
-        }
-
-        if (type.equals("Repr")) {
-            Node value = convert(map.get("value"));
-            return new Repr(value, file, start, end, line, col);
         }
 
         if (type.equals("Return")) {
@@ -625,19 +596,6 @@ public class Parser {
             List<Handler> handlers = convertList(map.get("handlers"));
             Block finalbody = convertBlock(map.get("finalbody"));
             return new Try(handlers, body, orelse, finalbody, file, start, end, line, col);
-        }
-
-        if (type.equals("TryExcept")) {
-            Block body = convertBlock(map.get("body"));
-            Block orelse = convertBlock(map.get("orelse"));
-            List<Handler> handlers = convertList(map.get("handlers"));
-            return new Try(handlers, body, orelse, null, file, start, end, line, col);
-        }
-
-        if (type.equals("TryFinally")) {
-            Block body = convertBlock(map.get("body"));
-            Block finalbody = convertBlock(map.get("finalbody"));
-            return new Try(null, body, null, finalbody, file, start, end, line, col);
         }
 
         if (type.equals("Tuple")) {
@@ -958,6 +916,18 @@ public class Parser {
     public Process startInterpreter(String pythonExe) {
         Process p;
         try {
+            Process versionCheck = new ProcessBuilder(
+                    pythonExe,
+                    "-c",
+                    "import sys; raise SystemExit(0 if sys.version_info >= ("
+                            + MIN_PYTHON_MAJOR + ", " + MIN_PYTHON_MINOR + ") else 1)")
+                    .inheritIO()
+                    .start();
+            if (versionCheck.waitFor() != 0) {
+                $.msg("Unsupported Python interpreter: " + pythonExe);
+                return null;
+            }
+
             ProcessBuilder builder = new ProcessBuilder(pythonExe, "-i", jsonizer);
             builder.redirectErrorStream(true);
             builder.redirectOutput(new File(parserLog + "-" + (logCount++)));
@@ -976,21 +946,12 @@ public class Parser {
         file = filename;
         content = $.readFile(filename);
 
-        Node node2 = python2Process == null ? null : parseFileInner(filename, python2Process);
-        if (node2 != null) {
-            return node2;
-        } else if (python3Process != null) {
-            Node node3 = parseFileInner(filename, python3Process);
-            if (node3 == null) {
-                Analyzer.self.failedToParse.add(filename);
-                return null;
-            } else {
-                return node3;
-            }
-        } else {
+        Node node = pythonProcess == null ? null : parseFileInner(filename, pythonProcess);
+        if (node == null) {
             Analyzer.self.failedToParse.add(filename);
             return null;
         }
+        return node;
     }
 
 
@@ -1017,7 +978,7 @@ public class Parser {
             if (System.currentTimeMillis() - waitStart > TIMEOUT) {
                 Analyzer.self.failedToParse.add(filename);
                 cleanTemp();
-                startPythonProcesses();
+                startPythonProcess();
                 return null;
             }
 

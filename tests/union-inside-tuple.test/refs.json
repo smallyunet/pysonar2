@@ -1,6 +1,27 @@
 [
   {
     "ref": {
+      "name": "q",
+      "file": "test1.py",
+      "start": 44,
+      "end": 45,
+      "line": 4,
+      "col": 8
+    },
+    "dests": [
+      {
+        "name": "q",
+        "file": "test1.py",
+        "start": 33,
+        "end": 36,
+        "line": 3,
+        "col": 7,
+        "type": "int"
+      }
+    ]
+  },
+  {
+    "ref": {
       "name": "x",
       "file": "test1.py",
       "start": 124,
@@ -17,27 +38,6 @@
         "line": 3,
         "col": 5,
         "type": "int -> ({int | str}, bool)"
-      }
-    ]
-  },
-  {
-    "ref": {
-      "name": "q",
-      "file": "test1.py",
-      "start": 44,
-      "end": 45,
-      "line": 4,
-      "col": 8
-    },
-    "dests": [
-      {
-        "name": "q",
-        "file": "test1.py",
-        "start": 33,
-        "end": 34,
-        "line": 3,
-        "col": 7,
-        "type": "int"
       }
     ]
   }

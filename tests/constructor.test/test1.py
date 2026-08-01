@@ -33,4 +33,4 @@ class TestInit2:
 class TestInit3:
     def __init__(self):
         self.my_field = 3
-        print self.my_field
+        print(self.my_field)

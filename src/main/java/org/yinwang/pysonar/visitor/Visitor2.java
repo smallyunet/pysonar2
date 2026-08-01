@@ -47,8 +47,6 @@ public interface Visitor2<T, P, Q> {
                 return visit((Dummy)node, param1, param2);
             case ELLIPSIS:
                 return visit((Ellipsis)node, param1, param2);
-            case EXEC:
-                return visit((Exec)node, param1, param2);
             case EXPR:
                 return visit((Expr)node, param1, param2);
             case EXTSLICE:
@@ -83,8 +81,6 @@ public interface Visitor2<T, P, Q> {
                 return visit((Name)node, param1, param2);
             case PASS:
                 return visit((Pass)node, param1, param2);
-            case PRINT:
-                return visit((Print)node, param1, param2);
             case PYCOMPLEX:
                 return visit((PyComplex)node, param1, param2);
             case PYFLOAT:
@@ -97,8 +93,6 @@ public interface Visitor2<T, P, Q> {
                 return visit((PySet)node, param1, param2);
             case RAISE:
                 return visit((Raise)node, param1, param2);
-            case REPR:
-                return visit((Repr)node, param1, param2);
             case RETURN:
                 return visit((Return)node, param1, param2);
             case SEQUENCE:
@@ -176,7 +170,6 @@ public interface Visitor2<T, P, Q> {
     T visit(DictComp node, P param1, Q param2);
     T visit(Dummy node, P param1, Q param2);
     T visit(Ellipsis node, P param1, Q param2);
-    T visit(Exec node, P param1, Q param2);
     T visit(Expr node, P param1, Q param2);
     T visit(ExtSlice node, P param1, Q param2);
     T visit(For node, P param1, Q param2);
@@ -194,14 +187,12 @@ public interface Visitor2<T, P, Q> {
     T visit(PyModule node, P param1, Q param2);
     T visit(Name node, P param1, Q param2);
     T visit(Pass node, P param1, Q param2);
-    T visit(Print node, P param1, Q param2);
     T visit(PyComplex node, P param1, Q param2);
     T visit(PyFloat node, P param1, Q param2);
     T visit(PyInt node, P param1, Q param2);
     T visit(PyList node, P param1, Q param2);
     T visit(PySet node, P param1, Q param2);
     T visit(Raise node, P param1, Q param2);
-    T visit(Repr node, P param1, Q param2);
     T visit(Return node, P param1, Q param2);
     T visit(SetComp node, P param1, Q param2);
     T visit(Slice node, P param1, Q param2);

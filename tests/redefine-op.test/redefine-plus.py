@@ -24,4 +24,4 @@ def fib(n):
 
 
 x = A("foo")
-print fib(x)
+print(fib(x))

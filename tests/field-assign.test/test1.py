@@ -7,4 +7,4 @@ a = A()
 a.x = "foo"
 a.y = 2      # create field in object here
 
-print a.x, a.y
+print(a.x, a.y)
