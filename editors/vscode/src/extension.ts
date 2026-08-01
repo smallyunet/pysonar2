@@ -11,6 +11,11 @@ import {
 interface ServerStatus {
   state: "starting" | "indexing" | "ready" | "stale" | "error";
   message: string;
+  phase?: "discovering" | "analyzing" | "finalizing" | "snapshot";
+  current?: number;
+  total?: number;
+  path?: string;
+  elapsedMillis?: number;
 }
 
 let clients: LanguageClient[] = [];
@@ -103,6 +108,7 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
 function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClient {
   const configuration = vscode.workspace.getConfiguration("pysonar2", folder.uri);
   const javaCommand = configuration.get<string>("java.command", "java");
+  const maxHeapMb = Math.max(0, Math.floor(configuration.get<number>("java.maxHeapMb", 0)));
   const pythonPath = configuration.get<string>("python.path", "").trim();
   const exclude = configuration.get<string[]>("analysis.exclude", []);
   const environment = { ...process.env };
@@ -112,7 +118,12 @@ function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClie
 
   const serverOptions: Executable = {
     command: javaCommand,
-    args: ["-cp", jar, "org.yinwang.pysonar.lsp.Main"],
+    args: [
+      ...(maxHeapMb > 0 ? [`-Xmx${maxHeapMb}m`] : []),
+      "-cp",
+      jar,
+      "org.yinwang.pysonar.lsp.Main",
+    ],
     options: {
       cwd: folder.uri.fsPath,
       env: environment,
@@ -155,7 +166,7 @@ function resolveServerJar(context: vscode.ExtensionContext): string | undefined 
   const candidates = [
     configured,
     context.asAbsolutePath(path.join("server", "pysonar-lsp.jar")),
-    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.1.0.jar"),
+    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.1.1.jar"),
   ].filter(Boolean);
   return candidates.find((candidate) => fs.existsSync(candidate));
 }
@@ -192,7 +203,10 @@ function updateStatusBar(): void {
       : stale
         ? "$(warning)"
         : "$(check)";
-  statusBar.text = `${icon} PySonar2 ${selected.state}`;
+  const progress = selected.state === "indexing" && selected.total && selected.total > 0
+    ? ` ${Math.min(100, Math.floor(((selected.current ?? 0) * 100) / selected.total))}%`
+    : ` ${selected.state}`;
+  statusBar.text = `${icon} PySonar2${progress}`;
   statusBar.tooltip = statuses.map((status) => status.message).join("\n");
   statusBar.show();
 }

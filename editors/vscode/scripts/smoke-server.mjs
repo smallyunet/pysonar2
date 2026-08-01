@@ -16,6 +16,7 @@ const server = spawn("java", ["-cp", jar, "org.yinwang.pysonar.lsp.Main"], {
 let buffer = Buffer.alloc(0);
 let ready = false;
 let definitionRequested = false;
+let detailedProgressSeen = false;
 
 const timeout = setTimeout(() => fail("Timed out waiting for the language server"), 20_000);
 
@@ -85,7 +86,17 @@ function handle(message) {
     return;
   }
 
+  if (message.method === "pysonar2/status" && message.params?.state === "indexing"
+      && message.params?.phase === "analyzing" && message.params?.total > 0
+      && message.params?.path) {
+    detailedProgressSeen = true;
+  }
+
   if (message.method === "pysonar2/status" && message.params?.state === "ready") {
+    if (!detailedProgressSeen) {
+      fail("Server did not report detailed file-level indexing progress");
+      return;
+    }
     ready = true;
     if (!definitionRequested) {
       definitionRequested = true;

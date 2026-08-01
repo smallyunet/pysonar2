@@ -1,139 +1,208 @@
-# PySonar2 - a type inferencer and indexer library for Python
+# PySonar2
 
-PySonar2 is a type inferencer and indexer library for Python, designed for analysing large code bases.
-The resulting index can be used to build code browsers and code search engines.
+[![CI](https://github.com/smallyunet/pysonar2/actions/workflows/ci.yml/badge.svg)](https://github.com/smallyunet/pysonar2/actions/workflows/ci.yml)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/smallyu.pysonar2-code-intelligence?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
+[![Live Demo](https://img.shields.io/badge/demo-live-0f766e.svg)](https://smallyunet.github.io/pysonar2/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-PySonar2 has a sophisticated type system and whole-project interprocedural analysis to infer types
-and locate definitions. It handles first-class functions (closures) and control flow correctly.
-As a result, the accuracy of the index often outperforms Python IDEs such as PyCharm.
+PySonar2 is a whole-project type inferencer and semantic indexer for Python. It follows values across
+files and function calls to locate definitions, references, and inferred types, making it suitable for
+IDEs, code browsers, and code-search infrastructure.
 
-PySonar2 uses advanced analysis techniques similar to control-flow analysis (k-CFA, CFA2, etc), but
-with a much simpler theory and without their drawbacks. It is both highly accurate and highly performant,
-thus it became the choice of several large scale code index infrastructures,
+The project now includes three ways to use the analyzer:
 
-Major users include:
+- **VS Code:** install the published extension for navigation, hovers, symbols, and diagnostics.
+- **Static code browser:** generate a self-contained HTML view of a Python project.
+- **Java integration:** embed the analyzer and consume its semantic index directly.
 
-- Google
-- Sourcegraph
-- Insight.io (now part of Elastic)
+Historically, PySonar2 has been used in large-scale code-indexing systems at Google, Sourcegraph, and
+Insight.io (now part of Elastic).
 
-<a href="http://www.yinwang.org/resources/demos/pysonar2/email/header.py.html">
-<img src="http://www.yinwang.org/images/pysonar2.gif" width="70%">
-</a>
+## Try PySonar2
 
+- [Open the interactive code-browser demo](https://smallyunet.github.io/pysonar2/)
+- [Install PySonar2 Code Intelligence from the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
+- [Download the latest GitHub release](https://github.com/smallyunet/pysonar2/releases/latest)
 
-### Supported runtimes
+## What's new
 
-PySonar2 3.x runs with Python 3.10 and newer. Python 2 is not supported. Language features have
-different semantic coverage levels; see the [Python support matrix](docs/python-support.md) for the
-difference between full inference, navigation support, and traversal fallback.
+### PySonar2 3.1
 
-The analyzer runs CPython's built-in `ast` parser in a persistent `python3` process. If your
-supported interpreter has a different executable name, set `PYSONAR_PYTHON` to its path.
+The 3.1 modernization moves the supported baseline to Python 3.10+ and Java 11+ while preserving the
+whole-project analysis model:
 
-PySonar2 itself targets Java 11 and can be built with Java 11 or newer.
+- parsing through the selected CPython interpreter in a persistent process;
+- positional-only and keyword-only parameters, annotations, assignment expressions, f-strings,
+  structural pattern matching, and modern async syntax;
+- traversal fallback for newer CPython AST nodes, so recognized child expressions remain indexed;
+- focused compatibility coverage across Python 3.10-3.14 and Java 11, 17, and 21 in CI;
+- a responsive, self-contained static code-browser demo; and
+- an explicit [Python support matrix](docs/python-support.md) separating inference, navigation, and
+  traversal-only coverage.
 
+### VS Code extension 0.1.1
+
+[PySonar2 Code Intelligence](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
+is the first stable Marketplace release. It adds a Java Language Server and a TypeScript VS Code client
+with:
+
+- go to definition and find all references;
+- inferred-type and docstring hovers;
+- document and workspace symbols;
+- semantic diagnostics;
+- one isolated server per workspace folder;
+- save-triggered workspace reindexing with atomic snapshots;
+- detailed discovery and file-level indexing progress; and
+- configurable Java, Python, server, and exclusion settings.
+
+The server JAR is bundled in the extension. There is no hosted PySonar2 service to deploy: analysis runs
+where the VS Code workspace extension runs. For Remote SSH, Java and Python must therefore be available
+on the remote machine.
+
+## Install the VS Code extension
+
+Install **PySonar2 Code Intelligence** from the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence),
+search for it in VS Code, or run:
+
+```sh
+code --install-extension smallyu.pysonar2-code-intelligence
+```
+
+Requirements:
+
+- VS Code 1.91+
+- Java 11+
+- Python 3.10+
+
+The extension uses `java` and `python3` from `PATH` by default. You can select other executables through
+`pysonar2.java.command` and `pysonar2.python.path`. PySonar2 complements existing Python extensions; it
+does not replace formatting, debugging, completion, or environment management.
+
+Indexing progress includes the current path, percentage, elapsed time, and JVM heap usage. Large
+multi-project workspaces can be narrowed with `pysonar2.analysis.exclude`; an optional
+`pysonar2.java.maxHeapMb` setting is available for projects that must be analyzed as one unit.
+
+See the [VS Code extension guide](editors/vscode/README.md) for commands, settings, development setup,
+packaging, and current limitations.
+
+## Generate a static code browser
+
+Build PySonar2 and analyze the included multi-file demo:
+
+```sh
+mvn package
+java -jar target/pysonar-3.1.1.jar demo_project ./demo-html
+```
+
+Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
+follow links between definitions and references. The generated site has no runtime server dependency and
+can be hosted on any static file server.
+
+Use the same command with another Python file or directory to analyze your own code:
+
+```sh
+java -jar target/pysonar-3.1.1.jar /path/to/python/project ./demo-html
+```
+
+Large source trees, such as a Python standard library, may take several minutes to analyze.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    VSCode[VS Code extension] -->|stdio / LSP| Server[Java language server]
+    Browser[Static browser generator] --> Analyzer[PySonar2 analyzer]
+    Server --> Analyzer
+    Analyzer -->|persistent process| CPython[CPython ast parser]
+    Analyzer --> Index[Types, definitions, references, diagnostics]
+```
+
+The analyzer performs whole-project interprocedural analysis and supports first-class functions,
+closures, imports, and control flow. The Language Server translates its completed index into standard
+LSP responses while keeping analysis work outside the VS Code extension host.
+
+## Build and test
+
+### Analyzer and Language Server
+
+```sh
+mvn test
+mvn package
+```
+
+The shaded JAR contains both the static-browser entry point and the Language Server implementation.
 
 ### VS Code extension
 
-This repository also contains a VS Code extension backed by a Java Language Server. It exposes
-PySonar2's whole-project index as go-to-definition, references, inferred-type hovers, document/workspace
-symbols, and diagnostics while keeping analysis work outside the VS Code extension host.
-
-The extension is a separate TypeScript project in [`editors/vscode`](editors/vscode), but it lives in
-this repository so the client, language-server protocol adapter, and analyzer can be developed and
-released together.
-
-Build and run the extension demo with:
-
 ```sh
 cd editors/vscode
-npm install
+npm ci
+npm run check
 npm run build
-code .
+npm run smoke
+npm run package
 ```
 
-Press `F5` and select **Run PySonar2 Extension Demo**. A new Extension Development Host opens the
-repository's `demo_project`, where you can try hover, definition, references, symbols, diagnostics, and
-save-triggered reindexing. See the [extension README](editors/vscode/README.md) for settings, packaging,
-architecture, and current limitations.
+`npm run smoke` starts the packaged Java server over real stdio JSON-RPC, indexes `demo_project`, and
+checks cross-file definition resolution. `npm run package` produces
+`editors/vscode/pysonar2-code-intelligence.vsix`.
 
+To run the interactive extension demo, open `editors/vscode` in VS Code, press `F5`, and choose
+**Run PySonar2 Extension Demo**. The Extension Development Host opens `demo_project` automatically.
 
-### How to build
+## Runtime configuration
 
-    mvn package -DskipTests
+PySonar2 uses CPython's built-in `ast` module. By default it launches `python3`; select another supported
+interpreter with:
 
+```sh
+export PYSONAR_PYTHON=/path/to/python3
+```
 
-### Demo
+`PYTHONPATH` is used to locate Python libraries. Point it at the library tree that belongs to the
+selected interpreter when you want references into those libraries to resolve:
 
-The repository includes a dedicated multi-file project that demonstrates cross-module navigation,
-class and collection inference, branching, recursion, and async syntax. Build its static code browser
-with:
+```sh
+export PYTHONPATH=/usr/lib/python3
+```
 
-    mvn package
-    java -jar target/pysonar-3.1.0.jar demo_project ./demo-html
+## Repository layout
 
-Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type,
-and follow links between definitions and references. The generated site is responsive, self-contained,
-and can be hosted on any static file server.
+| Path | Purpose |
+| --- | --- |
+| `src/main/java/org/yinwang/pysonar` | Analyzer, AST, type system, demos, and Language Server |
+| `src/test/java/org/yinwang/pysonar` | Parser, inference, traversal, demo, and LSP tests |
+| `editors/vscode` | Published VS Code extension and VSIX build tooling |
+| `demo_project` | Shared multi-file demo for the static browser and VS Code extension |
+| `docs/python-support.md` | Python syntax and semantic support contract |
 
-You can use the same command with another Python file or directory to generate a browser for your own
-code. Large trees, such as a Python standard library, may take a few minutes to analyze.
+## Current limitations
 
-Note that this is just a simple demo program based on the library. PySonar2 is not meant to be an
-end-user tool. It is mainly designed as a library for Python IDEs, developer tools and code search
-engines, so its interface may not be as appealing as an end-user tool.
+- Python syntax accepted by CPython does not automatically have complete PySonar2 type semantics; consult
+  the [support matrix](docs/python-support.md).
+- The VS Code extension analyzes the last saved workspace state. Unsaved-buffer overlays are not yet
+  implemented.
+- VS Code reindexing is whole-workspace rather than dependency-graph incremental.
+- The extension requires a desktop or remote extension host and cannot run as a browser-only web
+  extension.
+- Standard-library models and several newer Python semantic features remain conservative.
 
-If you have problems with it, please feel free to contact me.
+## Contributing
 
+Contributions are welcome. Because small analyzer changes can have broad inference effects, please open
+an issue before undertaking a large semantic change and add focused parser, inference, or reference tests
+for new AST behavior.
 
-### System requirements
+To regenerate legacy inference fixtures after an intentional semantic change:
 
-* Python 3.10+
-* Java 11+
-* maven
+```sh
+mvn package -DskipTests
+java -classpath target/pysonar-3.1.1.jar org.yinwang.pysonar.TestInference -generate tests
+```
 
+Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.
 
-### Environment variables
+## License
 
-PySonar2 uses CPython's built-in `ast` package to parse Python code, so make sure `python3` points
-to Python 3.10 or newer. Alternatively, select an interpreter explicitly:
-
-    export PYSONAR_PYTHON=/path/to/python3
-
-`PYTHONPATH` environment variable is used for locating the Python standard libraries. It is
-important to point it to the correct Python library, for example
-
-    export PYTHONPATH=/usr/lib/python3
-
-If this is not set up correctly, references to library code will not be found.
-
-
-### Contribute
-
-You are welcome to make code contributions.
-
-Because of the highly complex and unpublished theory behind PySonar2, things may go wrong easily
-with even an innocent-looking change. If you hope to contribute to PySonar2, please discuss with me
-first before making significant changes, otherwise I may not be able to review your changes.
-
-For basic verification, you can run the unit tests. PySonar2 has a basic test framework. You can run
-the tests using this command:
-
-    mvn test
-
-If you modify the code or tests, you need to generate new expected results. Run these command lines:
-
-    mvn package -DskipTests
-    java -classpath target/pysonar-<version>.jar org.yinwang.pysonar.TestInference -generate tests
-
-To write new tests, you just need to write relevant Python code demonstrating your change, put them
-into a directory named `tests/testname.test`(test directory name must end with ".test"). Please look
-at the `tests` directory for examples.
-
-Please don't expect the tests to catch all bugs. Be very careful :)
-
-
-### License
-
-Apache 2.0 License. See LICENSE file.
+PySonar2 is available under the [Apache License 2.0](LICENSE).

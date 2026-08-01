@@ -190,7 +190,7 @@ public class Demo {
                 + "<header class='topbar'><a class='brand' href='index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a>"
                 + "<a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>GitHub repository</a></header>"
                 + "<main id='main-content' class='landing'><section class='hero'>"
-                + "<span class='release-pill'>Python 3-only · v3.1.0</span>"
+                + "<span class='release-pill'>Python 3-only · v3.1.1</span>"
                 + "<h1>Code intelligence,<br>rendered as static HTML.</h1>"
                 + "<p>Explore a realistic multi-file Python project. Hover or focus a symbol for its inferred type, then follow links between definitions and references—no server required.</p>"
                 + "<div class='hero-actions'><a class='button primary' href='" + escapeAttribute(entryHref) + "'>Open the code browser</a>"
@@ -305,9 +305,9 @@ public class Demo {
 
 
     private static void usage() {
-        $.msg("Usage:  java -jar pysonar-3.1.0.jar <file-or-dir> <output-dir>");
+        $.msg("Usage:  java -jar pysonar-3.1.1.jar <file-or-dir> <output-dir>");
         $.msg("Example that generates an index for a Python 3 standard library:");
-        $.msg(" java -jar pysonar-3.1.0.jar /usr/lib/python3 ./html");
+        $.msg(" java -jar pysonar-3.1.1.jar /usr/lib/python3 ./html");
         System.exit(0);
     }
 

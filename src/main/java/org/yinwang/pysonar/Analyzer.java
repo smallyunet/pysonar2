@@ -13,6 +13,7 @@ import org.yinwang.pysonar.visitor.TypeInferencer;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 
 
 public class Analyzer {
@@ -105,9 +106,19 @@ public class Analyzer {
      * generated sources, and build output.
      */
     public void analyzeFiles(@NotNull String root, @NotNull Collection<String> files) {
+        analyzeFiles(root, files, null);
+    }
+
+
+    /** Analyze explicit files and report each file immediately before it is loaded. */
+    public void analyzeFiles(@NotNull String root, @NotNull Collection<String> files,
+                             @Nullable Consumer<String> fileListener) {
         projectDir = $.unifyPath(root);
         loadingProgress = new Progress(files.size(), 50);
         for (String file : files) {
+            if (fileListener != null) {
+                fileListener.accept(file);
+            }
             loadFile(file);
         }
     }
@@ -548,6 +559,13 @@ public class Analyzer {
         if (!$.deleteDirectory($.getTempDir()))
         {
             $.msg("Failed to delete temp dir: " + $.getTempDir());
+        }
+    }
+
+    /** Release the legacy global analyzer reference after an integration has copied its results. */
+    public void releaseGlobalReference() {
+        if (self == this) {
+            self = null;
         }
     }
 

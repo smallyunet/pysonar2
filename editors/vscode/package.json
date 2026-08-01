@@ -2,7 +2,7 @@
   "name": "pysonar2-code-intelligence",
   "displayName": "PySonar2 Code Intelligence",
   "description": "Whole-project Python type inference, navigation, references, symbols, and diagnostics powered by PySonar2.",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "publisher": "smallyu",
   "license": "Apache-2.0",
   "repository": {
@@ -51,6 +51,13 @@
           "default": "java",
           "scope": "machine-overridable",
           "description": "Java 11+ executable used to start the bundled PySonar2 language server."
+        },
+        "pysonar2.java.maxHeapMb": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "scope": "machine-overridable",
+          "description": "Optional maximum Java heap in MB. Zero keeps the JVM default; increase this only after narrowing the indexed workspace."
         },
         "pysonar2.python.path": {
           "type": "string",

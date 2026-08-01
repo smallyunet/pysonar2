@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,30 +41,34 @@ public final class AnalysisSnapshot {
 
     private final Path root;
     private final Map<Path, String> sources;
+    private final Map<Path, PositionCodec.LineIndex> positionIndexes;
     private final Map<Path, List<Occurrence>> occurrences;
     private final Map<Path, List<SymbolInformation>> symbols;
     private final Map<Path, List<org.eclipse.lsp4j.Diagnostic>> diagnostics;
 
     private AnalysisSnapshot(Path root,
                              Map<Path, String> sources,
+                             Map<Path, PositionCodec.LineIndex> positionIndexes,
                              Map<Path, List<Occurrence>> occurrences,
                              Map<Path, List<SymbolInformation>> symbols,
                              Map<Path, List<org.eclipse.lsp4j.Diagnostic>> diagnostics) {
         this.root = normalize(root);
         this.sources = immutableSources(sources);
+        this.positionIndexes = Collections.unmodifiableMap(new LinkedHashMap<>(positionIndexes));
         this.occurrences = immutableMapOfLists(occurrences);
         this.symbols = immutableMapOfLists(symbols);
         this.diagnostics = immutableMapOfLists(diagnostics);
     }
 
     public static AnalysisSnapshot empty(Path root) {
-        return new AnalysisSnapshot(root, Collections.emptyMap(), Collections.emptyMap(),
+        return new AnalysisSnapshot(root, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
                 Collections.emptyMap(), Collections.emptyMap());
     }
 
     static AnalysisSnapshot from(Path root, Analyzer analyzer) {
         Path normalizedRoot = normalize(root);
         Map<Path, String> sources = loadSources(analyzer.getLoadedFiles());
+        Map<Path, PositionCodec.LineIndex> positionIndexes = indexSources(sources);
         Map<Path, Map<String, MutableOccurrence>> occurrenceBuilders = new LinkedHashMap<>();
         Map<Path, List<SymbolInformation>> symbols = new LinkedHashMap<>();
 
@@ -75,7 +80,7 @@ public final class AnalysisSnapshot {
             mutableOccurrence(occurrenceBuilders, file, binding.start, binding.end).bindings.add(binding);
             if (file.startsWith(normalizedRoot) && !binding.isSynthetic()) {
                 symbols.computeIfAbsent(file, ignored -> new ArrayList<>())
-                        .add(symbol(binding, file, sources.get(file)));
+                        .add(symbol(binding, file, positionIndexes.get(file)));
             }
         }
 
@@ -90,10 +95,11 @@ public final class AnalysisSnapshot {
         }
 
         Map<Path, List<Occurrence>> occurrences = new LinkedHashMap<>();
+        Map<Binding, BindingView> bindingViews = new IdentityHashMap<>();
         for (Map.Entry<Path, Map<String, MutableOccurrence>> entry : occurrenceBuilders.entrySet()) {
             List<Occurrence> fileOccurrences = new ArrayList<>();
             for (MutableOccurrence mutable : entry.getValue().values()) {
-                fileOccurrences.add(Occurrence.freeze(mutable, sources));
+                fileOccurrences.add(Occurrence.freeze(mutable, sources, positionIndexes, bindingViews));
             }
             fileOccurrences.sort(Comparator.comparingInt(Occurrence::length));
             occurrences.put(entry.getKey(), fileOccurrences);
@@ -109,11 +115,11 @@ public final class AnalysisSnapshot {
             if (file == null || !sources.containsKey(file) || !file.startsWith(normalizedRoot)) {
                 continue;
             }
-            String source = sources.get(file);
+            PositionCodec.LineIndex positionIndex = positionIndexes.get(file);
             List<org.eclipse.lsp4j.Diagnostic> converted = new ArrayList<>();
             for (org.yinwang.pysonar.Diagnostic problem : analyzer.getDiagnosticsForFile(filename)) {
                 org.eclipse.lsp4j.Diagnostic diagnostic = new org.eclipse.lsp4j.Diagnostic();
-                diagnostic.setRange(range(source, problem.start, problem.end));
+                diagnostic.setRange(range(positionIndex, problem.start, problem.end));
                 diagnostic.setMessage(problem.msg);
                 diagnostic.setSource("pysonar2");
                 if (problem.msg.startsWith("Unused variable:")) {
@@ -127,7 +133,7 @@ public final class AnalysisSnapshot {
             diagnostics.put(file, converted);
         }
 
-        return new AnalysisSnapshot(normalizedRoot, sources, occurrences, symbols, diagnostics);
+        return new AnalysisSnapshot(normalizedRoot, sources, positionIndexes, occurrences, symbols, diagnostics);
     }
 
     public Optional<Hover> hover(Path file, Position position) {
@@ -249,7 +255,10 @@ public final class AnalysisSnapshot {
         if (source == null) {
             return Optional.empty();
         }
-        int offset = PositionCodec.toCodePointOffset(source, position);
+        PositionCodec.LineIndex positionIndex = positionIndexes.get(normalized);
+        int offset = positionIndex == null
+                ? PositionCodec.toCodePointOffset(source, position)
+                : positionIndex.toCodePointOffset(position);
         for (Occurrence occurrence : occurrences.getOrDefault(normalized, Collections.emptyList())) {
             int effectiveEnd = Math.max(occurrence.end, occurrence.start + 1);
             if (offset >= occurrence.start && offset <= effectiveEnd) {
@@ -260,15 +269,17 @@ public final class AnalysisSnapshot {
     }
 
     private Range toRange(Path file, int start, int end) {
-        String source = sources.get(file);
-        return source == null ? new Range(new Position(0, 0), new Position(0, 0)) : range(source, start, end);
+        PositionCodec.LineIndex positionIndex = positionIndexes.get(file);
+        return positionIndex == null
+                ? new Range(new Position(0, 0), new Position(0, 0))
+                : range(positionIndex, start, end);
     }
 
-    private static SymbolInformation symbol(Binding binding, Path file, String source) {
+    private static SymbolInformation symbol(Binding binding, Path file, PositionCodec.LineIndex positionIndex) {
         SymbolInformation symbol = new SymbolInformation();
         symbol.setName(binding.name);
         symbol.setKind(symbolKind(binding.kind));
-        symbol.setLocation(new Location(file.toUri().toString(), range(source, binding.start, binding.end)));
+        symbol.setLocation(new Location(file.toUri().toString(), range(positionIndex, binding.start, binding.end)));
         symbol.setContainerName(binding.qname);
         return symbol;
     }
@@ -319,10 +330,18 @@ public final class AnalysisSnapshot {
         return result;
     }
 
-    private static Range range(String source, int start, int end) {
+    private static Map<Path, PositionCodec.LineIndex> indexSources(Map<Path, String> sources) {
+        Map<Path, PositionCodec.LineIndex> result = new LinkedHashMap<>();
+        for (Map.Entry<Path, String> entry : sources.entrySet()) {
+            result.put(entry.getKey(), PositionCodec.index(entry.getValue()));
+        }
+        return result;
+    }
+
+    private static Range range(PositionCodec.LineIndex positionIndex, int start, int end) {
         int boundedStart = Math.max(0, start);
         int boundedEnd = Math.max(boundedStart, end);
-        return new Range(PositionCodec.toPosition(source, boundedStart), PositionCodec.toPosition(source, boundedEnd));
+        return new Range(positionIndex.toPosition(boundedStart), positionIndex.toPosition(boundedEnd));
     }
 
     private static Path pathOf(String filename) {
@@ -384,10 +403,13 @@ public final class AnalysisSnapshot {
             this.bindings = bindings;
         }
 
-        static Occurrence freeze(MutableOccurrence mutable, Map<Path, String> sources) {
+        static Occurrence freeze(MutableOccurrence mutable, Map<Path, String> sources,
+                                 Map<Path, PositionCodec.LineIndex> positionIndexes,
+                                 Map<Binding, BindingView> bindingViews) {
             List<BindingView> bindings = new ArrayList<>();
             for (Binding binding : mutable.bindings) {
-                bindings.add(BindingView.from(binding, sources));
+                bindings.add(bindingViews.computeIfAbsent(
+                        binding, key -> BindingView.from(key, sources, positionIndexes)));
             }
             return new Occurrence(mutable.start, mutable.end, Collections.unmodifiableList(bindings));
         }
@@ -410,14 +432,17 @@ public final class AnalysisSnapshot {
             this.references = references;
         }
 
-        static BindingView from(Binding binding, Map<Path, String> sources) {
+        static BindingView from(Binding binding, Map<Path, String> sources,
+                                Map<Path, PositionCodec.LineIndex> positionIndexes) {
             String type = binding.type == null ? "" : binding.type.toString();
             org.yinwang.pysonar.ast.Str docstring = binding.getDocstring();
             String documentation = docstring == null ? null : docstring.value;
-            Location definition = location(binding.getFile(), binding.start, binding.end, sources);
+            Location definition = location(
+                    binding.getFile(), binding.start, binding.end, sources, positionIndexes);
             List<Location> references = new ArrayList<>();
             for (Node reference : binding.refs) {
-                Location location = location(reference.file, reference.start, reference.end, sources);
+                Location location = location(
+                        reference.file, reference.start, reference.end, sources, positionIndexes);
                 if (location != null) {
                     references.add(location);
                 }
@@ -425,13 +450,19 @@ public final class AnalysisSnapshot {
             return new BindingView(type, documentation, definition, Collections.unmodifiableList(references));
         }
 
-        private static Location location(String filename, int start, int end, Map<Path, String> sources) {
+        private static Location location(String filename, int start, int end, Map<Path, String> sources,
+                                         Map<Path, PositionCodec.LineIndex> positionIndexes) {
             Path file = pathOf(filename);
             if (file == null) {
                 return null;
             }
-            String source = sources.get(file);
-            return source == null ? null : new Location(file.toUri().toString(), range(source, start, end));
+            if (!sources.containsKey(file)) {
+                return null;
+            }
+            PositionCodec.LineIndex positionIndex = positionIndexes.get(file);
+            return positionIndex == null
+                    ? null
+                    : new Location(file.toUri().toString(), range(positionIndex, start, end));
         }
     }
 }

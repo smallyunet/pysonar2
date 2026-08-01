@@ -37,11 +37,12 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
     private volatile PySonarLanguageClient client;
     private volatile AnalysisSession session;
     private volatile boolean shutdownRequested;
+    private volatile String lastProgressMessage = "workspace discovery";
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         Path root = workspaceRoot(params);
-        session = new AnalysisSession(root, excludeGlobs(params.getInitializationOptions()));
+        session = new AnalysisSession(root, excludeGlobs(params.getInitializationOptions()), this::reportProgress);
 
         ServerCapabilities capabilities = new ServerCapabilities();
         TextDocumentSyncOptions sync = new TextDocumentSyncOptions();
@@ -56,7 +57,7 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
         capabilities.setWorkspaceSymbolProvider(true);
 
         InitializeResult result = new InitializeResult(capabilities);
-        result.setServerInfo(new ServerInfo("PySonar2 Language Server", "3.1.0"));
+        result.setServerInfo(new ServerInfo("PySonar2 Language Server", "3.1.1"));
         return CompletableFuture.completedFuture(result);
     }
 
@@ -111,16 +112,22 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
         if (current == null) {
             return;
         }
+        long startedAt = System.currentTimeMillis();
+        lastProgressMessage = reason;
         status("indexing", reason);
         current.scheduleRebuild().whenComplete((snapshot, error) -> {
             if (error != null) {
-                status("error", rootCauseMessage(error));
-                log(MessageType.Error, "PySonar2 analysis failed: " + rootCauseMessage(error));
+                String message = analysisErrorMessage(error);
+                status("error", message);
+                log(MessageType.Error, "PySonar2 analysis failed: " + message);
                 return;
             }
             publishDiagnostics(snapshot);
-            status("ready", "Indexed " + snapshot.fileCount() + " Python files");
-            log(MessageType.Info, "PySonar2 indexed " + snapshot.fileCount() + " Python files");
+            String duration = formatDuration(System.currentTimeMillis() - startedAt);
+            String summary = "Indexed " + snapshot.fileCount() + " Python files in " + duration
+                    + " · " + heapUsage();
+            status("ready", summary);
+            log(MessageType.Info, "PySonar2 " + summary);
         });
     }
 
@@ -146,6 +153,68 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
         if (current != null) {
             current.status(new PySonarStatus(state, message));
         }
+    }
+
+    private void reportProgress(AnalysisProgress progress) {
+        PySonarLanguageClient current = client;
+        if (current == null) {
+            return;
+        }
+        PySonarStatus status = new PySonarStatus("indexing", progressMessage(progress));
+        lastProgressMessage = status.getMessage();
+        status.setPhase(progress.getPhase());
+        status.setCurrent(progress.getCurrent());
+        status.setTotal(progress.getTotal());
+        status.setPath(progress.getPath());
+        status.setElapsedMillis(progress.getElapsedMillis());
+        current.status(status);
+    }
+
+    private static String progressMessage(AnalysisProgress progress) {
+        String elapsed = formatDuration(progress.getElapsedMillis());
+        String heap = heapUsage();
+        if ("discovering".equals(progress.getPhase())) {
+            String count = progress.getCurrent() == 0 ? "" : " (" + progress.getCurrent() + " found)";
+            return "Discovering Python files" + count + " · " + progress.getPath()
+                    + " · " + elapsed + " · " + heap;
+        }
+        if ("analyzing".equals(progress.getPhase())) {
+            if (progress.getTotal() == 0) {
+                return "No Python files found · " + elapsed + " · " + heap;
+            }
+            int percent = (int) Math.min(100, progress.getCurrent() * 100L / progress.getTotal());
+            String path = progress.getPath().isEmpty() ? "Preparing analyzer" : progress.getPath();
+            return "Analyzing " + progress.getCurrent() + "/" + progress.getTotal()
+                    + " (" + percent + "%) · " + path + " · " + elapsed + " · " + heap;
+        }
+        return progress.getPath() + " · " + elapsed + " · " + heap;
+    }
+
+    private String analysisErrorMessage(Throwable error) {
+        String rootCause = rootCauseMessage(error);
+        if (rootCause.toLowerCase(java.util.Locale.ROOT).contains("java heap space")) {
+            return "Java heap exhausted during " + lastProgressMessage
+                    + ". Narrow pysonar2.analysis.exclude or set pysonar2.java.maxHeapMb, then reindex.";
+        }
+        return rootCause;
+    }
+
+    private static String heapUsage() {
+        Runtime runtime = Runtime.getRuntime();
+        long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
+        long maxMb = runtime.maxMemory() / (1024 * 1024);
+        return "heap " + usedMb + "/" + maxMb + " MB";
+    }
+
+    private static String formatDuration(long millis) {
+        if (millis < 1_000) {
+            return millis + "ms";
+        }
+        long seconds = millis / 1_000;
+        if (seconds < 60) {
+            return seconds + "s";
+        }
+        return (seconds / 60) + "m " + (seconds % 60) + "s";
     }
 
     private void log(MessageType type, String message) {

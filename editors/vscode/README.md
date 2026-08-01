@@ -3,6 +3,24 @@
 PySonar2 Code Intelligence brings PySonar2's whole-project Python type inference and cross-file index
 into VS Code through a Java language server.
 
+Project links: [interactive web demo](https://smallyunet.github.io/pysonar2/) ·
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence) ·
+[GitHub releases](https://github.com/smallyunet/pysonar2/releases/latest)
+
+## Install
+
+Install the stable release from the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence),
+search for **PySonar2 Code Intelligence** in VS Code, or run:
+
+```sh
+code --install-extension smallyu.pysonar2-code-intelligence
+```
+
+The extension bundles the PySonar2 server JAR, so no separate server deployment is required. Analysis
+runs on the machine hosting the VS Code workspace extension. In a Remote SSH workspace, Java and Python
+must be installed on the remote host.
+
 The extension currently provides:
 
 - go to definition;
@@ -33,6 +51,29 @@ new index. Navigation remains available from the previous completed snapshot whi
 Unsaved changes are marked as `stale` in the status bar. Save the document to refresh semantic results.
 Common virtual-environment, dependency, cache, build, and generated directories are excluded by default.
 
+During a rebuild, the PySonar2 output channel reports the active phase, elapsed time, discovered file
+count, analysis percentage, and current workspace-relative path. The status bar shows the current
+analysis percentage; select it to open the detailed output. Progress notifications are throttled so
+large workspaces remain responsive.
+
+If an unusually large project exhausts the Java heap, first exclude unrelated roots such as tests,
+scripts, migrations, or sibling repositories. Increase `pysonar2.java.maxHeapMb` only when the workspace
+must be analyzed as one unit. Progress lines include current and maximum heap usage to make that decision
+visible rather than speculative.
+
+For a repository that contains several independent Python surfaces, a focused workspace configuration
+can avoid indexing code that cannot contribute to application navigation:
+
+```json
+{
+  "pysonar2.analysis.exclude": ["tests/**", "scripts/**", "alembic/**"],
+  "pysonar2.java.maxHeapMb": 2048
+}
+```
+
+Exclude only roots whose definitions and references you do not need. The heap override is optional; the
+optimized snapshot path normally stays well below that limit.
+
 ## Commands
 
 - `PySonar2: Reindex Workspace` restarts the per-folder servers and builds fresh indexes.
@@ -43,6 +84,7 @@ Common virtual-environment, dependency, cache, build, and generated directories 
 | Setting | Purpose |
 | --- | --- |
 | `pysonar2.java.command` | Java 11+ executable used to launch the server. |
+| `pysonar2.java.maxHeapMb` | Optional JVM heap limit in MB; `0` keeps the JVM default. |
 | `pysonar2.python.path` | Optional Python 3.10+ interpreter. |
 | `pysonar2.server.path` | Development override for the bundled server JAR. |
 | `pysonar2.analysis.exclude` | Workspace-relative glob patterns omitted from indexing. |
@@ -85,9 +127,12 @@ npm install
 npm run package
 ```
 
-The prepublish step builds the Java project, copies `target/pysonar-3.1.0.jar` to the extension package as
+The prepublish step builds the Java project, copies `target/pysonar-3.1.1.jar` to the extension package as
 `server/pysonar-lsp.jar`, bundles the TypeScript client, and produces `pysonar2-code-intelligence.vsix`.
 Set `PYSONAR_MAVEN_REPO_LOCAL` when the build needs to use a non-default Maven dependency cache.
+
+The Marketplace release uses the same VSIX artifact produced by this command. Publishing is handled by
+the `smallyu` Marketplace publisher; a local build does not contact or depend on a hosted PySonar2 API.
 
 ## Current limitations
 
