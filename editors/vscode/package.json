@@ -3,7 +3,7 @@
   "displayName": "PySonar2 Code Intelligence",
   "description": "Whole-project Python type inference, navigation, references, symbols, and diagnostics powered by PySonar2.",
   "version": "0.1.0",
-  "publisher": "smallyunet",
+  "publisher": "smallyu",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

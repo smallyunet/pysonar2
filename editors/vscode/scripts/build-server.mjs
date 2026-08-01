@@ -7,7 +7,7 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const extensionDirectory = resolve(scriptDirectory, "..");
 const repositoryRoot = resolve(extensionDirectory, "../..");
 
-const mavenArguments = ["-DskipTests", "package"];
+const mavenArguments = ["-DskipTests", "clean", "package"];
 if (process.env.PYSONAR_MAVEN_REPO_LOCAL) {
   mavenArguments.unshift(`-Dmaven.repo.local=${process.env.PYSONAR_MAVEN_REPO_LOCAL}`);
 }
