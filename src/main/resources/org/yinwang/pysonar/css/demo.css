@@ -1,22 +1,22 @@
 :root {
-    color-scheme: dark;
-    --bg: #08111f;
-    --surface: #0e1a2b;
-    --surface-raised: #132238;
-    --surface-hover: #192b45;
-    --border: #263a55;
-    --border-strong: #395474;
-    --text: #e8f0fb;
-    --muted: #91a4bc;
-    --subtle: #60758f;
-    --accent: #53d6c7;
-    --accent-strong: #75eee0;
-    --accent-soft: rgba(83, 214, 199, 0.14);
-    --blue: #79b8ff;
-    --purple: #c6a0f6;
-    --yellow: #f6c177;
-    --red: #ff7b89;
-    --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    color-scheme: light;
+    --bg: #f5f8fc;
+    --surface: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-hover: #edf6f5;
+    --border: #dbe4ee;
+    --border-strong: #b8c7d8;
+    --text: #172033;
+    --muted: #53667d;
+    --subtle: #64748b;
+    --accent: #0f766e;
+    --accent-strong: #0b5f59;
+    --accent-soft: rgba(15, 118, 110, 0.11);
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --yellow: #a84b09;
+    --red: #dc2626;
+    --shadow: 0 18px 48px rgba(43, 61, 82, 0.10);
     --sans: "IBM Plex Sans", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
@@ -30,7 +30,7 @@ body {
     min-width: 320px;
     min-height: 100vh;
     background:
-        radial-gradient(circle at 85% -10%, rgba(61, 106, 170, 0.22), transparent 34rem),
+        radial-gradient(circle at 85% -10%, rgba(37, 99, 235, 0.10), transparent 34rem),
         var(--bg);
     color: var(--text);
     font: 16px/1.55 var(--sans);
@@ -52,12 +52,12 @@ a:focus-visible, button:focus-visible {
     padding: 9px 12px;
     border-radius: 7px;
     background: var(--accent);
-    color: #061512;
+    color: #ffffff;
     font-weight: 700;
     transform: translateY(-150%);
 }
 
-.skip-link:focus { transform: translateY(0); color: #061512; }
+.skip-link:focus { transform: translateY(0); color: #ffffff; }
 
 .topbar {
     position: sticky;
@@ -68,7 +68,7 @@ a:focus-visible, button:focus-visible {
     min-height: 58px;
     padding: 0 24px;
     border-bottom: 1px solid var(--border);
-    background: rgba(8, 17, 31, 0.94);
+    background: rgba(255, 255, 255, 0.94);
 }
 
 .brand {
@@ -87,7 +87,7 @@ a:focus-visible, button:focus-visible {
     place-items: center;
     border-radius: 8px;
     background: var(--accent);
-    color: #061512;
+    color: #ffffff;
     font: 700 14px/1 var(--mono);
 }
 
@@ -230,7 +230,7 @@ pre {
     min-width: max-content;
     margin: 0;
     padding: 18px 22px 36px 0;
-    color: #c8d6e8;
+    color: #334155;
     font: 14px/1.72 var(--mono);
     tab-size: 4;
 }
@@ -258,15 +258,15 @@ pre a.active {
 }
 
 .builtin { color: var(--yellow); }
-.comment, .block-comment, .doc-string { color: #6f849d; font-style: italic; }
+.comment, .block-comment, .doc-string { color: #64748b; font-style: italic; }
 .constant, .number { color: var(--purple); }
-.decorator { color: #e6a8d7; }
+.decorator { color: #9f3f8d; }
 .error { border-bottom: 1px solid var(--red); }
-.field-name, .identifier, .parameter { color: #b8c7da; }
+.field-name, .identifier, .parameter { color: #475569; }
 .function, .type-name { color: var(--blue); }
 .info { border-bottom: 1px dotted var(--blue); }
-.keyword { color: #ff8f9c; }
-.string { color: #a8d291; }
+.keyword { color: #be123c; }
+.string { color: #287a3d; }
 .warning { border-bottom: 1px solid var(--yellow); padding-bottom: 1px; }
 
 .symbol-tooltip {
@@ -279,7 +279,7 @@ pre a.active {
     border-radius: 8px;
     background: #17283f;
     box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
-    color: var(--text);
+    color: #f8fafc;
     font: 12px/1.45 var(--mono);
     opacity: 0;
     pointer-events: none;
@@ -336,7 +336,7 @@ pre a.active {
 }
 
 .button:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--text); }
-.button.primary { border-color: var(--accent); background: var(--accent); color: #061512; }
+.button.primary { border-color: var(--accent); background: var(--accent); color: #ffffff; }
 
 .metrics {
     display: grid;
@@ -349,7 +349,7 @@ pre a.active {
 .file-card {
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: rgba(14, 26, 43, 0.82);
+    background: rgba(255, 255, 255, 0.88);
 }
 
 .metric { padding: 18px; }
