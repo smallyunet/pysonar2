@@ -60,6 +60,8 @@ public enum NodeType {
     STR,
     SUBSCRIPT,
     TRY,
+    TYPEALIAS,
+    TYPEPARAMETER,
     TUPLE,
     UNARYOP,
     UNSUPPORTED,

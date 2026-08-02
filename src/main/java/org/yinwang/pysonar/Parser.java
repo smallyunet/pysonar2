@@ -246,7 +246,11 @@ public class Parser {
             Name name = (Name) convert(map.get("name_node"));      // hack
             List<Node> bases = convertList(map.get("bases"));
             Block body = convertBlock(map.get("body"));
-            return new ClassDef(name, bases, body, file, start, end, line, col);
+            List<Node> decorators = nonNullList(convertList(map.get("decorator_list")));
+            List<Keyword> keywords = nonNullList(convertList(map.get("keywords")));
+            List<TypeParameter> typeParams = nonNullList(convertList(map.get("type_params")));
+            return new ClassDef(name, bases, body, decorators, keywords, typeParams,
+                    file, start, end, line, col);
         }
 
         // left-fold Compare into
@@ -266,7 +270,9 @@ public class Parser {
             Node target = convert(map.get("target"));
             Node iter = convert(map.get("iter"));
             List<Node> ifs = convertList(map.get("ifs"));
-            return new Comprehension(target, iter, ifs, file, start, end, line, col);
+            boolean isAsync = map.get("is_async") instanceof Double
+                    && ((Double) map.get("is_async")).intValue() != 0;
+            return new Comprehension(target, iter, ifs, isAsync, file, start, end, line, col);
         }
 
         if (type.equals("Break")) {
@@ -310,7 +316,10 @@ public class Parser {
                 exceptions = null;
             }
 
-            Node binder = convert(map.get("name"));
+            Node binder = convert(map.get("name_node"));
+            if (binder == null && map.get("name") instanceof String) {
+                binder = new Name((String) map.get("name"), file, start, end, line, col);
+            }
             Block body = convertBlock(map.get("body"));
             return new Handler(exceptions, binder, body, file, start, end, line, col);
         }
@@ -378,10 +387,11 @@ public class Parser {
             collectArgumentAnnotation(varargObj, annotations);
             collectArgumentAnnotation(kwargObj, annotations);
             Node returnAnnotation = convert(map.get("returns"));
+            List<TypeParameter> typeParams = nonNullList(convertList(map.get("type_params")));
 
             return new FunctionDef(name, args, body, nonNullList(defaults), vararg, kwarg,
                     nonNullList(decors), kwOnlyArgs, kwDefaults, annotations, returnAnnotation,
-                    posOnlyArgs.size(), file, isAsync, start, end, line, col);
+                    posOnlyArgs.size(), typeParams, file, isAsync, start, end, line, col);
         }
 
         if (type.equals("GeneratorExp")) {
@@ -453,6 +463,18 @@ public class Parser {
             return new JoinedStr(nonNullList(convertList(map.get("values"))), file, start, end, line, col);
         }
 
+        if (type.equals("TemplateStr")) {
+            return new JoinedStr(nonNullList(convertList(map.get("values"))), file, start, end, line, col);
+        }
+
+        if (type.equals("Interpolation")) {
+            Node value = convert(map.get("value"));
+            Node formatSpec = convert(map.get("format_spec"));
+            int conversion = map.get("conversion") instanceof Double
+                    ? ((Double) map.get("conversion")).intValue() : -1;
+            return new FormattedValue(value, formatSpec, conversion, file, start, end, line, col);
+        }
+
         if (type.equals("List")) {
             List<Node> elts = convertList(map.get("elts"));
             return new PyList(elts, file, start, end, line, col);
@@ -509,6 +531,23 @@ public class Parser {
             Node target = convert(map.get("target"));
             Node value = convert(map.get("value"));
             return new NamedExpr(target, value, file, start, end, line, col);
+        }
+
+        if (type.equals("TypeAlias")) {
+            Name name = (Name) convert(map.get("name"));
+            List<TypeParameter> typeParams = nonNullList(convertList(map.get("type_params")));
+            Node value = convert(map.get("value"));
+            return new TypeAlias(name, typeParams, value, file, start, end, line, col);
+        }
+
+        if (type.equals("TypeVar") || type.equals("TypeVarTuple") || type.equals("ParamSpec")) {
+            Name name = (Name) convert(map.get("name_node"));
+            if (name == null) {
+                name = new Name((String) map.get("name"), file, start, end, line, col);
+            }
+            Node bound = convert(map.get("bound"));
+            Node defaultValue = convert(map.get("default_value"));
+            return new TypeParameter(type, name, bound, defaultValue, file, start, end, line, col);
         }
 
         if (type.equals("NameConstant")) {
@@ -606,8 +645,8 @@ public class Parser {
         }
 
         if (type.equals("Raise")) {
-            Node exceptionType = convert(map.get("type"));
-            Node inst = convert(map.get("inst"));
+            Node exceptionType = convert(map.containsKey("exc") ? map.get("exc") : map.get("type"));
+            Node inst = convert(map.containsKey("cause") ? map.get("cause") : map.get("inst"));
             Node tback = convert(map.get("tback"));
             return new Raise(exceptionType, inst, tback, file, start, end, line, col);
         }
@@ -664,12 +703,13 @@ public class Parser {
             return new Subscript(value, slice, file, start, end, line, col);
         }
 
-        if (type.equals("Try")) {
+        if (type.equals("Try") || type.equals("TryStar")) {
             Block body = convertBlock(map.get("body"));
             Block orelse = convertBlock(map.get("orelse"));
             List<Handler> handlers = convertList(map.get("handlers"));
             Block finalbody = convertBlock(map.get("finalbody"));
-            return new Try(handlers, body, orelse, finalbody, file, start, end, line, col);
+            return new Try(handlers, body, orelse, finalbody, type.equals("TryStar"),
+                    file, start, end, line, col);
         }
 
         if (type.equals("Tuple")) {

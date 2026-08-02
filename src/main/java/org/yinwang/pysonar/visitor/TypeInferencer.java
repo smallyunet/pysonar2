@@ -339,10 +339,13 @@ public class TypeInferencer implements Visitor1<Type, State>
     public Type visit(ClassDef node, State s)
     {
         ClassType classType = new ClassType(node.name.id, s);
+        visit(node.decorators, s);
+        visit(node.keywords, s);
+        visit(node.typeParams, classType.table);
         List<Type> baseTypes = new ArrayList<>();
         for (Node base : node.bases)
         {
-            Type baseType = visit(base, s);
+            Type baseType = visit(base, classType.table);
             if (baseType instanceof ClassType)
             {
                 classType.addSuper(baseType);
@@ -516,7 +519,13 @@ public class TypeInferencer implements Visitor1<Type, State>
         // Do not treat annotations as executable expressions until generics and
         // forward references are interpreted by the type engine.
         State env = s.getForwarding();
-        FunType fun = new FunType(node, env);
+        State functionEnv = env;
+        if (!node.typeParams.isEmpty())
+        {
+            functionEnv = new State(env, State.StateType.SCOPE);
+            visit(node.typeParams, functionEnv);
+        }
+        FunType fun = new FunType(node, functionEnv);
         fun.table.setParent(s);
         fun.table.setPath(s.extendPath(node.name.id));
         fun.setDefaultTypes(visit(node.defaults, s));
@@ -1157,6 +1166,33 @@ public class TypeInferencer implements Visitor1<Type, State>
         }
 
         return new UnionType(tp1, tp2, tph, tpFinal);
+    }
+
+    @NotNull
+    @Override
+    public Type visit(TypeAlias node, State s)
+    {
+        bind(s, node.nameNode, Types.UNKNOWN, VARIABLE);
+        State aliasState = s.copy();
+        visit(node.typeParams, aliasState);
+        visit(node.value, aliasState);
+        return Types.CONT;
+    }
+
+    @NotNull
+    @Override
+    public Type visit(TypeParameter node, State s)
+    {
+        if (node.bound != null)
+        {
+            visit(node.bound, s);
+        }
+        if (node.defaultValue != null)
+        {
+            visit(node.defaultValue, s);
+        }
+        bind(s, node.nameNode, Types.UNKNOWN, VARIABLE);
+        return Types.CONT;
     }
 
     @NotNull

@@ -125,6 +125,10 @@ public interface Visitor0<T> {
                 return visit((Subscript)node);
             case TRY:
                 return visit((Try)node);
+            case TYPEALIAS:
+                return visit((TypeAlias)node);
+            case TYPEPARAMETER:
+                return visit((TypeParameter)node);
             case TUPLE:
                 return visit((Tuple)node);
             case UNARYOP:
@@ -223,6 +227,8 @@ public interface Visitor0<T> {
     T visit(Str node);
     T visit(Subscript node);
     T visit(Try node);
+    T visit(TypeAlias node);
+    T visit(TypeParameter node);
     T visit(Tuple node);
     T visit(UnaryOp node);
     T visit(Unsupported node);

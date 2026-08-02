@@ -26,25 +26,24 @@ Insight.io (now part of Elastic).
 
 ## What's new
 
-### PySonar2 3.1
+### PySonar2 3.2
 
-The 3.1 modernization moves the supported baseline to Python 3.10+ and Java 11+ while preserving the
-whole-project analysis model:
+The 3.2 release extends the Python 3.10+ baseline through modern Python 3.11-3.14 syntax while preserving
+the whole-project analysis model:
 
 - parsing through the selected CPython interpreter in a persistent process;
-- positional-only and keyword-only parameters, annotations, assignment expressions, f-strings,
-  structural pattern matching, and modern async syntax;
+- exception groups, PEP 695 type aliases and generic parameters, type-parameter defaults, and template strings;
+- class decorators, metaclass keywords, modern raise causes and exception binders, and async comprehensions;
 - traversal fallback for newer CPython AST nodes, so recognized child expressions remain indexed;
 - focused compatibility coverage across Python 3.10-3.14 and Java 11, 17, and 21 in CI;
 - a responsive, self-contained static code-browser demo; and
 - an explicit [Python support matrix](docs/python-support.md) separating inference, navigation, and
   traversal-only coverage.
 
-### VS Code extension 0.1.3
+### VS Code extension 0.2.0
 
 [PySonar2 Code Intelligence](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
-is the first stable Marketplace release. It adds a Java Language Server and a TypeScript VS Code client
-with:
+bundles the 3.2 analyzer in a Java Language Server with a TypeScript VS Code client providing:
 
 - go to definition and find all references;
 - inferred-type and docstring hovers;
@@ -53,7 +52,7 @@ with:
 - one isolated server per workspace folder;
 - save-triggered workspace reindexing with atomic snapshots;
 - detailed discovery and file-level indexing progress; and
-- automatic nested Python project/package-root discovery; and
+- automatic nested Python project/package-root discovery;
 - configurable Java, Python, server, diagnostics, and exclusion settings.
 
 The server JAR is bundled in the extension. There is no hosted PySonar2 service to deploy: analysis runs
@@ -93,7 +92,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.1.2.jar demo_project ./demo-html
+java -jar target/pysonar-3.2.0.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -103,7 +102,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.1.2.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.2.0.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -199,7 +198,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.1.2.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.2.0.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.

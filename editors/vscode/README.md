@@ -133,7 +133,7 @@ npm install
 npm run package
 ```
 
-The prepublish step builds the Java project, copies `target/pysonar-3.1.2.jar` to the extension package as
+The prepublish step builds the Java project, copies `target/pysonar-3.2.0.jar` to the extension package as
 `server/pysonar-lsp.jar`, bundles the TypeScript client, and produces `pysonar2-code-intelligence.vsix`.
 Set `PYSONAR_MAVEN_REPO_LOCAL` when the build needs to use a non-default Maven dependency cache.
 
@@ -144,8 +144,8 @@ the `smallyu` Marketplace publisher; a local build does not contact or depend on
 
 - Semantic results follow the last saved workspace state; unsaved-buffer overlays are not implemented.
 - Rebuilds are whole-workspace rather than dependency-graph incremental.
-- Python 3.11+ syntax may parse successfully even when a feature only has navigation or traversal-level
-  semantics in PySonar2.
+- Modern Python 3.11-3.14 syntax is indexed, with conservative navigation semantics for exception groups
+  and generic type parameters.
 - Type annotations are parsed for navigation but are not yet used as complete inference inputs. Conservative
   diagnostics avoid treating unresolved annotation and dependency types as definite code errors.
 - Web extensions are not supported because the analyzer starts Java and CPython processes and reads a

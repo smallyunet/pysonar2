@@ -18,6 +18,14 @@ class AstEncoder(JSONEncoder):
 
 lines = ''
 
+type_parameter_types = tuple(
+    node_type for node_type in (
+        getattr(ast, 'TypeVar', None),
+        getattr(ast, 'TypeVarTuple', None),
+        getattr(ast, 'ParamSpec', None),
+    ) if node_type is not None
+)
+
 
 def parse_dump(filename, output, end_mark):
     try:
@@ -259,7 +267,8 @@ def find_end(node, s):
     elif isinstance(node, Dict):
         the_end = match_paren(s, '{', '}', find_start(node, s))
 
-    elif isinstance(node, Try):
+    elif (isinstance(node, Try) or
+          (hasattr(ast, 'TryStar') and isinstance(node, ast.TryStar))):
         if node.orelse != []:
             the_end = find_end(node.orelse, s)
         elif node.handlers != []:
@@ -349,6 +358,17 @@ def add_missing_names(node, s):
         else:
             node.kwarg_name = None
         node._fields += ('kwarg_name',)
+
+    elif isinstance(node, ExceptHandler) and node.name is not None:
+        head = find_start(node, s)
+        as_start = s.find(' as ', head, find_start(node.body, s))
+        if as_start >= 0:
+            node.name_node = str_to_name(s, as_start + len(' as '))
+            node._fields += ('name_node',)
+
+    elif type_parameter_types and isinstance(node, type_parameter_types):
+        node.name_node = str_to_name(s, find_start(node, s))
+        node._fields += ('name_node',)
 
     elif isinstance(node, Attribute):
         start = find_end(node.value, s)

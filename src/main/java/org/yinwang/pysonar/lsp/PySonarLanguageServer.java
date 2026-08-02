@@ -58,7 +58,7 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
         capabilities.setWorkspaceSymbolProvider(true);
 
         InitializeResult result = new InitializeResult(capabilities);
-        result.setServerInfo(new ServerInfo("PySonar2 Language Server", "3.1.2"));
+        result.setServerInfo(new ServerInfo("PySonar2 Language Server", "3.2.0"));
         return CompletableFuture.completedFuture(result);
     }
 

@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.2.0
+
+- Bundle PySonar2 3.2.0 with dedicated support for Python 3.11 exception groups.
+- Index Python 3.12 type aliases and generic type parameters, including variadic and parameter-spec forms.
+- Preserve Python 3.13 type-parameter defaults and Python 3.14 template-string interpolations.
+- Resolve class decorators, metaclass expressions, modern exception causes and binders, and async comprehensions.
+
 ## 0.1.3
 
 - Default to conservative diagnostics that show only high-confidence findings and suppress inference uncertainty.
