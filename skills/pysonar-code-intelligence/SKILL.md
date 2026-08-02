@@ -1,18 +1,20 @@
 ---
 name: pysonar-code-intelligence
-description: Analyze definitions, references, inferred types, and reference-based change impact in multi-file Python projects. Use when investigating unfamiliar or weakly typed Python code, planning cross-file changes, or checking semantic impact after saved edits. Do not use for formatting, tests, non-Python projects, or simple single-file changes.
+description: Resolve definitions, references, inferred types, and reference-based change impact when semantic uncertainty in an unfamiliar multi-file Python project could change the implementation. Use for ambiguous symbols, inheritance, aliases, or weakly typed cross-file flows. Do not use for well-localized tasks, formatting, tests, non-Python projects, or changes whose call sites are already clear from direct source search.
 ---
 
 # PySonar2 code intelligence
 
-Use the local `pysonar` CLI to collect semantic evidence before reasoning about unfamiliar or weakly typed Python code.
+Use the local `pysonar` CLI only when its semantic evidence can answer a concrete unresolved question. PySonar2 reindexes the saved project for every CLI invocation, so minimize invocations and output.
 
-1. Run `pysonar doctor --format json` before the first analysis. If it is unavailable or reports an incompatible schema, stop and explain how to install or update PySonar2.
-2. Resolve the saved file and its one-based line and character. PySonar2 analyzes saved workspace state only.
-3. Use `pysonar context --root <root> --file <file> --line <line> --character <character> --max-results 50 --format json` to investigate a symbol.
-4. Before a cross-file change, use `pysonar impact` with the same location. Treat the result as a definition/reference impact surface, not a complete runtime call graph.
-5. After editing Python files, run `pysonar check --root <root> --changed <file> --format json` for each changed file, then run the project's normal tests, lint, and type checker.
-6. Treat low-confidence, unknown, truncated, or limited results as leads. Confirm them by reading the referenced source. Never modify code solely from an inferred type.
-7. Fall back to direct source inspection, `rg`, and the project's language server when PySonar2 reports incomplete or unsupported semantics.
+1. Search the relevant source with `rg` first. Skip PySonar2 when definitions and call sites are already clear or the requested change is well localized.
+2. When a semantic question remains, run `pysonar doctor --format json` once per task before the first analysis. If it is unavailable or reports an incompatible schema, continue with direct source inspection and mention the limitation; do not block the task.
+3. Resolve one saved file location that best represents the uncertainty. PySonar2 uses one-based line and character positions and analyzes saved workspace state only.
+4. Run exactly one discovery query for that decision point:
+   - Use `pysonar impact --root <root> --file <file> --line <line> --character <character> --max-results 12 --format json` for a cross-file change. `impact` already includes the context fields; do not also run `context` at the same location.
+   - Use `pysonar context --root <root> --file <file> --line <line> --character <character> --max-results 12 --format json` only when definitions, references, or inferred type are needed without change-impact planning.
+5. Read only the returned source locations that can affect the implementation. If `truncated` is true, increase `--max-results` or query another location only when the omitted evidence could change the decision.
+6. After saved edits, run at most one batch diagnostic pass for all changed Python files: `pysonar check --root <root> --changed <file1> --changed <file2> --format json`. Then run focused project tests and any relevant lint or type checks. Skip `check` when PySonar2 was skipped during discovery or when project validation already supersedes its conservative diagnostics.
+7. Treat inferred types and reference impact as leads, not proof. Confirm material claims in source. Fall back to direct inspection and the project's language server when results are unknown, incomplete, dynamic, or unsupported.
 
-Keep stdout as JSON input for reasoning. Surface stderr errors and the result's `limitations` to the user when they affect confidence. See `references/cli-schema.md` only when command fields or compatibility behavior need clarification.
+Do not repeat a command merely to confirm the same evidence. Stop using PySonar2 for the task when a query is slow, noisy, or fails to reduce uncertainty. Keep stdout as JSON input for reasoning, and surface errors or `limitations` only when they affect the result. See `references/cli-schema.md` only when command fields or compatibility behavior need clarification.

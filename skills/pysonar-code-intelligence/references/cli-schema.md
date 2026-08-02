@@ -18,6 +18,6 @@ Exit codes:
 
 `context` returns the query, symbol text, inferred hover text, definitions, references, truncation status, and limitations.
 
-`impact` returns the same evidence plus `impactKind: reference-based` and `affectedFiles`. It does not claim complete dynamic call-graph coverage.
+`impact` is a superset of `context`: it returns the same evidence plus `impactKind: reference-based` and `affectedFiles`. Do not call both commands for the same location. It does not claim complete dynamic call-graph coverage.
 
-`check` returns conservative diagnostics, optionally filtered by repeated or comma-separated `--changed` paths. It does not replace tests, lint, or a strict type checker.
+`check` returns conservative diagnostics, optionally filtered by repeated or comma-separated `--changed` paths. Batch all changed Python files into one invocation because each CLI command performs a fresh project analysis. It does not replace tests, lint, or a strict type checker.
