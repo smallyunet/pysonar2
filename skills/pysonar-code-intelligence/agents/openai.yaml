@@ -1,0 +1,4 @@
+interface:
+  display_name: "PySonar2 Code Intelligence"
+  short_description: "Inspect Python types, references, and change impact"
+  default_prompt: "Use $pysonar-code-intelligence to gather semantic evidence for this Python code task."

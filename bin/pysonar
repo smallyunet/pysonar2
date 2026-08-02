@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+if [ -n "${PYSONAR_JAR:-}" ]; then
+  jar_path=$PYSONAR_JAR
+elif [ -f "$script_dir/../lib/pysonar.jar" ]; then
+  jar_path=$script_dir/../lib/pysonar.jar
+else
+  jar_path=$script_dir/../target/pysonar-3.2.0.jar
+fi
+
+if [ ! -f "$jar_path" ]; then
+  echo "PySonar2 JAR not found. Build with 'mvn package' or set PYSONAR_JAR." >&2
+  exit 127
+fi
+
+exec java -jar "$jar_path" "$@"

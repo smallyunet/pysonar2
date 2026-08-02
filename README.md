@@ -9,10 +9,11 @@ PySonar2 is a whole-project type inferencer and semantic indexer for Python. It 
 files and function calls to locate definitions, references, and inferred types, making it suitable for
 IDEs, code browsers, and code-search infrastructure.
 
-The project now includes three ways to use the analyzer:
+The project now includes four ways to use the analyzer:
 
 - **VS Code:** install the published extension for navigation, hovers, symbols, and diagnostics.
 - **Static code browser:** generate a self-contained HTML view of a Python project.
+- **Coding agents:** install the portable Agent Skill and query the local JSON CLI.
 - **Java integration:** embed the analyzer and consume its semantic index directly.
 
 Historically, PySonar2 has been used in large-scale code-indexing systems at Google, Sourcegraph, and
@@ -85,6 +86,66 @@ multi-project workspaces can be narrowed with `pysonar2.analysis.exclude`; an op
 
 See the [VS Code extension guide](editors/vscode/README.md) for commands, settings, development setup,
 packaging, and current limitations.
+
+## Use PySonar2 with coding agents
+
+PySonar2 includes an actively installed, filesystem-based Agent Skill for Codex, Claude Code, GitHub
+Copilot, Gemini CLI, and Cursor. The Skill teaches an agent when to use PySonar2; all analysis remains in
+the local CLI, with one JSON object written to stdout and progress or errors written to stderr.
+
+Build the CLI bundle:
+
+```sh
+mvn package
+unzip target/pysonar-cli-3.2.0.zip
+export PATH="$PWD/pysonar-cli-3.2.0/bin:$PATH"
+pysonar doctor --format json
+```
+
+Install the Skill for the current user. The portable target uses the shared `~/.agents/skills` location:
+
+```sh
+pysonar skill install --agent portable --scope user
+```
+
+Use a tool-specific target when the coding agent does not read the portable location:
+
+```sh
+pysonar skill install --agent claude --scope user
+pysonar skill install --agent copilot --scope user
+pysonar skill install --agent cursor --scope user
+```
+
+Supported targets and destinations are:
+
+| Target | User scope | Project scope |
+| --- | --- | --- |
+| `portable`, `codex`, `gemini` | `~/.agents/skills` | `.agents/skills` |
+| `claude` | `~/.claude/skills` | `.claude/skills` |
+| `copilot` | `~/.copilot/skills` | `.github/skills` |
+| `cursor` | `~/.cursor/skills` | `.cursor/skills` |
+
+Run `skill update`, `skill doctor`, or `skill uninstall` with the same `--agent` and `--scope` options
+to manage an installation. PySonar2 records file hashes and refuses to overwrite or remove a Skill that
+has been modified locally.
+
+The machine-readable analysis commands are:
+
+```sh
+pysonar context --root . --file app.py --line 42 --character 8 --format json
+pysonar impact --root . --file app.py --line 42 --character 8 --format json
+pysonar check --root . --changed app.py --format json
+```
+
+`context` returns inferred hover information, definitions, references, and small source snippets.
+`impact` adds the affected-file set and explicitly reports that its coverage is reference-based rather
+than a complete runtime call graph. `check` returns conservative diagnostics for the whole project or
+the paths selected with repeated or comma-separated `--changed` options.
+
+The canonical Skill source is [`skills/pysonar-code-intelligence`](skills/pysonar-code-intelligence).
+The CLI embeds that same directory in the packaged JAR, so installs and updates stay aligned with the
+CLI version. The public `SKILL.md` uses only portable `name` and `description` frontmatter; optional
+Codex UI metadata lives separately under `agents/openai.yaml`.
 
 ## Generate a static code browser
 
