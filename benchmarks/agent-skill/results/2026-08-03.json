@@ -1,0 +1,46 @@
+{
+  "date": "2026-08-03",
+  "projectCommit": "5d3eca535b411de95394dbcc37e28f0f56859d34",
+  "codexCli": "0.146.0-alpha.9.2",
+  "model": "gpt-5.6-sol",
+  "reasoningEffort": "medium",
+  "repetitions": 1,
+  "tokenDefinition": "input_tokens + output_tokens; cached_input_tokens is a subset of input_tokens",
+  "tasks": [
+    {
+      "id": "rename-impact",
+      "control": {"passed": true, "seconds": 54.119, "inputTokens": 103556, "cachedInputTokens": 94464, "outputTokens": 1575, "reasoningOutputTokens": 310, "totalTokens": 105131, "analyzerCommands": []},
+      "skill": {"passed": true, "seconds": 55.237, "inputTokens": 122374, "cachedInputTokens": 106496, "outputTokens": 1529, "reasoningOutputTokens": 282, "totalTokens": 123903, "analyzerCommands": ["doctor", "impact", "check"]}
+    },
+    {
+      "id": "alias-definition",
+      "control": {"passed": true, "seconds": 42.645, "inputTokens": 89933, "cachedInputTokens": 76288, "outputTokens": 1098, "reasoningOutputTokens": 207, "totalTokens": 91031, "analyzerCommands": []},
+      "skill": {"passed": true, "seconds": 42.331, "inputTokens": 109855, "cachedInputTokens": 91392, "outputTokens": 1308, "reasoningOutputTokens": 275, "totalTokens": 111163, "analyzerCommands": []}
+    },
+    {
+      "id": "factory-types",
+      "control": {"passed": true, "seconds": 40.583, "inputTokens": 88211, "cachedInputTokens": 71168, "outputTokens": 1203, "reasoningOutputTokens": 205, "totalTokens": 89414, "analyzerCommands": []},
+      "skill": {"passed": true, "seconds": 38.079, "inputTokens": 90574, "cachedInputTokens": 77312, "outputTokens": 1225, "reasoningOutputTokens": 163, "totalTokens": 91799, "analyzerCommands": []}
+    },
+    {
+      "id": "callback-flow",
+      "control": {"passed": true, "seconds": 41.199, "inputTokens": 90129, "cachedInputTokens": 76288, "outputTokens": 947, "reasoningOutputTokens": 206, "totalTokens": 91076, "analyzerCommands": []},
+      "skill": {"passed": true, "seconds": 42.986, "inputTokens": 109049, "cachedInputTokens": 93440, "outputTokens": 1156, "reasoningOutputTokens": 187, "totalTokens": 110205, "analyzerCommands": []}
+    },
+    {
+      "id": "localized-boundary",
+      "control": {"passed": true, "seconds": 36.733, "inputTokens": 85023, "cachedInputTokens": 73216, "outputTokens": 761, "reasoningOutputTokens": 77, "totalTokens": 85784, "analyzerCommands": []},
+      "skill": {"passed": true, "seconds": 36.568, "inputTokens": 88781, "cachedInputTokens": 71168, "outputTokens": 820, "reasoningOutputTokens": 166, "totalTokens": 89601, "analyzerCommands": []}
+    },
+    {
+      "id": "dynamic-plugin",
+      "control": {"passed": true, "seconds": 37.646, "inputTokens": 71274, "cachedInputTokens": 64256, "outputTokens": 882, "reasoningOutputTokens": 195, "totalTokens": 72156, "analyzerCommands": []},
+      "skill": {"passed": true, "seconds": 40.644, "inputTokens": 89555, "cachedInputTokens": 76288, "outputTokens": 983, "reasoningOutputTokens": 201, "totalTokens": 90538, "analyzerCommands": []}
+    }
+  ],
+  "aggregate": {
+    "control": {"passed": 6, "trials": 6, "seconds": 252.925, "inputTokens": 528126, "cachedInputTokens": 455680, "uncachedInputTokens": 72446, "outputTokens": 6466, "reasoningOutputTokens": 1200, "totalTokens": 534592},
+    "skill": {"passed": 6, "trials": 6, "seconds": 255.845, "inputTokens": 610188, "cachedInputTokens": 516096, "uncachedInputTokens": 94092, "outputTokens": 7021, "reasoningOutputTokens": 1274, "totalTokens": 617209},
+    "skillMinusControl": {"seconds": 2.92, "secondsPercent": 1.15, "totalTokens": 82617, "totalTokensPercent": 15.45}
+  }
+}

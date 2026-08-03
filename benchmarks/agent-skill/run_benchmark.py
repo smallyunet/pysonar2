@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Run isolated Codex Skill-vs-No-Skill trials and emit auditable JSON results."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import time
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+BENCHMARK_DIR = Path(__file__).resolve().parent
+DEFAULT_MODEL = "gpt-5.6-sol"
+CONDITIONS = ("control", "skill")
+ANALYZER_COMMAND_RE = re.compile(
+    r"(?<![A-Za-z0-9_.-])pysonar\s+(?:doctor|context|impact|check)\b"
+)
+
+
+def load_tasks() -> list[dict[str, str]]:
+    return json.loads((BENCHMARK_DIR / "tasks.json").read_text())
+
+
+def make_codex_home(root: Path, condition: str) -> Path:
+    home = root / f"codex-home-{condition}"
+    home.mkdir(parents=True)
+    auth = Path.home() / ".codex" / "auth.json"
+    if not auth.exists():
+        raise RuntimeError(f"Codex auth not found at {auth}")
+    (home / "auth.json").symlink_to(auth)
+    if condition == "skill":
+        skill_source = ROOT / "skills" / "pysonar-code-intelligence"
+        skills = home / "skills"
+        skills.mkdir()
+        (skills / "pysonar-code-intelligence").symlink_to(skill_source)
+    return home
+
+
+def trial_prompt(task: dict[str, str], condition: str) -> str:
+    condition_instruction = {
+        "control": (
+            "Do not use PySonar2, pysonar commands, or any PySonar2 skill. "
+            "Use ordinary repository search, source inspection, and tests."
+        ),
+        "skill": (
+            "Use the installed pysonar-code-intelligence skill faithfully. "
+            "Its routing decision may use or skip the pysonar CLI as instructed."
+        ),
+    }[condition]
+    return f"""You are completing one benchmark task in an isolated Python repository.
+
+{condition_instruction}
+
+Task: {task['prompt']}
+
+Do not commit. Do not read outside this repository except for installed skill instructions and tools.
+Finish with a concise summary and the tests you ran.
+"""
+
+
+def parse_events(stdout: str) -> dict[str, object]:
+    usage: dict[str, int] = {}
+    commands: list[str] = []
+    final = ""
+    event_count = 0
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        event_count += 1
+        if event.get("type") == "turn.completed":
+            usage = event.get("usage", {})
+        item = event.get("item", {})
+        if event.get("type") == "item.completed" and item.get("type") == "command_execution":
+            commands.append(item.get("command", ""))
+        if item.get("type") == "agent_message":
+            final = item.get("text", final)
+    pysonar_commands = [command for command in commands if ANALYZER_COMMAND_RE.search(command)]
+    return {
+        "usage": usage,
+        "eventCount": event_count,
+        "commands": commands,
+        "pysonarCommands": pysonar_commands,
+        "finalMessage": final,
+    }
+
+
+def validate(task_id: str, worktree: Path) -> dict[str, object]:
+    validator = BENCHMARK_DIR / "validators" / f"{task_id}.py"
+    started = time.monotonic()
+    result = subprocess.run(
+        ["python3", str(validator), str(worktree)],
+        text=True,
+        capture_output=True,
+        timeout=60,
+    )
+    return {
+        "passed": result.returncode == 0,
+        "exitCode": result.returncode,
+        "durationSeconds": round(time.monotonic() - started, 3),
+        "stdout": result.stdout.strip(),
+        "stderr": result.stderr.strip(),
+    }
+
+
+def run_trial(
+    task: dict[str, str],
+    condition: str,
+    repetition: int,
+    model: str,
+    run_root: Path,
+    results_dir: Path,
+    allow_unsandboxed_child: bool,
+) -> dict[str, object]:
+    trial_id = f"{task['id']}--{condition}--r{repetition}"
+    worktree = run_root / "worktrees" / trial_id
+    shutil.copytree(BENCHMARK_DIR / "fixtures" / task["id"], worktree)
+    codex_home = make_codex_home(run_root / trial_id, condition)
+    env = os.environ.copy()
+    env["CODEX_HOME"] = str(codex_home)
+    env["PATH"] = f"{ROOT / 'bin'}:{env['PATH']}"
+    command = [
+        "codex", "exec", "--ephemeral", "--ignore-user-config",
+        "--skip-git-repo-check", "--json", "--color", "never",
+        "--model", model, "-c", 'model_reasoning_effort="medium"',
+    ]
+    if allow_unsandboxed_child:
+        # Codex Desktop already applies an outer sandbox. A nested macOS
+        # sandbox-exec fails with sandbox_apply (exit 71), so the disposable
+        # child run must not attempt to install another sandbox profile.
+        command.append("--dangerously-bypass-approvals-and-sandbox")
+    else:
+        command.extend(("--sandbox", "workspace-write"))
+    command.extend(("--cd", str(worktree), trial_prompt(task, condition)))
+    started = time.monotonic()
+    process = subprocess.run(command, text=True, capture_output=True, env=env, timeout=900)
+    duration = round(time.monotonic() - started, 3)
+    parsed = parse_events(process.stdout)
+    score = validate(task["id"], worktree)
+    raw_path = results_dir / "raw" / f"{trial_id}.jsonl"
+    raw_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_path.write_text(process.stdout)
+    stderr_path = results_dir / "raw" / f"{trial_id}.stderr.txt"
+    stderr_path.write_text(process.stderr)
+    return {
+        "trialId": trial_id,
+        "taskId": task["id"],
+        "category": task["category"],
+        "condition": condition,
+        "repetition": repetition,
+        "model": model,
+        "durationSeconds": duration,
+        "agentExitCode": process.returncode,
+        "score": score,
+        **parsed,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--repetitions", type=int, default=1)
+    parser.add_argument("--task", action="append", dest="tasks")
+    parser.add_argument("--condition", action="append", choices=CONDITIONS)
+    parser.add_argument("--results-dir", type=Path, required=True)
+    parser.add_argument(
+        "--allow-unsandboxed-child",
+        action="store_true",
+        help=(
+            "disable the child Codex sandbox; use only when an outer sandbox "
+            "already confines these disposable fixtures"
+        ),
+    )
+    args = parser.parse_args()
+
+    selected = [task for task in load_tasks() if not args.tasks or task["id"] in args.tasks]
+    conditions = args.condition or list(CONDITIONS)
+    args.results_dir.mkdir(parents=True, exist_ok=True)
+    # Use /private/tmp explicitly on macOS. The process environment's TMPDIR points
+    # into /var/folders, where nested Codex sandboxes cannot apply their profile.
+    with tempfile.TemporaryDirectory(
+        prefix="pysonar-agent-benchmark-", dir="/private/tmp"
+    ) as temporary:
+        run_root = Path(temporary)
+        records = []
+        for repetition in range(1, args.repetitions + 1):
+            for task in selected:
+                for condition in conditions:
+                    print(f"running {task['id']} / {condition} / r{repetition}", flush=True)
+                    record = run_trial(
+                        task,
+                        condition,
+                        repetition,
+                        args.model,
+                        run_root,
+                        args.results_dir,
+                        args.allow_unsandboxed_child,
+                    )
+                    records.append(record)
+                    print(
+                        f"  pass={record['score']['passed']} duration={record['durationSeconds']}s "
+                        f"pysonar_calls={len(record['pysonarCommands'])}",
+                        flush=True,
+                    )
+    output = args.results_dir / "results.json"
+    output.write_text(json.dumps(records, indent=2) + "\n")
+    print(f"wrote {output}")
+    return 0 if all(record["score"]["passed"] for record in records) else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

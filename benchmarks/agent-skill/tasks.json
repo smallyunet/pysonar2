@@ -1,0 +1,32 @@
+[
+  {
+    "id": "rename-impact",
+    "category": "cross-file reference impact",
+    "prompt": "Rename the public function score_order to score_trade. Update every executable call site, including imported aliases, and do not leave a compatibility alias named score_order. Preserve behavior and keep the change focused. Run the visible tests before finishing."
+  },
+  {
+    "id": "alias-definition",
+    "category": "import alias definition resolution",
+    "prompt": "The webhook path is using the wrong sanitizer behavior. Change the sanitizer that actually reaches process_webhook so it removes token and secret fields while preserving email. Do not change the similarly named public-preview sanitizer. Keep the change focused and run the visible tests."
+  },
+  {
+    "id": "factory-types",
+    "category": "unannotated factory and inferred type flow",
+    "prompt": "Audit records now need a human-readable preview. Make deliver return '<destination>: <preview>' for every message type that can flow from build_message into deliver. Email previews use the subject; SMS previews use the first 12 characters of the body. Avoid channel-specific branching in deliver and run the visible tests."
+  },
+  {
+    "id": "callback-flow",
+    "category": "first-class callback data flow",
+    "prompt": "Partner ingestion must accept lowercase external IDs by normalizing them to uppercase before validation. Change only the callback that actually reaches ingest_partner; the admin ingestion path must remain strict and reject lowercase IDs. Run the visible tests."
+  },
+  {
+    "id": "localized-boundary",
+    "category": "localized non-semantic fix",
+    "prompt": "Fix the retry boundary bug: an operation with attempts equal to max_attempts must not retry. Keep the change minimal and run the visible tests."
+  },
+  {
+    "id": "dynamic-plugin",
+    "category": "dynamic dispatch analyzer boundary",
+    "prompt": "The configured plugin 'compact_slug' must collapse repeated dashes after replacing spaces, so 'A  B' becomes 'a-b'. Update the loaded plugin without changing the loader or the 'display_title' plugin. Run the visible tests."
+  }
+]

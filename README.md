@@ -147,6 +147,16 @@ The CLI embeds that same directory in the packaged JAR, so installs and updates 
 CLI version. The public `SKILL.md` uses only portable `name` and `description` frontmatter; optional
 Codex UI metadata lives separately under `agents/openai.yaml`.
 
+### Agent Skill benchmark
+
+The reproducible benchmark under [`benchmarks/agent-skill`](benchmarks/agent-skill) compares isolated
+Codex runs with and without the Skill across six task types. In the 2026-08-03 single-repetition pilot,
+both conditions passed 6/6 hidden validators. The Skill invoked PySonar2 only for the cross-file impact
+task and correctly skipped it for the other five, but used 15.5% more total tokens on these small
+fixtures. This is evidence that routing works, not evidence of token savings; the fixture scale is too
+small for reduced exploration to repay Skill and analyzer overhead. See the
+[`full method, result table, and limitations`](docs/agent-skill-benchmark.md).
+
 ## Generate a static code browser
 
 Build PySonar2 and analyze the included multi-file demo:
