@@ -1,6 +1,56 @@
 # PySonar2 Agent Skill benchmark
 
-## 2026-08-03 diverse-task pilot
+## 2026-08-03 natural-trigger follow-up
+
+After the first pilot exposed fixed Skill-loading overhead, the Skill and benchmark were changed so
+that control and treatment prompts are byte-identical. The treatment environment merely makes the
+Skill and CLI available; it does not instruct the model to use them. The Skill description now requires
+unresolved uncertainty after ordinary source search, and its default workflow no longer runs `doctor`
+or `check`.
+
+The follow-up used seven task categories, two conditions, three repetitions, hidden validators, and a
+seeded randomized schedule: 42 completed trials. The corrected dynamic-dispatch prompt explicitly
+distinguishes runtime Python callbacks from Codex plugins, avoiding an observed `plugin-creator` Skill
+confound. A new same-name/import-alias task exercises natural semantic routing.
+
+| Task category | Control tokens (3 runs) | Skill tokens (3 runs) | Delta |
+| --- | ---: | ---: | ---: |
+| Import-alias definition | 280,863 | 232,618 | -17.2% |
+| First-class callback flow | 245,032 | 252,434 | +3.0% |
+| Dynamic plugin dispatch | 276,621 | 247,646 | -10.5% |
+| Unannotated factory/type flow | 299,211 | 304,019 | +1.6% |
+| Localized boundary fix | 242,139 | 232,555 | -4.0% |
+| Cross-file rename impact | 264,422 | 327,025 | +23.7% |
+| Same-name/import-alias ambiguity | 295,168 | 298,996 | +1.3% |
+| **Total** | **1,903,456** | **1,895,293** | **-0.43%** |
+
+Both conditions passed 21/21 validators. Control took 931.4 seconds and treatment took 934.8 seconds
+(+0.36%). Treatment used 8,201 fewer uncached input tokens and 1,318 more output tokens. Only one of 21
+treatment trials loaded `pysonar-code-intelligence`; after direct search made the binding clear, it
+correctly skipped the analyzer. No treatment trial invoked `plan`, `context`, `impact`, or `check`.
+
+This meets the narrow routing goal: on small tasks where direct inspection is sufficient, installing
+the Skill is approximately token-neutral rather than adding the previous fixed 15.5% overhead. It does
+**not** show analyzer-driven savings. The new compact `plan` command and persistent JSONL `session`
+protocol are covered by CLI tests, but require a large, genuinely ambiguous repository benchmark before
+making a token-reduction claim.
+
+Structured measurements, including all 42 trial rows, command counts, output characters, Skill reads,
+and analyzer calls, are in
+[`2026-08-03-natural.json`](../benchmarks/agent-skill/results/2026-08-03-natural.json).
+
+Remaining limitations:
+
+- Three repetitions expose substantial model variance but are still a small sample.
+- Synthetic repositories underrepresent large-project exploration cost.
+- Per-task deltas vary widely even without Skill activation; the aggregate should be treated as a
+  routing regression result, not causal proof of a 0.43% saving.
+- PySonar2's semantic references remain incomplete for some import aliases and module attributes.
+  `plan` therefore labels its conservative exact-identifier fallback separately from semantic matches.
+- A persistent `session` reuses an immutable snapshot, but `refresh` is still an atomic whole-workspace
+  rebuild rather than dependency-graph incremental analysis.
+
+## 2026-08-03 forced-use diverse-task pilot
 
 This pilot tests whether the `pysonar-code-intelligence` Skill improves equal-quality Codex task
 completion, and whether it avoids the analyzer when direct inspection is sufficient. It replaces the

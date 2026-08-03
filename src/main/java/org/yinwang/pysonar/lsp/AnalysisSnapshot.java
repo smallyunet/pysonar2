@@ -245,6 +245,60 @@ public final class AnalysisSnapshot {
         return result;
     }
 
+    /** Returns exact symbol-name or qualified-name matches without fuzzy-result truncation. */
+    public List<SymbolInformation> exactWorkspaceSymbols(String query, int limit) {
+        String needle = query == null ? "" : query;
+        int boundedLimit = Math.max(1, limit);
+        List<SymbolInformation> result = new ArrayList<>();
+        for (List<SymbolInformation> fileSymbols : symbols.values()) {
+            for (SymbolInformation symbol : fileSymbols) {
+                if (needle.equals(symbol.getName()) || needle.equals(symbol.getContainerName())) {
+                    result.add(symbol);
+                    if (result.size() >= boundedLimit) {
+                        return result;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Returns exact identifier text occurrences as a conservative fallback to semantic references. */
+    public List<Location> identifierLocations(String identifier, int limit) {
+        if (identifier == null || identifier.isEmpty()) {
+            return Collections.emptyList();
+        }
+        for (int index = 0; index < identifier.length(); index++) {
+            if (!Character.isJavaIdentifierPart(identifier.charAt(index))) {
+                return Collections.emptyList();
+            }
+        }
+        int boundedLimit = Math.max(1, limit);
+        List<Location> result = new ArrayList<>();
+        for (Map.Entry<Path, String> entry : sources.entrySet()) {
+            if (!entry.getKey().startsWith(root)) {
+                continue;
+            }
+            String source = entry.getValue();
+            int offset = 0;
+            while ((offset = source.indexOf(identifier, offset)) >= 0) {
+                int end = offset + identifier.length();
+                boolean leftBoundary = offset == 0 || !Character.isJavaIdentifierPart(source.charAt(offset - 1));
+                boolean rightBoundary = end == source.length()
+                        || !Character.isJavaIdentifierPart(source.charAt(end));
+                if (leftBoundary && rightBoundary) {
+                    result.add(new Location(entry.getKey().toUri().toString(),
+                            toRange(entry.getKey(), offset, end)));
+                    if (result.size() >= boundedLimit) {
+                        return result;
+                    }
+                }
+                offset = end;
+            }
+        }
+        return result;
+    }
+
     public Map<String, List<org.eclipse.lsp4j.Diagnostic>> diagnosticsByUri() {
         Map<String, List<org.eclipse.lsp4j.Diagnostic>> result = new LinkedHashMap<>();
         for (Map.Entry<Path, List<org.eclipse.lsp4j.Diagnostic>> entry : diagnostics.entrySet()) {

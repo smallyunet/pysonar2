@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -58,6 +59,67 @@ public class MainTest {
         JsonObject impactJson = JsonParser.parseString(impact.stdout).getAsJsonObject();
         assertEquals("reference-based", impactJson.get("impactKind").getAsString());
         assertTrue(impactJson.getAsJsonArray("affectedFiles").size() >= 1);
+    }
+
+    @Test
+    public void compactPlanResolvesSymbolsAndBatchesOneAnalysis() throws Exception {
+        File root = temporaryFolder.newFolder("plan-project");
+        Files.write(new File(root, "rules.py").toPath(), (
+                "def score_order(value):\n" +
+                "    return value * 2\n" +
+                "\n" +
+                "def other(value):\n" +
+                "    return value\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "service.py").toPath(), (
+                "from rules import score_order\n" +
+                "\n" +
+                "result = score_order(3)\n").getBytes(StandardCharsets.UTF_8));
+
+        Result plan = run("plan", "--root", root.getAbsolutePath(),
+                "--symbol", "score_order", "--symbol", "other", "--intent", "change",
+                "--max-results", "8", "--format", "compact-json");
+        assertEquals(plan.stderr, 0, plan.exitCode);
+        JsonObject json = JsonParser.parseString(plan.stdout).getAsJsonObject();
+        assertEquals("plan", json.get("command").getAsString());
+        assertEquals(2, json.getAsJsonArray("queries").size());
+        JsonObject score = json.getAsJsonArray("queries").get(0).getAsJsonObject();
+        assertEquals("score_order", score.get("symbol").getAsString());
+        assertFalse(score.getAsJsonArray("candidates").isEmpty());
+        assertEquals("exact-identifier-text", score.get("occurrenceKind").getAsString());
+        assertTrue(score.get("returnedOccurrenceCount").getAsInt() >= 3);
+        assertTrue(score.getAsJsonArray("affectedFiles").size() >= 2);
+        JsonObject candidate = score.getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertFalse(candidate.getAsJsonArray("definitions").isEmpty());
+        assertFalse("compact output omits verbose timing", json.has("analysisMillis"));
+    }
+
+    @Test
+    public void sessionReusesSnapshotForMultiplePlans() throws Exception {
+        File root = temporaryFolder.newFolder("session-project");
+        Files.write(new File(root, "models.py").toPath(), (
+                "class User:\n" +
+                "    pass\n" +
+                "\n" +
+                "class Team:\n" +
+                "    pass\n").getBytes(StandardCharsets.UTF_8));
+        String requests =
+                "{\"id\":\"first\",\"command\":\"plan\",\"symbol\":\"User\"}\n" +
+                "{\"id\":\"second\",\"command\":\"plan\",\"symbol\":\"Team\"}\n" +
+                "{\"command\":\"quit\"}\n";
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+        int exitCode = Main.run(
+                new String[]{"session", "--root", root.getAbsolutePath(), "--format", "json"},
+                new ByteArrayInputStream(requests.getBytes(StandardCharsets.UTF_8)),
+                new PrintStream(stdout), new PrintStream(stderr));
+        assertEquals(new String(stderr.toByteArray(), StandardCharsets.UTF_8), 0, exitCode);
+        String[] lines = new String(stdout.toByteArray(), StandardCharsets.UTF_8).trim().split("\\R");
+        assertEquals(4, lines.length);
+        assertEquals("session-ready", JsonParser.parseString(lines[0]).getAsJsonObject()
+                .get("command").getAsString());
+        assertEquals("first", JsonParser.parseString(lines[1]).getAsJsonObject().get("id").getAsString());
+        assertEquals("second", JsonParser.parseString(lines[2]).getAsJsonObject().get("id").getAsString());
+        assertEquals("quit", JsonParser.parseString(lines[3]).getAsJsonObject().get("command").getAsString());
     }
 
     @Test

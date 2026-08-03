@@ -27,6 +27,11 @@
   {
     "id": "dynamic-plugin",
     "category": "dynamic dispatch analyzer boundary",
-    "prompt": "The configured plugin 'compact_slug' must collapse repeated dashes after replacing spaces, so 'A  B' becomes 'a-b'. Update the loaded plugin without changing the loader or the 'display_title' plugin. Run the visible tests."
+    "prompt": "This is a runtime Python callback called a plugin, not a Codex plugin or Skill task. The configured callback 'compact_slug' must collapse repeated dashes after replacing spaces, so 'A  B' becomes 'a-b'. Update it without changing the loader or 'display_title'. Run the visible tests."
+  },
+  {
+    "id": "semantic-ambiguity",
+    "category": "ambiguous same-name bindings and import aliases",
+    "prompt": "A partner webhook is leaking token and secret fields through normalization. This unfamiliar multi-file Python project has several same-named normalize functions and imported aliases. Determine which binding actually reaches process_partner, change only that implementation to remove token and secret while preserving email, and leave public, admin, audit, and legacy normalization unchanged. Run the visible tests."
   }
 ]

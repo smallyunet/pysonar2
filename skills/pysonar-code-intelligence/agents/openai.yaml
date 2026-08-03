@@ -1,4 +1,4 @@
 interface:
   display_name: "PySonar2 Code Intelligence"
-  short_description: "Resolve ambiguous Python symbols and change impact"
-  default_prompt: "Use $pysonar-code-intelligence only where semantic uncertainty could change this Python implementation."
+  short_description: "Resolve Python ambiguity left after source search"
+  default_prompt: "Use $pysonar-code-intelligence only after direct search leaves cross-file Python binding, type, or impact uncertainty."

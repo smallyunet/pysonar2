@@ -20,4 +20,8 @@ Exit codes:
 
 `impact` is a superset of `context`: it returns the same evidence plus `impactKind: reference-based` and `affectedFiles`. Do not call both commands for the same location. It does not claim complete dynamic call-graph coverage.
 
-`check` returns conservative diagnostics, optionally filtered by repeated or comma-separated `--changed` paths. Batch all changed Python files into one invocation because each CLI command performs a fresh project analysis. It does not replace tests, lint, or a strict type checker.
+`plan` accepts one or more repeated `--symbol` values and analyzes the project once. Each query contains semantic exact-name candidates plus explicitly labeled `exact-identifier-text` occurrences as a conservative fallback for incomplete alias or attribute references. For `--intent change`, it also returns the fallback affected-file shortlist. Treat occurrences as candidates, not proof that same-named symbols share a binding. `--format compact-json` omits verbose timing, root, kinds, inferred types, and repeated limitations.
+
+`session` keeps one `AnalysisSession` alive over newline-delimited JSON. It first emits `session-ready`, then accepts `{"command":"plan","symbol":"name","intent":"inspect|change","maxResults":8}`, `{"command":"refresh"}`, and `{"command":"quit"}`. `symbol` may be a string or array. Plans reuse the current immutable snapshot; `refresh` performs an explicit atomic whole-workspace rebuild after saved edits.
+
+`check` returns conservative diagnostics, optionally filtered by repeated or comma-separated `--changed` paths. It is an exception path when focused project validation is unavailable, not a default follow-up to analysis. It does not replace tests, lint, or a strict type checker.

@@ -2,17 +2,23 @@ package org.yinwang.pysonar.cli;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.SymbolInformation;
 import org.yinwang.pysonar.demos.Demo;
 import org.yinwang.pysonar.lsp.AnalysisSession;
 import org.yinwang.pysonar.lsp.AnalysisSnapshot;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.io.PrintStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -36,11 +42,11 @@ import java.util.concurrent.TimeUnit;
 /** Command-line interface intended for coding agents and local automation. */
 public final class Main {
 
-    public static final String VERSION = "3.2.0";
+    public static final String VERSION = "3.3.0";
     public static final int SCHEMA_VERSION = 1;
     private static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final Set<String> COMMANDS = new LinkedHashSet<>(Arrays.asList(
-            "doctor", "context", "impact", "check", "skill", "help", "--help", "-h"));
+            "doctor", "plan", "session", "context", "impact", "check", "skill", "help", "--help", "-h"));
     private static final List<String> SKILL_FILES = Arrays.asList(
             "SKILL.md", "agents/openai.yaml", "references/cli-schema.md");
 
@@ -52,13 +58,17 @@ public final class Main {
             Demo.main(args);
             return;
         }
-        int exitCode = run(args, System.out, System.err);
+        int exitCode = run(args, System.in, System.out, System.err);
         if (exitCode != 0) {
             System.exit(exitCode);
         }
     }
 
     public static int run(String[] args, PrintStream out, PrintStream err) {
+        return run(args, System.in, out, err);
+    }
+
+    public static int run(String[] args, InputStream input, PrintStream out, PrintStream err) {
         try {
             if (args.length == 0 || "help".equals(args[0]) || "--help".equals(args[0]) || "-h".equals(args[0])) {
                 usage(out);
@@ -76,6 +86,15 @@ public final class Main {
                     options.requireJson();
                     writeJson(out, context(options, false));
                     return 0;
+                case "plan":
+                    options.assertOnly("root", "symbol", "intent", "max-results", "format");
+                    options.requireFormat("compact-json", "json");
+                    writeJson(out, plan(options));
+                    return 0;
+                case "session":
+                    options.assertOnly("root", "format");
+                    options.requireJson();
+                    return session(options, input, out);
                 case "impact":
                     options.assertOnly("root", "file", "line", "character", "max-results", "format");
                     options.requireJson();
@@ -109,7 +128,8 @@ public final class Main {
         Map<String, Object> python = probePython(pythonCommand);
         result.put("python", python);
         result.put("status", Boolean.TRUE.equals(python.get("available")) ? "ok" : "degraded");
-        result.put("capabilities", Arrays.asList("context", "reference-impact", "diagnostics", "skill-install"));
+        result.put("capabilities", Arrays.asList(
+                "symbol-plan", "persistent-session", "context", "reference-impact", "diagnostics", "skill-install"));
         return result;
     }
 
@@ -172,6 +192,193 @@ public final class Main {
                     "Results describe the saved workspace state and may be incomplete for dynamic Python behavior."));
         }
         return result;
+    }
+
+    private static Map<String, Object> plan(Arguments args) throws Exception {
+        List<String> symbols = args.all("symbol");
+        if (symbols.isEmpty()) {
+            throw new CliException("Missing required option --symbol", 2);
+        }
+        String intent = args.value("intent", "inspect");
+        if (!"inspect".equals(intent) && !"change".equals(intent)) {
+            throw new CliException("--intent must be inspect or change", 2);
+        }
+        int maxResults = Math.max(1, args.integer("max-results", 8));
+        boolean compact = "compact-json".equals(args.value("format", "compact-json"));
+        Path root = root(args);
+        long started = System.nanoTime();
+        AnalysisSnapshot snapshot = analyze(root);
+        List<Map<String, Object>> queries = new ArrayList<>();
+        for (String symbol : symbols) {
+            queries.add(symbolPlan(root, snapshot, symbol, intent, maxResults, compact));
+        }
+        Map<String, Object> result = envelope("plan");
+        result.put("queries", queries);
+        if (!compact) {
+            result.put("root", root.toString());
+            result.put("analysisMillis", elapsedMillis(started));
+            result.put("limitations", Arrays.asList(
+                    "Plans use saved-workspace definitions and references, not a complete runtime call graph.",
+                    "Dynamic imports, reflection, monkey patching, and unresolved types may be omitted."));
+        }
+        return result;
+    }
+
+    private static int session(Arguments args, InputStream input, PrintStream out) throws Exception {
+        Path root = root(args);
+        try (AnalysisSession session = new AnalysisSession(root, Collections.emptyList());
+             BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+            long started = System.nanoTime();
+            AnalysisSnapshot snapshot = session.rebuildNow();
+            Map<String, Object> ready = envelope("session-ready");
+            ready.put("root", root.toString());
+            ready.put("fileCount", snapshot.fileCount());
+            ready.put("analysisMillis", elapsedMillis(started));
+            writeJson(out, ready);
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                JsonObject request;
+                try {
+                    request = JsonParser.parseString(line).getAsJsonObject();
+                } catch (Exception error) {
+                    writeJson(out, error("Session input must be one JSON object per line", 2));
+                    continue;
+                }
+                String requestId = jsonString(request, "id", null);
+                String command = jsonString(request, "command", "");
+                Map<String, Object> response;
+                try {
+                    switch (command) {
+                        case "plan":
+                            response = sessionPlan(root, snapshot, request);
+                            break;
+                        case "refresh":
+                            long refreshStarted = System.nanoTime();
+                            snapshot = session.rebuildNow();
+                            response = envelope("refresh");
+                            response.put("fileCount", snapshot.fileCount());
+                            response.put("analysisMillis", elapsedMillis(refreshStarted));
+                            break;
+                        case "quit":
+                            response = envelope("quit");
+                            if (requestId != null) {
+                                response.put("id", requestId);
+                            }
+                            writeJson(out, response);
+                            return 0;
+                        default:
+                            throw new CliException("Session command must be plan, refresh, or quit", 2);
+                    }
+                } catch (CliException error) {
+                    response = error(error.getMessage(), error.exitCode);
+                }
+                if (requestId != null) {
+                    response.put("id", requestId);
+                }
+                writeJson(out, response);
+            }
+        }
+        return 0;
+    }
+
+    private static Map<String, Object> sessionPlan(Path root, AnalysisSnapshot snapshot, JsonObject request) {
+        String intent = jsonString(request, "intent", "inspect");
+        if (!"inspect".equals(intent) && !"change".equals(intent)) {
+            throw new CliException("intent must be inspect or change", 2);
+        }
+        int maxResults = jsonInteger(request, "maxResults", 8);
+        if (maxResults < 1) {
+            throw new CliException("maxResults must be positive", 2);
+        }
+        List<String> symbols = new ArrayList<>();
+        JsonElement symbolValue = request.get("symbol");
+        if (symbolValue != null && symbolValue.isJsonArray()) {
+            for (JsonElement value : symbolValue.getAsJsonArray()) {
+                symbols.add(value.getAsString());
+            }
+        } else if (symbolValue != null && symbolValue.isJsonPrimitive()) {
+            symbols.add(symbolValue.getAsString());
+        }
+        if (symbols.isEmpty()) {
+            throw new CliException("Session plan requires symbol", 2);
+        }
+        List<Map<String, Object>> queries = new ArrayList<>();
+        for (String symbol : symbols) {
+            queries.add(symbolPlan(root, snapshot, symbol, intent, maxResults, true));
+        }
+        Map<String, Object> response = envelope("plan");
+        response.put("queries", queries);
+        return response;
+    }
+
+    private static String jsonString(JsonObject object, String key, String fallback) {
+        JsonElement value = object.get(key);
+        return value == null || value.isJsonNull() ? fallback : value.getAsString();
+    }
+
+    private static int jsonInteger(JsonObject object, String key, int fallback) {
+        JsonElement value = object.get(key);
+        return value == null || value.isJsonNull() ? fallback : value.getAsInt();
+    }
+
+    private static Map<String, Object> symbolPlan(Path root, AnalysisSnapshot snapshot, String symbol,
+                                                   String intent, int maxResults, boolean compact) {
+        List<SymbolInformation> matches = snapshot.exactWorkspaceSymbols(symbol, Integer.MAX_VALUE);
+        List<Location> occurrences = snapshot.identifierLocations(symbol, maxResults + 1);
+        boolean truncated = matches.size() > maxResults;
+        List<Map<String, Object>> candidates = new ArrayList<>();
+        for (SymbolInformation match : matches.subList(0, Math.min(matches.size(), maxResults))) {
+            Location declaration = match.getLocation();
+            Path file = Paths.get(URI.create(declaration.getUri())).toAbsolutePath().normalize();
+            Position position = declaration.getRange().getStart();
+            List<Location> definitions = snapshot.definitions(file, position);
+            if (definitions.isEmpty()) {
+                definitions = Collections.singletonList(declaration);
+            }
+            List<Location> references = snapshot.references(file, position, false);
+            Map<String, Object> candidate = new LinkedHashMap<>();
+            candidate.put("name", match.getName());
+            candidate.put("qualifiedName", qualifiedName(root, file, match.getName()));
+            if (!compact) {
+                candidate.put("kind", match.getKind() == null ? null : match.getKind().toString());
+                candidate.put("inferredType", hoverText(snapshot.hover(file, position)));
+            }
+            candidate.put("definitions", locations(root, definitions, maxResults, true));
+            candidate.put("references", locations(root, references, maxResults, true));
+            if ("change".equals(intent)) {
+                candidate.put("affectedFiles", affectedFiles(root, definitions, references));
+            }
+            candidate.put("truncated", definitions.size() > maxResults || references.size() > maxResults);
+            candidates.add(candidate);
+        }
+        Map<String, Object> query = new LinkedHashMap<>();
+        query.put("symbol", symbol);
+        query.put("intent", intent);
+        query.put("matchCount", matches.size());
+        query.put("candidates", candidates);
+        query.put("occurrenceKind", "exact-identifier-text");
+        List<Location> limitedOccurrences = occurrences.subList(0, Math.min(occurrences.size(), maxResults));
+        query.put("returnedOccurrenceCount", limitedOccurrences.size());
+        query.put("occurrences", locations(root, limitedOccurrences, maxResults, true));
+        if ("change".equals(intent)) {
+            query.put("affectedFiles", affectedFiles(root, Collections.emptyList(), limitedOccurrences));
+        }
+        query.put("truncated", truncated || occurrences.size() > maxResults);
+        return query;
+    }
+
+    private static String qualifiedName(Path root, Path file, String name) {
+        String relative = normalizeRelative(root, file);
+        int extension = relative.lastIndexOf(".py");
+        String module = extension == relative.length() - 3
+                ? relative.substring(0, extension)
+                : relative;
+        module = module.replace('/', '.').replace('\\', '.');
+        return module.isEmpty() ? name : module + "." + name;
     }
 
     private static Map<String, Object> check(Arguments args) throws Exception {
@@ -503,12 +710,15 @@ public final class Main {
 
     private static void writeJson(PrintStream stream, Object value) {
         stream.println(JSON.toJson(value));
+        stream.flush();
     }
 
     private static void usage(PrintStream out) {
         out.println("PySonar2 agent CLI " + VERSION);
         out.println("Usage:");
         out.println("  pysonar doctor --format json");
+        out.println("  pysonar plan --root DIR --symbol NAME [--intent inspect|change] [--max-results N] [--format compact-json]");
+        out.println("  pysonar session --root DIR --format json  # JSONL plan/refresh/quit protocol on stdin/stdout");
         out.println("  pysonar context --root DIR --file FILE --line N [--character N] [--max-results N]");
         out.println("  pysonar impact --root DIR --file FILE --line N [--character N] [--max-results N]");
         out.println("  pysonar check --root DIR [--changed FILE[,FILE...]]");
@@ -576,9 +786,13 @@ public final class Main {
         }
 
         void requireJson() {
-            String format = value("format", "json");
-            if (!"json".equals(format)) {
-                throw new CliException("--format currently supports only json", 2);
+            requireFormat("json");
+        }
+
+        void requireFormat(String... supported) {
+            String format = value("format", supported[0]);
+            if (!Arrays.asList(supported).contains(format)) {
+                throw new CliException("--format must be one of: " + String.join(", ", supported), 2);
             }
         }
 

@@ -173,7 +173,7 @@ function resolveServerJar(context: vscode.ExtensionContext): string | undefined 
   const candidates = [
     configured,
     context.asAbsolutePath(path.join("server", "pysonar-lsp.jar")),
-    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.2.0.jar"),
+    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.3.0.jar"),
   ].filter(Boolean);
   return candidates.find((candidate) => fs.existsSync(candidate));
 }

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.2.1
+
+- Bundle PySonar2 3.3.0 with compact symbol planning and persistent JSONL analysis sessions.
+- Expose batched inspect/change plans for coding agents while clearly labeling lexical fallback results.
+- Ship the narrower agent skill and reproducible natural-trigger benchmark artifacts.
+
 ## 0.2.0
 
 - Bundle PySonar2 3.2.0 with dedicated support for Python 3.11 exception groups.

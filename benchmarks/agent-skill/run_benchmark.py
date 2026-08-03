@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -19,8 +20,9 @@ BENCHMARK_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = "gpt-5.6-sol"
 CONDITIONS = ("control", "skill")
 ANALYZER_COMMAND_RE = re.compile(
-    r"(?<![A-Za-z0-9_.-])pysonar\s+(?:doctor|context|impact|check)\b"
+    r"(?<![A-Za-z0-9_.-])pysonar\s+(?:doctor|plan|context|impact|check)\b"
 )
+SOURCE_READ_COMMAND_RE = re.compile(r"(?:^|[;&|\s])(rg|sed|find|head|tail)(?:\s|$)")
 
 
 def load_tasks() -> list[dict[str, str]]:
@@ -42,24 +44,12 @@ def make_codex_home(root: Path, condition: str) -> Path:
     return home
 
 
-def trial_prompt(task: dict[str, str], condition: str) -> str:
-    condition_instruction = {
-        "control": (
-            "Do not use PySonar2, pysonar commands, or any PySonar2 skill. "
-            "Use ordinary repository search, source inspection, and tests."
-        ),
-        "skill": (
-            "Use the installed pysonar-code-intelligence skill faithfully. "
-            "Its routing decision may use or skip the pysonar CLI as instructed."
-        ),
-    }[condition]
+def trial_prompt(task: dict[str, str]) -> str:
     return f"""You are completing one benchmark task in an isolated Python repository.
-
-{condition_instruction}
 
 Task: {task['prompt']}
 
-Do not commit. Do not read outside this repository except for installed skill instructions and tools.
+Do not commit. Do not read outside this repository except for automatically available task instructions.
 Finish with a concise summary and the tests you ran.
 """
 
@@ -67,8 +57,12 @@ Finish with a concise summary and the tests you ran.
 def parse_events(stdout: str) -> dict[str, object]:
     usage: dict[str, int] = {}
     commands: list[str] = []
+    command_output_chars = 0
+    source_read_output_chars = 0
     final = ""
     event_count = 0
+    completed_items = 0
+    agent_messages = 0
     for line in stdout.splitlines():
         try:
             event = json.loads(line)
@@ -78,15 +72,28 @@ def parse_events(stdout: str) -> dict[str, object]:
         if event.get("type") == "turn.completed":
             usage = event.get("usage", {})
         item = event.get("item", {})
+        if event.get("type") == "item.completed":
+            completed_items += 1
         if event.get("type") == "item.completed" and item.get("type") == "command_execution":
-            commands.append(item.get("command", ""))
+            command = item.get("command", "")
+            output_length = len(item.get("aggregated_output", ""))
+            commands.append(command)
+            command_output_chars += output_length
+            if SOURCE_READ_COMMAND_RE.search(command):
+                source_read_output_chars += output_length
         if item.get("type") == "agent_message":
             final = item.get("text", final)
+            if event.get("type") == "item.completed":
+                agent_messages += 1
     pysonar_commands = [command for command in commands if ANALYZER_COMMAND_RE.search(command)]
     return {
         "usage": usage,
         "eventCount": event_count,
+        "completedItems": completed_items,
+        "agentMessages": agent_messages,
         "commands": commands,
+        "commandOutputChars": command_output_chars,
+        "sourceReadOutputChars": source_read_output_chars,
         "pysonarCommands": pysonar_commands,
         "finalMessage": final,
     }
@@ -125,7 +132,8 @@ def run_trial(
     codex_home = make_codex_home(run_root / trial_id, condition)
     env = os.environ.copy()
     env["CODEX_HOME"] = str(codex_home)
-    env["PATH"] = f"{ROOT / 'bin'}:{env['PATH']}"
+    if condition == "skill":
+        env["PATH"] = f"{ROOT / 'bin'}:{env['PATH']}"
     command = [
         "codex", "exec", "--ephemeral", "--ignore-user-config",
         "--skip-git-repo-check", "--json", "--color", "never",
@@ -138,7 +146,7 @@ def run_trial(
         command.append("--dangerously-bypass-approvals-and-sandbox")
     else:
         command.extend(("--sandbox", "workspace-write"))
-    command.extend(("--cd", str(worktree), trial_prompt(task, condition)))
+    command.extend(("--cd", str(worktree), trial_prompt(task)))
     started = time.monotonic()
     process = subprocess.run(command, text=True, capture_output=True, env=env, timeout=900)
     duration = round(time.monotonic() - started, 3)
@@ -167,6 +175,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--repetitions", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=20260803)
     parser.add_argument("--task", action="append", dest="tasks")
     parser.add_argument("--condition", action="append", choices=CONDITIONS)
     parser.add_argument("--results-dir", type=Path, required=True)
@@ -190,25 +199,31 @@ def main() -> int:
     ) as temporary:
         run_root = Path(temporary)
         records = []
-        for repetition in range(1, args.repetitions + 1):
-            for task in selected:
-                for condition in conditions:
-                    print(f"running {task['id']} / {condition} / r{repetition}", flush=True)
-                    record = run_trial(
-                        task,
-                        condition,
-                        repetition,
-                        args.model,
-                        run_root,
-                        args.results_dir,
-                        args.allow_unsandboxed_child,
-                    )
-                    records.append(record)
-                    print(
-                        f"  pass={record['score']['passed']} duration={record['durationSeconds']}s "
-                        f"pysonar_calls={len(record['pysonarCommands'])}",
-                        flush=True,
-                    )
+        schedule = [
+            (task, condition, repetition)
+            for repetition in range(1, args.repetitions + 1)
+            for task in selected
+            for condition in conditions
+        ]
+        random.Random(args.seed).shuffle(schedule)
+        for task, condition, repetition in schedule:
+            print(f"running {task['id']} / {condition} / r{repetition}", flush=True)
+            record = run_trial(
+                task,
+                condition,
+                repetition,
+                args.model,
+                run_root,
+                args.results_dir,
+                args.allow_unsandboxed_child,
+            )
+            record["scheduleSeed"] = args.seed
+            records.append(record)
+            print(
+                f"  pass={record['score']['passed']} duration={record['durationSeconds']}s "
+                f"pysonar_calls={len(record['pysonarCommands'])}",
+                flush=True,
+            )
     output = args.results_dir / "results.json"
     output.write_text(json.dumps(records, indent=2) + "\n")
     print(f"wrote {output}")

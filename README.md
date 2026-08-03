@@ -27,6 +27,17 @@ Insight.io (now part of Elastic).
 
 ## What's new
 
+### PySonar2 3.3
+
+The 3.3 release adds lower-overhead code intelligence for coding agents:
+
+- compact `plan` responses for one or more symbols and `inspect` or `change` intent;
+- persistent JSONL `session` mode with explicit atomic snapshot refresh;
+- exact semantic candidates with clearly labeled identifier-text fallback when reference coverage is incomplete;
+- a narrower agent skill that invokes semantic analysis only when ordinary repository search leaves uncertainty; and
+- a reproducible natural-trigger benchmark covering seven task types, paired control/treatment runs, quality,
+  token use, wall time, and analyzer-call attribution.
+
 ### PySonar2 3.2
 
 The 3.2 release extends the Python 3.10+ baseline through modern Python 3.11-3.14 syntax while preserving
@@ -41,10 +52,10 @@ the whole-project analysis model:
 - an explicit [Python support matrix](docs/python-support.md) separating inference, navigation, and
   traversal-only coverage.
 
-### VS Code extension 0.2.0
+### VS Code extension 0.2.1
 
 [PySonar2 Code Intelligence](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
-bundles the 3.2 analyzer in a Java Language Server with a TypeScript VS Code client providing:
+bundles the 3.3 analyzer in a Java Language Server with a TypeScript VS Code client providing:
 
 - go to definition and find all references;
 - inferred-type and docstring hovers;
@@ -97,8 +108,8 @@ Build the CLI bundle:
 
 ```sh
 mvn package
-unzip target/pysonar-cli-3.2.0.zip
-export PATH="$PWD/pysonar-cli-3.2.0/bin:$PATH"
+unzip target/pysonar-cli-3.3.0.zip
+export PATH="$PWD/pysonar-cli-3.3.0/bin:$PATH"
 pysonar doctor --format json
 ```
 
@@ -132,15 +143,33 @@ has been modified locally.
 The machine-readable analysis commands are:
 
 ```sh
+pysonar plan --root . --symbol Handler --intent change --max-results 8 --format compact-json
 pysonar context --root . --file app.py --line 42 --character 8 --format json
 pysonar impact --root . --file app.py --line 42 --character 8 --format json
 pysonar check --root . --changed app.py --format json
 ```
 
-`context` returns inferred hover information, definitions, references, and small source snippets.
+`plan` resolves one or more repeated symbol names with a single analysis and returns compact definitions,
+references, snippets, and affected files for agent change planning. `context` returns inferred hover
+information, definitions, references, and small source snippets.
 `impact` adds the affected-file set and explicitly reports that its coverage is reference-based rather
 than a complete runtime call graph. `check` returns conservative diagnostics for the whole project or
-the paths selected with repeated or comma-separated `--changed` options.
+the paths selected with repeated or comma-separated `--changed` options; it is intended for cases where
+focused project validation is unavailable, not as a mandatory post-edit step.
+
+For several semantic decisions in one agent task, keep an immutable analysis snapshot alive with the
+JSONL session protocol:
+
+```sh
+pysonar session --root . --format json
+{"command":"plan","symbol":["Handler","Registry"],"intent":"change","maxResults":8}
+{"command":"refresh"}
+{"command":"quit"}
+```
+
+The session emits a `session-ready` object before accepting requests. `plan` requests reuse the current
+snapshot; send `refresh` after saved edits. Refresh is an atomic whole-workspace rebuild, not yet a
+dependency-graph incremental update.
 
 The canonical Skill source is [`skills/pysonar-code-intelligence`](skills/pysonar-code-intelligence).
 The CLI embeds that same directory in the packaged JAR, so installs and updates stay aligned with the
@@ -150,11 +179,12 @@ Codex UI metadata lives separately under `agents/openai.yaml`.
 ### Agent Skill benchmark
 
 The reproducible benchmark under [`benchmarks/agent-skill`](benchmarks/agent-skill) compares isolated
-Codex runs with and without the Skill across six task types. In the 2026-08-03 single-repetition pilot,
-both conditions passed 6/6 hidden validators. The Skill invoked PySonar2 only for the cross-file impact
-task and correctly skipped it for the other five, but used 15.5% more total tokens on these small
-fixtures. This is evidence that routing works, not evidence of token savings; the fixture scale is too
-small for reduced exploration to repay Skill and analyzer overhead. See the
+Codex runs with and without the Skill. After narrowing the trigger and removing mandatory
+`doctor`/`check`, the 2026-08-03 natural-trigger run covered seven task types with three repetitions:
+both conditions passed 21/21 validators, and the Skill condition used 0.43% fewer total tokens with
+0.36% more wall-clock time. Only one treatment trial loaded the PySonar2 Skill, and none needed the
+analyzer because direct search resolved every small fixture. This demonstrates near-neutral routing
+overhead, not analyzer-driven token savings; a large-project semantic benchmark is still required. See the
 [`full method, result table, and limitations`](docs/agent-skill-benchmark.md).
 
 ## Generate a static code browser
@@ -163,7 +193,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.2.0.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.0.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -173,7 +203,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.2.0.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.3.0.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -246,6 +276,7 @@ export PYTHONPATH=/usr/lib/python3
 | `src/test/java/org/yinwang/pysonar` | Parser, inference, traversal, demo, and LSP tests |
 | `editors/vscode` | Published VS Code extension and VSIX build tooling |
 | `demo_project` | Shared multi-file demo for the static browser and VS Code extension |
+| `benchmarks/agent-skill` | Reproducible natural-trigger Skill-vs-control agent benchmark |
 | `docs/python-support.md` | Python syntax and semantic support contract |
 
 ## Current limitations
@@ -269,7 +300,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.2.0.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.3.0.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.
