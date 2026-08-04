@@ -52,7 +52,7 @@ the whole-project analysis model:
 - an explicit [Python support matrix](docs/python-support.md) separating inference, navigation, and
   traversal-only coverage.
 
-### VS Code extension 0.2.1
+### VS Code extension 0.2.2
 
 [PySonar2 Code Intelligence](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
 bundles the 3.3 analyzer in a Java Language Server with a TypeScript VS Code client providing:
@@ -108,8 +108,8 @@ Build the CLI bundle:
 
 ```sh
 mvn package
-unzip target/pysonar-cli-3.3.0.zip
-export PATH="$PWD/pysonar-cli-3.3.0/bin:$PATH"
+unzip target/pysonar-cli-3.3.1.zip
+export PATH="$PWD/pysonar-cli-3.3.1/bin:$PATH"
 pysonar doctor --format json
 ```
 
@@ -195,7 +195,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.3.0.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.1.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -205,7 +205,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.3.0.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.3.1.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -304,7 +304,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.3.0.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.3.1.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.

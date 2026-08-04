@@ -12,13 +12,13 @@ output="$output_dir/analyzer-$timestamp.json"
 
 mkdir -p "$output_dir"
 
-if [ ! -f "$project_root/target/pysonar-3.3.0.jar" ]; then
-  echo "Build target/pysonar-3.3.0.jar with mvn package first." >&2
+if [ ! -f "$project_root/target/pysonar-3.3.1.jar" ]; then
+  echo "Build target/pysonar-3.3.1.jar with mvn package first." >&2
   exit 2
 fi
 
 if [ -n "$change_file" ]; then
-  java -cp "$project_root/target/pysonar-3.3.0.jar" \
+  java -cp "$project_root/target/pysonar-3.3.1.jar" \
     org.yinwang.pysonar.bench.AnalyzerBenchmark \
     --root "$corpus" \
     --warmups 1 \
@@ -26,7 +26,7 @@ if [ -n "$change_file" ]; then
     --cache-dir "$output_dir/cache" \
     --change-file "$change_file" > "$output"
 else
-  java -cp "$project_root/target/pysonar-3.3.0.jar" \
+  java -cp "$project_root/target/pysonar-3.3.1.jar" \
     org.yinwang.pysonar.bench.AnalyzerBenchmark \
     --root "$corpus" \
     --warmups 1 \

@@ -139,7 +139,7 @@ npm install
 npm run package
 ```
 
-The prepublish step builds the Java project, copies `target/pysonar-3.3.0.jar` to the extension package as
+The prepublish step builds the Java project, copies `target/pysonar-3.3.1.jar` to the extension package as
 `server/pysonar-lsp.jar`, bundles the TypeScript client, and produces `pysonar2-code-intelligence.vsix`.
 Set `PYSONAR_MAVEN_REPO_LOCAL` when the build needs to use a non-default Maven dependency cache.
 

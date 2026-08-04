@@ -6,7 +6,7 @@
 
     <groupId>org.yinwang</groupId>
     <artifactId>pysonar</artifactId>
-    <version>3.3.0</version>
+    <version>3.3.1</version>
     <packaging>jar</packaging>
     <name>pysonar2</name>
 

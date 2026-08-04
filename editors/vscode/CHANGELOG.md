@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.2.2
 
 - Reuse content-addressed serialized ASTs across rebuilds and language-server restarts.
 - Rebuild only changed files and their transitive reverse-import dependents, with conservative full
