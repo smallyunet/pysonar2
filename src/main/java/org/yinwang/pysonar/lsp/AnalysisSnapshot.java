@@ -150,6 +150,66 @@ public final class AnalysisSnapshot {
         return new AnalysisSnapshot(normalizedRoot, sources, positionIndexes, occurrences, symbols, diagnostics);
     }
 
+    /**
+     * Replaces editor data for a conservative affected-file closure while retaining the
+     * immutable slices for unrelated files. Reference lists are reconciled by definition
+     * location so queries from either side of an incremental boundary remain complete.
+     */
+    AnalysisSnapshot replaceFiles(AnalysisSnapshot replacement, Collection<Path> affectedFiles) {
+        Set<Path> affected = new LinkedHashSet<>();
+        Set<String> affectedUris = new LinkedHashSet<>();
+        for (Path file : affectedFiles) {
+            Path normalized = normalize(file);
+            affected.add(normalized);
+            affectedUris.add(normalized.toUri().toString());
+        }
+
+        Map<String, BindingView> newBindings = bindingViewsByDefinition(
+                replacement.occurrences, null);
+        Map<String, BindingView> oldBindings = bindingViewsByDefinition(
+                occurrences, newBindings.keySet());
+
+        Map<Path, String> mergedSources = new LinkedHashMap<>(sources);
+        Map<Path, PositionCodec.LineIndex> mergedIndexes = new LinkedHashMap<>(positionIndexes);
+        Map<Path, List<Occurrence>> mergedOccurrences = new LinkedHashMap<>();
+        Map<Path, List<SymbolInformation>> mergedSymbols = new LinkedHashMap<>(symbols);
+        Map<Path, List<org.eclipse.lsp4j.Diagnostic>> mergedDiagnostics = new LinkedHashMap<>(diagnostics);
+
+        for (Path file : affected) {
+            mergedSources.remove(file);
+            mergedIndexes.remove(file);
+            mergedSymbols.remove(file);
+            mergedDiagnostics.remove(file);
+        }
+        for (Map.Entry<Path, String> entry : replacement.sources.entrySet()) {
+            if (affected.contains(entry.getKey()) || !entry.getKey().startsWith(root)) {
+                mergedSources.put(entry.getKey(), entry.getValue());
+                mergedIndexes.put(entry.getKey(), replacement.positionIndexes.get(entry.getKey()));
+            }
+        }
+        copyAffectedLists(replacement.symbols, mergedSymbols, affected);
+        copyAffectedLists(replacement.diagnostics, mergedDiagnostics, affected);
+
+        for (Map.Entry<Path, List<Occurrence>> entry : occurrences.entrySet()) {
+            if (!affected.contains(entry.getKey())) {
+                mergedOccurrences.put(entry.getKey(), reconcileOccurrences(
+                        entry.getValue(), newBindings, affectedUris, false));
+            }
+        }
+        for (Map.Entry<Path, List<Occurrence>> entry : replacement.occurrences.entrySet()) {
+            if (affected.contains(entry.getKey())) {
+                mergedOccurrences.put(entry.getKey(), reconcileOccurrences(
+                        entry.getValue(), oldBindings, affectedUris, true));
+            } else if (!entry.getKey().startsWith(root) && !mergedOccurrences.containsKey(entry.getKey())) {
+                mergedOccurrences.put(entry.getKey(), reconcileOccurrences(
+                        entry.getValue(), oldBindings, affectedUris, true));
+            }
+        }
+
+        return new AnalysisSnapshot(root, mergedSources, mergedIndexes, mergedOccurrences,
+                mergedSymbols, mergedDiagnostics);
+    }
+
     public Optional<Hover> hover(Path file, Position position) {
         Optional<Occurrence> occurrence = occurrenceAt(file, position);
         if (!occurrence.isPresent()) {
@@ -437,6 +497,64 @@ public final class AnalysisSnapshot {
         return location.getUri() + ":" + range.getStart().getLine() + ":" + range.getStart().getCharacter();
     }
 
+    private static <T> void copyAffectedLists(Map<Path, List<T>> source, Map<Path, List<T>> target,
+                                              Set<Path> affected) {
+        for (Map.Entry<Path, List<T>> entry : source.entrySet()) {
+            if (affected.contains(entry.getKey())) {
+                target.put(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private static Map<String, BindingView> bindingViewsByDefinition(
+            Map<Path, List<Occurrence>> occurrenceMap, Set<String> selectedDefinitions) {
+        Map<String, BindingView> result = new LinkedHashMap<>();
+        boolean selectAll = selectedDefinitions == null;
+        for (List<Occurrence> fileOccurrences : occurrenceMap.values()) {
+            for (Occurrence occurrence : fileOccurrences) {
+                for (BindingView binding : occurrence.bindings) {
+                    if (binding.definition != null) {
+                        String key = locationKey(binding.definition);
+                        if (!selectAll && !selectedDefinitions.contains(key)) {
+                            continue;
+                        }
+                        BindingView previous = result.get(key);
+                        result.put(key, previous == null ? binding : previous.unionReferences(binding));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private static List<Occurrence> reconcileOccurrences(List<Occurrence> input,
+                                                         Map<String, BindingView> counterparts,
+                                                         Set<String> affectedUris,
+                                                         boolean preferInputFields) {
+        List<Occurrence> result = new ArrayList<>();
+        for (Occurrence occurrence : input) {
+            List<BindingView> bindings = null;
+            int bindingIndex = 0;
+            for (BindingView binding : occurrence.bindings) {
+                BindingView counterpart = binding.definition == null
+                        ? null : counterparts.get(locationKey(binding.definition));
+                boolean needsReconciliation = counterpart != null || binding.hasReferenceIn(affectedUris);
+                if (needsReconciliation) {
+                    if (bindings == null) {
+                        bindings = new ArrayList<>(occurrence.bindings.subList(0, bindingIndex));
+                    }
+                    bindings.add(binding.reconcileReferences(counterpart, affectedUris, preferInputFields));
+                } else if (bindings != null) {
+                    bindings.add(binding);
+                }
+                bindingIndex++;
+            }
+            result.add(bindings == null ? occurrence : new Occurrence(occurrence.start, occurrence.end,
+                    Collections.unmodifiableList(bindings)));
+        }
+        return result;
+    }
+
     private static <T> Map<Path, List<T>> immutableMapOfLists(Map<Path, List<T>> input) {
         Map<Path, List<T>> copy = new LinkedHashMap<>();
         for (Map.Entry<Path, List<T>> entry : input.entrySet()) {
@@ -516,6 +634,57 @@ public final class AnalysisSnapshot {
                 }
             }
             return new BindingView(type, documentation, definition, Collections.unmodifiableList(references));
+        }
+
+        BindingView unionReferences(BindingView other) {
+            LinkedHashMap<String, Location> merged = new LinkedHashMap<>();
+            for (Location reference : references) {
+                merged.put(locationKey(reference), reference);
+            }
+            for (Location reference : other.references) {
+                merged.put(locationKey(reference), reference);
+            }
+            return new BindingView(type, documentation, definition,
+                    Collections.unmodifiableList(new ArrayList<>(merged.values())));
+        }
+
+        BindingView reconcileReferences(BindingView counterpart, Set<String> affectedUris,
+                                        boolean preferThisFields) {
+            LinkedHashMap<String, Location> merged = new LinkedHashMap<>();
+            BindingView oldSide = preferThisFields ? counterpart : this;
+            BindingView newSide = preferThisFields ? this : counterpart;
+            if (oldSide != null) {
+                for (Location reference : oldSide.references) {
+                    if (!affectedUris.contains(reference.getUri())) {
+                        merged.put(locationKey(reference), reference);
+                    }
+                }
+            }
+            if (newSide != null) {
+                for (Location reference : newSide.references) {
+                    if (affectedUris.contains(reference.getUri()) || oldSide == null) {
+                        merged.put(locationKey(reference), reference);
+                    }
+                }
+            }
+            boolean definitionAffected = definition != null && affectedUris.contains(definition.getUri());
+            BindingView fields;
+            if (definitionAffected) {
+                fields = newSide == null ? this : newSide;
+            } else {
+                fields = oldSide == null ? this : oldSide;
+            }
+            return new BindingView(fields.type, fields.documentation, fields.definition,
+                    Collections.unmodifiableList(new ArrayList<>(merged.values())));
+        }
+
+        boolean hasReferenceIn(Set<String> uris) {
+            for (Location reference : references) {
+                if (uris.contains(reference.getUri())) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static Location location(String filename, int start, int end, Map<Path, String> sources,

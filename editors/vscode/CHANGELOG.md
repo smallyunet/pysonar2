@@ -1,5 +1,13 @@
 # Change Log
 
+## Unreleased
+
+- Reuse content-addressed serialized ASTs across rebuilds and language-server restarts.
+- Rebuild only changed files and their transitive reverse-import dependents, with conservative full
+  fallback for unsupported import syntax.
+- Report rebuild scope and AST-cache hit/miss counters in server status and JSONL session responses.
+- Add reproducible analyzer JSON benchmarks plus JFR CPU and allocation profiling scripts.
+
 ## 0.2.1
 
 - Bundle PySonar2 3.3.0 with compact symbol planning and persistent JSONL analysis sessions.

@@ -9,13 +9,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -41,6 +47,11 @@ public final class AnalysisSession implements AutoCloseable {
     private final ScheduledExecutorService executor;
     private final Consumer<AnalysisProgress> progressListener;
     private final DiagnosticPolicy diagnosticPolicy;
+    private final Path astCacheDirectory;
+    private Map<Path, String> fileHashes = Collections.emptyMap();
+    private ImportGraph importGraph;
+    private boolean initialized;
+    private volatile RebuildMetrics lastMetrics = RebuildMetrics.empty();
     private ScheduledFuture<?> scheduled;
 
     public AnalysisSession(Path root, Collection<String> excludeGlobs) {
@@ -52,12 +63,24 @@ public final class AnalysisSession implements AutoCloseable {
         this(root, excludeGlobs, DiagnosticPolicy.conservative(), progressListener);
     }
 
+    public AnalysisSession(Path root, Collection<String> excludeGlobs,
+                           Consumer<AnalysisProgress> progressListener, Path astCacheDirectory) {
+        this(root, excludeGlobs, DiagnosticPolicy.conservative(), progressListener, astCacheDirectory);
+    }
+
     AnalysisSession(Path root, Collection<String> excludeGlobs, DiagnosticPolicy diagnosticPolicy,
                     Consumer<AnalysisProgress> progressListener) {
+        this(root, excludeGlobs, diagnosticPolicy, progressListener, null);
+    }
+
+    AnalysisSession(Path root, Collection<String> excludeGlobs, DiagnosticPolicy diagnosticPolicy,
+                    Consumer<AnalysisProgress> progressListener, Path astCacheDirectory) {
         this.root = realPath(root);
         this.excludeGlobs = Collections.unmodifiableList(new ArrayList<>(excludeGlobs));
         this.diagnosticPolicy = diagnosticPolicy == null ? DiagnosticPolicy.conservative() : diagnosticPolicy;
         this.progressListener = progressListener == null ? progress -> { } : progressListener;
+        this.astCacheDirectory = astCacheDirectory == null
+                ? defaultAstCacheDirectory(this.root) : astCacheDirectory.toAbsolutePath().normalize();
         this.snapshot = new AtomicReference<>(AnalysisSnapshot.empty(root));
         this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "pysonar2-analysis");
@@ -72,6 +95,10 @@ public final class AnalysisSession implements AutoCloseable {
 
     public AnalysisSnapshot current() {
         return snapshot.get();
+    }
+
+    public RebuildMetrics lastMetrics() {
+        return lastMetrics;
     }
 
     public synchronized CompletableFuture<AnalysisSnapshot> scheduleRebuild() {
@@ -90,37 +117,180 @@ public final class AnalysisSession implements AutoCloseable {
     }
 
     public AnalysisSnapshot rebuildNow() throws IOException {
+        long rebuildStarted = System.nanoTime();
         ProgressReporter progress = new ProgressReporter();
         progress.report("discovering", 0, 0, root.toString(), true);
         List<String> files = collectPythonFiles(progress);
-        progress.report("analyzing", 0, files.size(), "", true);
+        List<Path> workspaceFiles = new ArrayList<>();
+        for (String file : files) {
+            workspaceFiles.add(Path.of(file).toAbsolutePath().normalize());
+        }
+        WorkspaceContent workspaceContent = readWorkspaceFiles(workspaceFiles);
+        Map<Path, String> nextHashes = workspaceContent.hashes;
+        ImportGraph nextGraph = ImportGraph.build(root, workspaceContent.sources);
+        Set<Path> changed = changedFiles(fileHashes, nextHashes);
+
+        if (initialized && changed.isEmpty()) {
+            fileHashes = nextHashes;
+            importGraph = nextGraph;
+            lastMetrics = new RebuildMetrics(RebuildMetrics.Mode.NO_CHANGE, workspaceFiles.size(),
+                    0, 0, 0, 0, 0, elapsedMillis(rebuildStarted), "content hashes unchanged");
+            progress.report("up-to-date", workspaceFiles.size(), workspaceFiles.size(),
+                    "Workspace hashes are unchanged", true);
+            return snapshot.get();
+        }
+
+        boolean full = !initialized;
+        String reason = full ? "initial analysis" : "changed files and reverse import dependencies";
+        Set<Path> affected = new LinkedHashSet<>();
+        if (!full && (importGraph == null || !importGraph.isComplete() || !nextGraph.isComplete())) {
+            full = true;
+            reason = "unsupported continued import syntax";
+        }
+        if (!full) {
+            affected.addAll(importGraph.affectedBy(changed));
+            affected.addAll(nextGraph.affectedBy(changed));
+            if (workspaceFiles.size() >= 20
+                    && affected.size() * 100L >= workspaceFiles.size() * 60L) {
+                full = true;
+                reason = "affected closure covers at least 60% of the workspace";
+            }
+        }
+        if (full) {
+            affected.clear();
+            affected.addAll(workspaceFiles);
+            affected.addAll(changed);
+        }
+
+        List<String> analysisFiles = new ArrayList<>();
+        for (Path file : workspaceFiles) {
+            if (full || affected.contains(file)) {
+                analysisFiles.add(file.toString());
+            }
+        }
+        progress.report("analyzing", 0, analysisFiles.size(), "", true);
+        AnalysisRun run = analyze(files, analysisFiles, progress);
+        AnalysisSnapshot next = full
+                ? run.snapshot
+                : snapshot.get().replaceFiles(run.snapshot, affected);
+        snapshot.set(next);
+        initialized = true;
+        fileHashes = nextHashes;
+        importGraph = nextGraph;
+        lastMetrics = new RebuildMetrics(full ? RebuildMetrics.Mode.FULL : RebuildMetrics.Mode.INCREMENTAL,
+                workspaceFiles.size(), changed.size(), affected.size(), run.analyzedFiles,
+                run.astCacheHits, run.astCacheMisses, elapsedMillis(rebuildStarted), reason);
+        return next;
+    }
+
+    private AnalysisRun analyze(List<String> workspaceFiles, List<String> analysisFiles,
+                                ProgressReporter progress) throws IOException {
         HashMap<String, Object> options = new HashMap<>();
         options.put("quiet", true);
+        options.put("astCacheDir", astCacheDirectory.toString());
         Analyzer analyzer = new Analyzer(options);
         boolean finished = false;
         try {
             analyzer.addPath(root.toString());
-            for (Path analysisPath : discoverAnalysisPaths(files)) {
+            for (Path analysisPath : discoverAnalysisPaths(workspaceFiles)) {
                 analyzer.addPath(analysisPath.toString());
             }
             int[] current = {0};
-            analyzer.analyzeFiles(root.toString(), files, file -> {
+            analyzer.analyzeFiles(root.toString(), analysisFiles, file -> {
                 current[0]++;
-                progress.report("analyzing", current[0], files.size(), relativePath(file),
-                        current[0] == 1 || current[0] == files.size());
+                progress.report("analyzing", current[0], analysisFiles.size(), relativePath(file),
+                        current[0] == 1 || current[0] == analysisFiles.size());
             });
-            progress.report("finalizing", files.size(), files.size(), "Resolving inferred types and references", true);
+            progress.report("finalizing", analysisFiles.size(), analysisFiles.size(),
+                    "Resolving inferred types and references", true);
             analyzer.finish();
             finished = true;
-            progress.report("snapshot", files.size(), files.size(), "Building editor snapshot", true);
+            progress.report("snapshot", analysisFiles.size(), analysisFiles.size(),
+                    "Building editor snapshot", true);
             AnalysisSnapshot next = AnalysisSnapshot.from(root, analyzer, diagnosticPolicy);
-            snapshot.set(next);
-            return next;
+            return new AnalysisRun(next, analyzer.getLoadedFiles().size(),
+                    analyzer.getStat("astCacheHits"), analyzer.getStat("astCacheMisses"));
         } finally {
             if (!finished) {
                 analyzer.close();
             }
             analyzer.releaseGlobalReference();
+        }
+    }
+
+    private static WorkspaceContent readWorkspaceFiles(Collection<Path> files) throws IOException {
+        Map<Path, String> hashes = new LinkedHashMap<>();
+        Map<Path, String> sources = new LinkedHashMap<>();
+        for (Path file : files) {
+            byte[] bytes = Files.readAllBytes(file);
+            hashes.put(file, sha256(bytes));
+            sources.put(file, new String(bytes, StandardCharsets.UTF_8));
+        }
+        return new WorkspaceContent(Collections.unmodifiableMap(hashes),
+                Collections.unmodifiableMap(sources));
+    }
+
+    private static Set<Path> changedFiles(Map<Path, String> previous, Map<Path, String> current) {
+        Set<Path> changed = new LinkedHashSet<>();
+        Set<Path> all = new LinkedHashSet<>(previous.keySet());
+        all.addAll(current.keySet());
+        for (Path file : all) {
+            if (!java.util.Objects.equals(previous.get(file), current.get(file))) {
+                changed.add(file);
+            }
+        }
+        return changed;
+    }
+
+    private static Path defaultAstCacheDirectory(Path root) {
+        String configured = System.getenv("PYSONAR_CACHE_DIR");
+        Path base = configured == null || configured.trim().isEmpty()
+                ? Path.of(System.getProperty("java.io.tmpdir"), "pysonar2-ast-cache")
+                : Path.of(configured);
+        String interpreter = System.getenv().getOrDefault("PYSONAR_PYTHON", "python3");
+        String namespace = sha256((root.toString() + "\n" + interpreter + "\nast-v1")
+                .getBytes(StandardCharsets.UTF_8)).substring(0, 24);
+        return base.toAbsolutePath().normalize().resolve("ast-v1").resolve(namespace);
+    }
+
+    private static String sha256(byte[] bytes) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+            StringBuilder result = new StringBuilder(digest.length * 2);
+            for (byte value : digest) {
+                result.append(String.format("%02x", value & 0xff));
+            }
+            return result.toString();
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 is unavailable", impossible);
+        }
+    }
+
+    private static long elapsedMillis(long started) {
+        return (System.nanoTime() - started) / 1_000_000L;
+    }
+
+    private static final class AnalysisRun {
+        final AnalysisSnapshot snapshot;
+        final int analyzedFiles;
+        final long astCacheHits;
+        final long astCacheMisses;
+
+        AnalysisRun(AnalysisSnapshot snapshot, int analyzedFiles, long astCacheHits, long astCacheMisses) {
+            this.snapshot = snapshot;
+            this.analyzedFiles = analyzedFiles;
+            this.astCacheHits = astCacheHits;
+            this.astCacheMisses = astCacheMisses;
+        }
+    }
+
+    private static final class WorkspaceContent {
+        final Map<Path, String> hashes;
+        final Map<Path, String> sources;
+
+        WorkspaceContent(Map<Path, String> hashes, Map<Path, String> sources) {
+            this.hashes = hashes;
+            this.sources = sources;
         }
     }
 

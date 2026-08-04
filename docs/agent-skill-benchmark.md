@@ -47,8 +47,9 @@ Remaining limitations:
   routing regression result, not causal proof of a 0.43% saving.
 - PySonar2's semantic references remain incomplete for some import aliases and module attributes.
   `plan` therefore labels its conservative exact-identifier fallback separately from semantic matches.
-- A persistent `session` reuses an immutable snapshot, but `refresh` is still an atomic whole-workspace
-  rebuild rather than dependency-graph incremental analysis.
+- The benchmark predates the content-hash and reverse-import incremental rebuild added later. Current
+  `session refresh` responses report whether the rebuild was full, incremental, or a no-change reuse;
+  this historical result did not measure that path.
 
 ## 2026-08-03 forced-use diverse-task pilot
 

@@ -105,6 +105,7 @@ public class MainTest {
         String requests =
                 "{\"id\":\"first\",\"command\":\"plan\",\"symbol\":\"User\"}\n" +
                 "{\"id\":\"second\",\"command\":\"plan\",\"symbol\":\"Team\"}\n" +
+                "{\"id\":\"refresh\",\"command\":\"refresh\"}\n" +
                 "{\"command\":\"quit\"}\n";
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
@@ -114,12 +115,18 @@ public class MainTest {
                 new PrintStream(stdout), new PrintStream(stderr));
         assertEquals(new String(stderr.toByteArray(), StandardCharsets.UTF_8), 0, exitCode);
         String[] lines = new String(stdout.toByteArray(), StandardCharsets.UTF_8).trim().split("\\R");
-        assertEquals(4, lines.length);
-        assertEquals("session-ready", JsonParser.parseString(lines[0]).getAsJsonObject()
-                .get("command").getAsString());
+        assertEquals(5, lines.length);
+        JsonObject ready = JsonParser.parseString(lines[0]).getAsJsonObject();
+        assertEquals("session-ready", ready.get("command").getAsString());
+        assertEquals("full", ready.get("rebuildMode").getAsString());
+        assertEquals(1, ready.get("astCacheMisses").getAsInt());
         assertEquals("first", JsonParser.parseString(lines[1]).getAsJsonObject().get("id").getAsString());
         assertEquals("second", JsonParser.parseString(lines[2]).getAsJsonObject().get("id").getAsString());
-        assertEquals("quit", JsonParser.parseString(lines[3]).getAsJsonObject().get("command").getAsString());
+        JsonObject refresh = JsonParser.parseString(lines[3]).getAsJsonObject();
+        assertEquals("refresh", refresh.get("id").getAsString());
+        assertEquals("no_change", refresh.get("rebuildMode").getAsString());
+        assertEquals(0, refresh.get("analyzedFiles").getAsInt());
+        assertEquals("quit", JsonParser.parseString(lines[4]).getAsJsonObject().get("command").getAsString());
     }
 
     @Test

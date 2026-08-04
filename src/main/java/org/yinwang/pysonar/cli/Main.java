@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.yinwang.pysonar.demos.Demo;
 import org.yinwang.pysonar.lsp.AnalysisSession;
 import org.yinwang.pysonar.lsp.AnalysisSnapshot;
+import org.yinwang.pysonar.lsp.RebuildMetrics;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -234,6 +235,7 @@ public final class Main {
             ready.put("root", root.toString());
             ready.put("fileCount", snapshot.fileCount());
             ready.put("analysisMillis", elapsedMillis(started));
+            addRebuildMetrics(ready, session.lastMetrics());
             writeJson(out, ready);
 
             String line;
@@ -262,6 +264,7 @@ public final class Main {
                             response = envelope("refresh");
                             response.put("fileCount", snapshot.fileCount());
                             response.put("analysisMillis", elapsedMillis(refreshStarted));
+                            addRebuildMetrics(response, session.lastMetrics());
                             break;
                         case "quit":
                             response = envelope("quit");
@@ -691,6 +694,16 @@ public final class Main {
 
     private static long elapsedMillis(long started) {
         return (System.nanoTime() - started) / 1_000_000L;
+    }
+
+    private static void addRebuildMetrics(Map<String, Object> result, RebuildMetrics metrics) {
+        result.put("rebuildMode", metrics.getMode().name().toLowerCase(java.util.Locale.ROOT));
+        result.put("changedFiles", metrics.getChangedFiles());
+        result.put("affectedFiles", metrics.getAffectedFiles());
+        result.put("analyzedFiles", metrics.getAnalyzedFiles());
+        result.put("astCacheHits", metrics.getAstCacheHits());
+        result.put("astCacheMisses", metrics.getAstCacheMisses());
+        result.put("rebuildReason", metrics.getReason());
     }
 
     private static Map<String, Object> envelope(String command) {

@@ -7,3 +7,4 @@ __pycache__/
 /editors/vscode/server/*.jar
 /editors/vscode/*.vsix
 /editors/vscode/LICENSE
+.env

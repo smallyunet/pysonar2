@@ -45,8 +45,14 @@ By default the extension runs `java` and `python3` from `PATH`. Use `pysonar2.ja
 ## Analysis model
 
 The server indexes the saved files in each workspace folder. After a Python file is saved, it waits
-briefly for related file events, performs a serialized workspace rebuild, and atomically publishes the
-new index. Navigation remains available from the previous completed snapshot while indexing.
+briefly for related file events, compares content hashes, and analyzes the changed files plus their
+transitive reverse-import dependents. It then atomically publishes the merged snapshot. Navigation
+remains available from the previous completed snapshot while indexing.
+
+Serialized ASTs persist under VS Code's extension global-storage directory and are partitioned by
+workspace, selected Python interpreter, and cache format. Unchanged source content is reused across
+rebuilds and language-server restarts. Outside VS Code, set `PYSONAR_CACHE_DIR` to choose a durable cache
+root; otherwise the CLI uses a persistent namespace under the system temporary directory.
 
 Unsaved changes are marked as `stale` in the status bar. Save the document to refresh semantic results.
 Common virtual-environment, dependency, cache, build, and generated directories are excluded by default.
@@ -54,9 +60,9 @@ Nested Python package roots and directories containing `pyproject.toml`, `setup.
 added to module resolution automatically, including when the VS Code workspace is a larger monorepo.
 
 During a rebuild, the PySonar2 output channel reports the active phase, elapsed time, discovered file
-count, analysis percentage, and current workspace-relative path. The status bar shows the current
-analysis percentage; select it to open the detailed output. Progress notifications are throttled so
-large workspaces remain responsive.
+count, analysis percentage, current workspace-relative path, rebuild mode, analyzed/workspace counts,
+and AST-cache hits/misses. The status bar shows the current analysis percentage; select it to open the
+detailed output. Progress notifications are throttled so large workspaces remain responsive.
 
 If an unusually large project exhausts the Java heap, first exclude unrelated roots such as tests,
 scripts, migrations, or sibling repositories. Increase `pysonar2.java.maxHeapMb` only when the workspace
@@ -143,7 +149,12 @@ the `smallyu` Marketplace publisher; a local build does not contact or depend on
 ## Current limitations
 
 - Semantic results follow the last saved workspace state; unsaved-buffer overlays are not implemented.
-- Rebuilds are whole-workspace rather than dependency-graph incremental.
+- Incremental invalidation follows static imports. Dynamic imports are conservatively connected to all
+  workspace modules, and unsupported backslash-continued import syntax triggers a full rebuild.
+- PySonar2's legacy call-driven inference can let callers refine imported function types. Incremental
+  snapshots keep the previous complete type projection for unchanged dependency definitions instead of
+  replacing it with a partial caller-only view; a future semantic dependency graph can invalidate those
+  definitions more precisely.
 - Modern Python 3.11-3.14 syntax is indexed, with conservative navigation semantics for exception groups
   and generic type parameters.
 - Type annotations are parsed for navigation but are not yet used as complete inference inputs. Conservative

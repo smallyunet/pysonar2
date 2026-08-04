@@ -43,7 +43,8 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         Path root = workspaceRoot(params);
         Object options = params.getInitializationOptions();
-        session = new AnalysisSession(root, excludeGlobs(options), diagnosticPolicy(options), this::reportProgress);
+        session = new AnalysisSession(root, excludeGlobs(options), diagnosticPolicy(options),
+                this::reportProgress, cacheDirectory(options));
 
         ServerCapabilities capabilities = new ServerCapabilities();
         TextDocumentSyncOptions sync = new TextDocumentSyncOptions();
@@ -125,8 +126,12 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
             }
             publishDiagnostics(snapshot);
             String duration = formatDuration(System.currentTimeMillis() - startedAt);
+            RebuildMetrics metrics = current.lastMetrics();
             String summary = "Indexed " + snapshot.fileCount() + " Python files in " + duration
-                    + " · " + heapUsage();
+                    + " · " + metrics.getMode().name().toLowerCase(java.util.Locale.ROOT)
+                    + " analyzed " + metrics.getAnalyzedFiles() + "/" + metrics.getWorkspaceFiles()
+                    + " · AST cache " + metrics.getAstCacheHits() + " hit/"
+                    + metrics.getAstCacheMisses() + " miss · " + heapUsage();
             status("ready", summary);
             log(MessageType.Info, "PySonar2 " + summary);
         });
@@ -266,6 +271,17 @@ public final class PySonarLanguageServer implements LanguageServer, LanguageClie
         }
         Map<?, ?> options = (Map<?, ?>) initializationOptions;
         return DiagnosticPolicy.from(options.get("diagnosticsMode"), options.get("diagnosticsMaxPerFile"));
+    }
+
+    private static Path cacheDirectory(Object initializationOptions) {
+        if (!(initializationOptions instanceof Map)) {
+            return null;
+        }
+        Object value = ((Map<?, ?>) initializationOptions).get("cacheDirectory");
+        if (value == null || value.toString().trim().isEmpty()) {
+            return null;
+        }
+        return Path.of(value.toString()).toAbsolutePath().normalize();
     }
 
     private static String rootCauseMessage(Throwable error) {

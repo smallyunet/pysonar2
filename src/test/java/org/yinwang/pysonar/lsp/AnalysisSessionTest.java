@@ -12,6 +12,7 @@ import org.yinwang.pysonar.Analyzer;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class AnalysisSessionTest {
@@ -157,5 +159,112 @@ public class AnalysisSessionTest {
         assertTrue(conservative.shouldPublish("Incorrect number of arguments for isinstance"));
         assertFalse(conservative.shouldPublish("unbound variable Optional"));
         assertFalse(conservative.shouldPublish("Attribute is not found in type: get"));
+    }
+
+    @Test
+    public void skipsUnchangedWorkspacesAndRebuildsOnlyReverseImportClosure() throws Exception {
+        File root = temporary.newFolder("incremental-workspace");
+        File model = new File(root, "model.py");
+        File service = new File(root, "service.py");
+        File main = new File(root, "main.py");
+        File unrelated = new File(root, "unrelated.py");
+        Files.write(model.toPath(), "class Thing:\n    pass\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(service.toPath(), (
+                "from model import Thing\n" +
+                "value = Thing()\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(main.toPath(), (
+                "from service import value\n" +
+                "result = value\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(unrelated.toPath(), "standalone = 1\n".getBytes(StandardCharsets.UTF_8));
+
+        Path cache = temporary.newFolder("incremental-cache").toPath();
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList(),
+                DiagnosticPolicy.conservative(), progress -> { }, cache)) {
+            AnalysisSnapshot initial = session.rebuildNow();
+            assertEquals(RebuildMetrics.Mode.FULL, session.lastMetrics().getMode());
+            assertEquals(4, initial.fileCount());
+
+            AnalysisSnapshot unchanged = session.rebuildNow();
+            assertSame(initial, unchanged);
+            assertEquals(RebuildMetrics.Mode.NO_CHANGE, session.lastMetrics().getMode());
+            assertEquals(0, session.lastMetrics().getAnalyzedFiles());
+
+            Files.write(model.toPath(), "\nclass Thing:\n    pass\n".getBytes(StandardCharsets.UTF_8));
+            AnalysisSnapshot dependentUpdate = session.rebuildNow();
+            assertEquals(RebuildMetrics.Mode.INCREMENTAL, session.lastMetrics().getMode());
+            assertEquals(1, session.lastMetrics().getChangedFiles());
+            assertEquals(3, session.lastMetrics().getAffectedFiles());
+            List<Location> definitions = dependentUpdate.definitions(service.toPath(), new Position(1, 9));
+            assertFalse(definitions.isEmpty());
+            assertEquals(1, definitions.get(0).getRange().getStart().getLine());
+            assertFalse(dependentUpdate.documentSymbols(unrelated.toPath()).isEmpty());
+
+            Files.write(unrelated.toPath(), "standalone = 2\n".getBytes(StandardCharsets.UTF_8));
+            session.rebuildNow();
+            assertEquals(RebuildMetrics.Mode.INCREMENTAL, session.lastMetrics().getMode());
+            assertEquals(1, session.lastMetrics().getAffectedFiles());
+
+            Files.delete(unrelated.toPath());
+            AnalysisSnapshot deleted = session.rebuildNow();
+            assertEquals(RebuildMetrics.Mode.INCREMENTAL, session.lastMetrics().getMode());
+            assertEquals(1, session.lastMetrics().getChangedFiles());
+            assertEquals(3, deleted.fileCount());
+            assertTrue(deleted.documentSymbols(unrelated.toPath()).isEmpty());
+        }
+    }
+
+    @Test
+    public void reusesPersistentAstCacheAcrossAnalyzerInstancesAndInvalidatesByContent() throws Exception {
+        File root = temporary.newFolder("persistent-cache-workspace");
+        File source = new File(root, "module.py");
+        Files.write(source.toPath(), "value = 1\n".getBytes(StandardCharsets.UTF_8));
+        Path cache = temporary.newFolder("persistent-cache").toPath();
+
+        try (AnalysisSession first = new AnalysisSession(root.toPath(), Collections.emptyList(),
+                DiagnosticPolicy.conservative(), progress -> { }, cache)) {
+            first.rebuildNow();
+            assertTrue(first.lastMetrics().getAstCacheMisses() >= 1);
+        }
+        try (AnalysisSession second = new AnalysisSession(root.toPath(), Collections.emptyList(),
+                DiagnosticPolicy.conservative(), progress -> { }, cache)) {
+            second.rebuildNow();
+            assertTrue(second.lastMetrics().getAstCacheHits() >= 1);
+
+            Files.write(source.toPath(), "value = 2\n".getBytes(StandardCharsets.UTF_8));
+            second.rebuildNow();
+            assertTrue(second.lastMetrics().getAstCacheMisses() >= 1);
+        }
+    }
+
+    @Test
+    public void reconcilesReferencesAcrossIncrementalSnapshotBoundaries() throws Exception {
+        File root = temporary.newFolder("incremental-reference-workspace");
+        File model = new File(root, "model.py");
+        File first = new File(root, "first.py");
+        File second = new File(root, "second.py");
+        Files.write(model.toPath(), "class Thing:\n    pass\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(first.toPath(), (
+                "from model import Thing\n" +
+                "one = Thing()\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(second.toPath(), (
+                "from model import Thing\n" +
+                "two = Thing()\n").getBytes(StandardCharsets.UTF_8));
+
+        Path cache = temporary.newFolder("incremental-reference-cache").toPath();
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList(),
+                DiagnosticPolicy.conservative(), progress -> { }, cache)) {
+            AnalysisSnapshot initial = session.rebuildNow();
+            assertTrue(initial.references(model.toPath(), new Position(0, 7), false).size() >= 2);
+
+            Files.write(first.toPath(), (
+                    "\n" +
+                    "from model import Thing\n" +
+                    "one = Thing()\n").getBytes(StandardCharsets.UTF_8));
+            AnalysisSnapshot updated = session.rebuildNow();
+            List<Location> references = updated.references(model.toPath(), new Position(0, 7), false);
+            assertTrue(references.stream().anyMatch(location -> location.getUri().endsWith("first.py")
+                    && location.getRange().getStart().getLine() >= 1));
+            assertTrue(references.stream().anyMatch(location -> location.getUri().endsWith("second.py")));
+        }
     }
 }

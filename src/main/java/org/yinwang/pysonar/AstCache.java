@@ -6,6 +6,9 @@ import org.yinwang.pysonar.ast.PyModule;
 import org.yinwang.pysonar.ast.Node;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -24,8 +27,13 @@ public class AstCache {
     private Map<String, Node> cache = new HashMap<>();
     @NotNull
     private Parser parser = new Parser();
+    @NotNull
+    private final String cacheDir;
+    private final boolean persistent;
 
-    public AstCache() {
+    public AstCache(@NotNull String cacheDir, boolean persistent) {
+        this.cacheDir = cacheDir;
+        this.persistent = persistent;
     }
 
 
@@ -44,7 +52,7 @@ public class AstCache {
      */
     public boolean clearDiskCache() {
         try {
-            $.deleteDirectory(new File(Analyzer.self.cacheDir));
+            $.deleteDirectory(new File(cacheDir));
             return true;
         } catch (Exception x) {
             LOG.log(Level.SEVERE, "Failed to clear disk cache: " + x);
@@ -55,7 +63,9 @@ public class AstCache {
 
     public void close() {
         parser.close();
-        clearDiskCache();
+        if (!persistent) {
+            clearDiskCache();
+        }
     }
 
 
@@ -76,12 +86,14 @@ public class AstCache {
         // Might be cached on disk but not in memory.
         Node node = getSerializedModule(path);
         if (node != null) {
+            Analyzer.self.stats.inc("astCacheHits");
             LOG.log(Level.FINE, "reusing " + path);
             cache.put(path, node);
             return node;
         }
 
         node = null;
+        Analyzer.self.stats.inc("astCacheMisses");
         try {
             LOG.log(Level.FINE, "parsing " + path);
             node = parser.parseFile(path);
@@ -104,19 +116,29 @@ public class AstCache {
      */
     @NotNull
     public String getCachePath(@NotNull String sourcePath) {
-        return $.makePathString(Analyzer.self.cacheDir, $.getFileHash(sourcePath));
+        return $.makePathString(cacheDir, $.getFileHash(sourcePath));
     }
 
 
     // package-private for testing
     void serialize(@NotNull Node ast) {
         String path = getCachePath(ast.file);
+        String temporaryPath = path + ".tmp-" + Analyzer.self.sid + "-" + Thread.currentThread().getId();
         ObjectOutputStream oos = null;
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(path);
+            fos = new FileOutputStream(temporaryPath);
             oos = new ObjectOutputStream(fos);
             oos.writeObject(ast);
+            oos.close();
+            oos = null;
+            try {
+                Files.move(new File(temporaryPath).toPath(), new File(path).toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException unsupported) {
+                Files.move(new File(temporaryPath).toPath(), new File(path).toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (Exception e) {
             $.msg("Failed to serialize: " + path);
         } finally {
@@ -128,6 +150,7 @@ public class AstCache {
                 }
             } catch (Exception e) {
             }
+            new File(temporaryPath).delete();
         }
     }
 

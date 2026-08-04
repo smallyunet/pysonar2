@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { createHash } from "node:crypto";
 import * as vscode from "vscode";
 import {
   Executable,
@@ -11,7 +12,7 @@ import {
 interface ServerStatus {
   state: "starting" | "indexing" | "ready" | "stale" | "error";
   message: string;
-  phase?: "discovering" | "analyzing" | "finalizing" | "snapshot";
+  phase?: "discovering" | "analyzing" | "finalizing" | "snapshot" | "up-to-date";
   current?: number;
   total?: number;
   path?: string;
@@ -73,7 +74,7 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
   }
 
   for (const folder of folders) {
-    const client = createClient(folder, jar);
+    const client = createClient(context, folder, jar);
     clients.push(client);
     folderStatuses.set(folder.uri.toString(), {
       state: "starting",
@@ -105,7 +106,11 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
   updateStatusBar();
 }
 
-function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClient {
+function createClient(
+  context: vscode.ExtensionContext,
+  folder: vscode.WorkspaceFolder,
+  jar: string,
+): LanguageClient {
   const configuration = vscode.workspace.getConfiguration("pysonar2", folder.uri);
   const javaCommand = configuration.get<string>("java.command", "java");
   const maxHeapMb = Math.max(0, Math.floor(configuration.get<number>("java.maxHeapMb", 0)));
@@ -120,6 +125,16 @@ function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClie
   if (pythonPath) {
     environment.PYSONAR_PYTHON = pythonPath;
   }
+  const cacheNamespace = createHash("sha256")
+    .update(`${folder.uri.toString()}\n${pythonPath || "python3"}\nast-v1`)
+    .digest("hex")
+    .slice(0, 24);
+  const cacheDirectory = path.join(
+    context.globalStorageUri.fsPath,
+    "ast-cache",
+    "ast-v1",
+    cacheNamespace,
+  );
 
   const serverOptions: Executable = {
     command: javaCommand,
@@ -154,6 +169,7 @@ function createClient(folder: vscode.WorkspaceFolder, jar: string): LanguageClie
       exclude,
       diagnosticsMode,
       diagnosticsMaxPerFile,
+      cacheDirectory,
     },
   };
 

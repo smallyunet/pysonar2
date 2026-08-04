@@ -168,8 +168,10 @@ pysonar session --root . --format json
 ```
 
 The session emits a `session-ready` object before accepting requests. `plan` requests reuse the current
-snapshot; send `refresh` after saved edits. Refresh is an atomic whole-workspace rebuild, not yet a
-dependency-graph incremental update.
+snapshot; send `refresh` after saved edits. Refresh compares content hashes, rebuilds the changed files
+and their transitive reverse-import dependents, and atomically publishes the merged snapshot. If import
+syntax cannot be modeled conservatively, it falls back to a full rebuild. Responses include the rebuild
+mode, changed/affected/analyzed counts, reason, and AST-cache hit/miss counters.
 
 The canonical Skill source is [`skills/pysonar-code-intelligence`](skills/pysonar-code-intelligence).
 The CLI embeds that same directory in the packaged JAR, so installs and updates stay aligned with the
@@ -277,6 +279,7 @@ export PYTHONPATH=/usr/lib/python3
 | `editors/vscode` | Published VS Code extension and VSIX build tooling |
 | `demo_project` | Shared multi-file demo for the static browser and VS Code extension |
 | `benchmarks/agent-skill` | Reproducible natural-trigger Skill-vs-control agent benchmark |
+| `benchmarks/analyzer` | Auditable analyzer timing, allocation counters, and JFR profiling |
 | `docs/python-support.md` | Python syntax and semantic support contract |
 
 ## Current limitations
@@ -285,7 +288,8 @@ export PYTHONPATH=/usr/lib/python3
   the [support matrix](docs/python-support.md).
 - The VS Code extension analyzes the last saved workspace state. Unsaved-buffer overlays are not yet
   implemented.
-- VS Code reindexing is whole-workspace rather than dependency-graph incremental.
+- Incremental invalidation follows static imports. Dynamic imports are conservatively connected to all
+  workspace modules, and unsupported continued-import syntax falls back to a full rebuild.
 - The extension requires a desktop or remote extension host and cannot run as a browser-only web
   extension.
 - Standard-library models and several newer Python semantic features remain conservative.

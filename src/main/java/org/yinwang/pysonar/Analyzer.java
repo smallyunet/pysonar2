@@ -67,8 +67,13 @@ public class Analyzer {
         this.stats.putInt("startTime", System.currentTimeMillis());
         this.builtins = new Builtins();
         this.builtins.init();
-        this.cacheDir = createCacheDir();
-        this.astCache = new AstCache();
+        Object configuredCacheDir = this.options.get("astCacheDir");
+        boolean persistentAstCache = configuredCacheDir instanceof String
+                && !((String) configuredCacheDir).trim().isEmpty();
+        this.cacheDir = persistentAstCache
+                ? createPersistentCacheDir((String) configuredCacheDir)
+                : createCacheDir();
+        this.astCache = new AstCache(cacheDir, persistentAstCache);
         addPythonPath();
         copyModels();
     }
@@ -341,6 +346,19 @@ public class Analyzer {
             }
         }
         return dir;
+    }
+
+
+    private String createPersistentCacheDir(String configured) {
+        File directory = new File(configured).getAbsoluteFile();
+        if (!directory.exists() && !directory.mkdirs()) {
+            $.die("Failed to create persistent AST cache directory: " + directory);
+        }
+        if (!directory.isDirectory() || !directory.canRead() || !directory.canWrite()) {
+            $.die("Persistent AST cache directory is not readable and writable: " + directory);
+        }
+        $.msg("Persistent AST cache is at: " + directory);
+        return directory.getPath();
     }
 
 
@@ -646,6 +664,11 @@ public class Analyzer {
 
     public void registerBinding(@NotNull Binding b) {
         allBindings.add(b);
+    }
+
+
+    public long getStat(String key) {
+        return stats.getInt(key);
     }
 
 
