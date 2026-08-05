@@ -40,6 +40,9 @@ public class DemoSmokeTest
         assertTrue(html.contains("class='browser-shell'"));
         assertTrue(html.contains("class='skip-link'"));
         assertTrue(html.contains("class='symbol-tooltip'"));
+        assertTrue(html.contains("class='analysis-context'"));
+        assertTrue(html.contains("definitions</span>"));
+        assertTrue(html.contains("references</span>"));
         assertTrue(html.contains("data-tooltip="));
         assertTrue(html.contains("aria-describedby='symbol-tooltip'"));
         assertTrue(html.contains("class='topbar-path'>demo_project/sample.py</span>"));
@@ -52,7 +55,11 @@ public class DemoSmokeTest
         File indexFile = new File(outputDir, "index.html");
         assertTrue("demo index was not generated", indexFile.isFile());
         String index = new String(Files.readAllBytes(indexFile.toPath()), StandardCharsets.UTF_8);
-        assertTrue(index.contains("Code intelligence"));
+        assertTrue(index.contains("Follow Python symbols across the whole project"));
+        assertTrue(index.contains("class='analysis-preview'"));
+        assertTrue(index.contains("What this snapshot demonstrates"));
+        assertTrue(index.contains("Imports &amp; re-exports"));
+        assertTrue(index.contains("C3 inheritance"));
         assertTrue(index.contains("class='project-root'>demo_project/</code>"));
         assertTrue(index.contains("sample.py.html"));
         assertFalse("the project root is a label, not a duplicated output directory",

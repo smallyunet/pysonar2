@@ -17,6 +17,14 @@ public class FunctionDef extends Node {
     public final List<Node> kwOnlyArgs;
     public final List<Node> kwDefaults;
     public final List<Node> annotations;
+    /** Positional annotations aligned with {@link #args}; entries may be null. */
+    public final List<Node> positionalAnnotations;
+    /** Keyword-only annotations aligned with {@link #kwOnlyArgs}; entries may be null. */
+    public final List<Node> kwOnlyAnnotations;
+    @Nullable
+    public final Node varargAnnotation;
+    @Nullable
+    public final Node kwargAnnotation;
     public final List<TypeParameter> typeParams;
     @Nullable
     public final Node returnAnnotation;
@@ -30,7 +38,8 @@ public class FunctionDef extends Node {
     public FunctionDef(Name name, List<Node> args, Node body, List<Node> defaults,
         Name vararg, Name kwarg, List<Node> decorators, String file, boolean isAsync, int start, int end, int line, int col) {
         this(name, args, body, defaults, vararg, kwarg, decorators,
-                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), null, 0,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>(), new ArrayList<>(), null, null, null, 0,
                 new ArrayList<>(),
                 file, isAsync, start, end, line, col);
     }
@@ -38,6 +47,8 @@ public class FunctionDef extends Node {
     public FunctionDef(Name name, List<Node> args, Node body, List<Node> defaults,
         Name vararg, Name kwarg, List<Node> decorators,
         List<Node> kwOnlyArgs, List<Node> kwDefaults, List<Node> annotations,
+        List<Node> positionalAnnotations, List<Node> kwOnlyAnnotations,
+        @Nullable Node varargAnnotation, @Nullable Node kwargAnnotation,
         @Nullable Node returnAnnotation, int posOnlyArgCount,
         List<TypeParameter> typeParams,
         String file, boolean isAsync, int start, int end, int line, int col) {
@@ -60,6 +71,10 @@ public class FunctionDef extends Node {
         this.kwOnlyArgs = kwOnlyArgs;
         this.kwDefaults = kwDefaults;
         this.annotations = annotations;
+        this.positionalAnnotations = positionalAnnotations;
+        this.kwOnlyAnnotations = kwOnlyAnnotations;
+        this.varargAnnotation = varargAnnotation;
+        this.kwargAnnotation = kwargAnnotation;
         this.returnAnnotation = returnAnnotation;
         this.posOnlyArgCount = posOnlyArgCount;
         this.typeParams = typeParams;
@@ -138,6 +153,15 @@ public class FunctionDef extends Node {
     public boolean isClassMethod() {
         for (Node d : decorators) {
             if (d instanceof Name && ((Name) d).id.equals("classmethod")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isProperty() {
+        for (Node decorator : decorators) {
+            if (decorator instanceof Name && "property".equals(((Name) decorator).id)) {
                 return true;
             }
         }

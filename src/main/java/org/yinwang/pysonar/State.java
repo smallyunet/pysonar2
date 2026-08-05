@@ -244,39 +244,92 @@ public class State {
 
 
     /**
-     * Look up an attribute in the type hierarchy.  Don't look at parent link,
-     * because the enclosing scope may not be a super class. The search is
-     * "depth first, left to right" as in Python's (old) multiple inheritance
-     * rule. The new MRO can be implemented, but will probably not introduce
-     * much difference.
+     * Look up an attribute using Python's C3 method-resolution order. Parent
+     * links are lexical scopes and intentionally do not participate.
      */
-    @NotNull
-    private static Set<State> looked = new HashSet<>();    // circularity prevention
-
-
     @Nullable
     public Set<Binding> lookupAttr(String attr) {
-        if (looked.contains(this)) {
-            return null;
-        } else {
-            Set<Binding> b = lookupLocal(attr);
-            if (b != null) {
-                return b;
-            } else {
-                if (supers != null && !supers.isEmpty()) {
-                    looked.add(this);
-                    for (State p : supers) {
-                        b = p.lookupAttr(attr);
-                        if (b != null) {
-                            looked.remove(this);
-                            return b;
-                        }
-                    }
-                    looked.remove(this);
-                    return null;
-                } else {
-                    return null;
+        for (State state : resolutionOrder()) {
+            Set<Binding> binding = state.lookupLocal(attr);
+            if (binding != null) {
+                return binding;
+            }
+        }
+        return null;
+    }
+
+
+    /** Returns a deterministic C3 linearization, with this state first. */
+    @NotNull
+    List<State> resolutionOrder() {
+        return linearize(this, new IdentityHashMap<>(),
+                Collections.newSetFromMap(new IdentityHashMap<>()));
+    }
+
+
+    @NotNull
+    private static List<State> linearize(@NotNull State state,
+                                         @NotNull Map<State, List<State>> memo,
+                                         @NotNull Set<State> active) {
+        List<State> cached = memo.get(state);
+        if (cached != null) {
+            return new ArrayList<>(cached);
+        }
+        if (!active.add(state)) {
+            return new ArrayList<>(Collections.singletonList(state));
+        }
+
+        List<List<State>> sequences = new ArrayList<>();
+        if (state.supers != null) {
+            for (State parent : state.supers) {
+                sequences.add(linearize(parent, memo, active));
+            }
+            sequences.add(new ArrayList<>(state.supers));
+        }
+
+        List<State> result = new ArrayList<>();
+        result.add(state);
+        mergeLinearizations(result, sequences);
+        active.remove(state);
+        memo.put(state, new ArrayList<>(result));
+        return result;
+    }
+
+
+    private static void mergeLinearizations(@NotNull List<State> result,
+                                            @NotNull List<List<State>> sequences) {
+        while (sequences.stream().anyMatch(sequence -> !sequence.isEmpty())) {
+            State candidate = null;
+            for (List<State> sequence : sequences) {
+                if (sequence.isEmpty()) {
+                    continue;
                 }
+                State head = sequence.get(0);
+                boolean appearsInTail = sequences.stream().anyMatch(other ->
+                        other.size() > 1 && other.subList(1, other.size()).contains(head));
+                if (!appearsInTail) {
+                    candidate = head;
+                    break;
+                }
+            }
+
+            // Invalid Python hierarchies are rejected at runtime. Keep analysis
+            // conservative and deterministic instead of recursing forever.
+            if (candidate == null) {
+                for (List<State> sequence : sequences) {
+                    if (!sequence.isEmpty()) {
+                        candidate = sequence.get(0);
+                        break;
+                    }
+                }
+            }
+
+            if (!result.contains(candidate)) {
+                result.add(candidate);
+            }
+            final State selected = candidate;
+            for (List<State> sequence : sequences) {
+                sequence.removeIf(item -> item == selected);
             }
         }
     }

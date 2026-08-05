@@ -38,6 +38,19 @@ Insight.io (now part of Elastic).
 
 ## What's new
 
+### Core semantics on main
+
+The next core-analysis update strengthens semantic navigation and type flow rather than adding another
+integration surface:
+
+- Python C3 method-resolution order for multiple inheritance;
+- package re-export, alias, and module-attribute reference coverage;
+- annotation-assisted inference that only seeds values when runtime evidence is unknown;
+- property value inference while preserving existing classmethod and staticmethod behavior;
+- explicit `Awaitable[T]` results for async calls and unwrapped `await` types; and
+- a richer generated demo that exposes these capabilities, per-file semantic counts, and responsive
+  source navigation.
+
 ### PySonar2 3.3
 
 The 3.3 release turns the analyzer into a more reusable semantic-change provider:

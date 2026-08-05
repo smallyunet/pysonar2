@@ -1,10 +1,10 @@
 """Entry point for the PySonar2 code intelligence demo."""
 
-from pysonar_demo import DemoApp
+from pysonar_demo import PredictionEngine
 
 
 def run_demo():
-    app = DemoApp("Prediction Lab")
+    app = PredictionEngine("Prediction Lab")
     markets = [
         {
             "question": "Will Python remain the most popular AI language?",

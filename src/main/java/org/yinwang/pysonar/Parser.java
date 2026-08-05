@@ -380,17 +380,24 @@ public class Parser {
                 decors = convertList(map.get("decorator_list"));
             }
 
+            List<Node> positionalAnnotations = collectAlignedArgumentAnnotations(
+                    argsMap.get("posonlyargs"));
+            positionalAnnotations.addAll(collectAlignedArgumentAnnotations(argsMap.get("args")));
+            List<Node> kwOnlyAnnotations = collectAlignedArgumentAnnotations(argsMap.get("kwonlyargs"));
+            Node varargAnnotation = convertArgumentAnnotation(varargObj);
+            Node kwargAnnotation = convertArgumentAnnotation(kwargObj);
             List<Node> annotations = new ArrayList<>();
-            collectArgumentAnnotations(argsMap.get("posonlyargs"), annotations);
-            collectArgumentAnnotations(argsMap.get("args"), annotations);
-            collectArgumentAnnotations(argsMap.get("kwonlyargs"), annotations);
-            collectArgumentAnnotation(varargObj, annotations);
-            collectArgumentAnnotation(kwargObj, annotations);
+            addNonNullAnnotations(positionalAnnotations, annotations);
+            addNonNullAnnotations(kwOnlyAnnotations, annotations);
+            if (varargAnnotation != null) annotations.add(varargAnnotation);
+            if (kwargAnnotation != null) annotations.add(kwargAnnotation);
             Node returnAnnotation = convert(map.get("returns"));
             List<TypeParameter> typeParams = nonNullList(convertList(map.get("type_params")));
 
             return new FunctionDef(name, args, body, nonNullList(defaults), vararg, kwarg,
-                    nonNullList(decors), kwOnlyArgs, kwDefaults, annotations, returnAnnotation,
+                    nonNullList(decors), kwOnlyArgs, kwDefaults, annotations,
+                    positionalAnnotations, kwOnlyAnnotations, varargAnnotation, kwargAnnotation,
+                    returnAnnotation,
                     posOnlyArgs.size(), typeParams, file, isAsync, start, end, line, col);
         }
 
@@ -774,22 +781,30 @@ public class Parser {
         return list == null ? new ArrayList<>() : list;
     }
 
-    private void collectArgumentAnnotations(@Nullable Object value, @NotNull List<Node> annotations) {
-        if (!(value instanceof List)) {
-            return;
+    @NotNull
+    private List<Node> collectAlignedArgumentAnnotations(@Nullable Object value) {
+        List<Node> annotations = new ArrayList<>();
+        if (value instanceof List) {
+            for (Object arg : (List<?>) value) {
+                annotations.add(convertArgumentAnnotation(arg));
+            }
         }
-        for (Object arg : (List<?>) value) {
-            collectArgumentAnnotation(arg, annotations);
-        }
+        return annotations;
     }
 
-    private void collectArgumentAnnotation(@Nullable Object value, @NotNull List<Node> annotations) {
+    @Nullable
+    private Node convertArgumentAnnotation(@Nullable Object value) {
         if (!(value instanceof Map)) {
-            return;
+            return null;
         }
-        Node annotation = convert(((Map<?, ?>) value).get("annotation"));
-        if (annotation != null) {
-            annotations.add(annotation);
+        return convert(((Map<?, ?>) value).get("annotation"));
+    }
+
+    private void addNonNullAnnotations(@NotNull List<Node> source, @NotNull List<Node> target) {
+        for (Node annotation : source) {
+            if (annotation != null) {
+                target.add(annotation);
+            }
         }
     }
 

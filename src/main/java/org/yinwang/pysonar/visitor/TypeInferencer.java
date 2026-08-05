@@ -10,6 +10,7 @@ import org.yinwang.pysonar.CallStackEntry;
 import org.yinwang.pysonar.State;
 import org.yinwang.pysonar.ast.*;
 import org.yinwang.pysonar.types.ClassType;
+import org.yinwang.pysonar.types.AwaitableType;
 import org.yinwang.pysonar.types.DictType;
 import org.yinwang.pysonar.types.FunType;
 import org.yinwang.pysonar.types.InstanceType;
@@ -65,10 +66,9 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(AnnAssign node, State s)
     {
-        // Type annotations are not inference inputs yet. Resolving them as runtime
-        // expressions creates false unbound-name findings for typing constructs.
+        Type annotationType = resolveAnnotation(node.annotation, s);
         Type valueType = node.value == null ? Types.UNKNOWN : visit(node.value, s);
-        bind(s, node.target, valueType);
+        bind(s, node.target, valueType.isUnknownType() ? annotationType : valueType);
         return Types.CONT;
     }
 
@@ -127,7 +127,12 @@ public class TypeInferencer implements Visitor1<Type, State>
         }
         else
         {
-            return visit(node.value, s);
+            Type valueType = visit(node.value, s);
+            if (valueType instanceof AwaitableType)
+            {
+                return ((AwaitableType) valueType).resultType;
+            }
+            return valueType.isUnknownType() ? Types.UNKNOWN : valueType;
         }
     }
 
@@ -526,6 +531,14 @@ public class TypeInferencer implements Visitor1<Type, State>
             visit(node.typeParams, functionEnv);
         }
         FunType fun = new FunType(node, functionEnv);
+        if (node.returnAnnotation != null)
+        {
+            fun.declaredReturnType = resolveAnnotation(node.returnAnnotation, functionEnv);
+            if (node.isAsync)
+            {
+                fun.declaredReturnType = new AwaitableType(fun.declaredReturnType);
+            }
+        }
         fun.table.setParent(s);
         fun.table.setPath(s.extendPath(node.name.id));
         fun.setDefaultTypes(visit(node.defaults, s));
@@ -1380,7 +1393,20 @@ public class TypeInferencer implements Visitor1<Type, State>
             {
                 Analyzer.self.putRef(node.attr, b);
             }
-            return State.makeUnion(bs);
+            Type result = Types.UNKNOWN;
+            for (Binding binding : bs)
+            {
+                Type bindingType = binding.type;
+                if (bindingType instanceof FunType && ((FunType) bindingType).func != null
+                        && ((FunType) bindingType).func.isProperty()
+                        && targetType instanceof InstanceType)
+                {
+                    bindingType = apply((FunType) bindingType, targetType,
+                            Collections.emptyList(), Collections.emptyMap(), null, null, node);
+                }
+                result = UnionType.union(result, bindingType);
+            }
+            return result;
         }
     }
 
@@ -1563,6 +1589,15 @@ public class TypeInferencer implements Visitor1<Type, State>
             }
 
             toType = UnionType.remove(toType, Types.CONT);
+            if (toType.isUnknownType() && func.declaredReturnType != null
+                    && !func.declaredReturnType.isUnknownType())
+            {
+                toType = func.declaredReturnType;
+            }
+            else if (func.func.isAsync && !(toType instanceof AwaitableType))
+            {
+                toType = new AwaitableType(toType);
+            }
             if (!func.func.name.id.equals("__init__"))
             {
                 func.addMapping(fromType, toType);
@@ -1636,6 +1671,14 @@ public class TypeInferencer implements Visitor1<Type, State>
                     }
                 }
             }
+            if (aType.isUnknownType() && i < func.positionalAnnotations.size())
+            {
+                Type annotated = resolveAnnotation(func.positionalAnnotations.get(i), state);
+                if (!annotated.isUnknownType())
+                {
+                    aType = annotated;
+                }
+            }
             bind(state, arg, aType, PARAMETER);
             fromType.add(aType);
         }
@@ -1656,6 +1699,14 @@ public class TypeInferencer implements Visitor1<Type, State>
             {
                 argType = Types.UNKNOWN;
                 addWarningToNode(arg, "unable to bind keyword-only argument:" + arg);
+            }
+            if (argType.isUnknownType() && i < func.kwOnlyAnnotations.size())
+            {
+                Type annotated = resolveAnnotation(func.kwOnlyAnnotations.get(i), state);
+                if (!annotated.isUnknownType())
+                {
+                    argType = annotated;
+                }
             }
             bind(state, arg, argType, PARAMETER);
             fromType.add(argType);
@@ -1704,6 +1755,100 @@ public class TypeInferencer implements Visitor1<Type, State>
         }
 
         return fromType;
+    }
+
+    @NotNull
+    private Type resolveAnnotation(@Nullable Node annotation, @NotNull State state)
+    {
+        if (annotation == null)
+        {
+            return Types.UNKNOWN;
+        }
+        if (annotation instanceof Str)
+        {
+            String name = String.valueOf(((Str) annotation).value);
+            Set<Binding> bindings = state.lookup(name);
+            return annotationValueType(bindings == null ? Types.UNKNOWN : State.makeUnion(bindings));
+        }
+        if (annotation instanceof Subscript)
+        {
+            Subscript subscript = (Subscript) annotation;
+            String genericName = annotationName(subscript.value);
+            // Visit the container name so annotation definitions/references remain navigable.
+            visit(subscript.value, state);
+            List<Node> arguments = new ArrayList<>();
+            if (subscript.slice instanceof Tuple)
+            {
+                arguments.addAll(((Tuple) subscript.slice).elts);
+            }
+            else if (subscript.slice != null)
+            {
+                arguments.add(subscript.slice);
+            }
+            List<Type> argumentTypes = new ArrayList<>();
+            for (Node argument : arguments)
+            {
+                argumentTypes.add(resolveAnnotation(argument, state));
+            }
+            if ("Optional".equals(genericName) && !argumentTypes.isEmpty())
+            {
+                return UnionType.union(argumentTypes.get(0), Types.NoneInstance);
+            }
+            if ("Union".equals(genericName))
+            {
+                return UnionType.newUnion(argumentTypes);
+            }
+            if (("list".equals(genericName) || "List".equals(genericName)
+                    || "Sequence".equals(genericName) || "Iterable".equals(genericName))
+                    && !argumentTypes.isEmpty())
+            {
+                return new ListType(argumentTypes.get(0));
+            }
+            if (("dict".equals(genericName) || "Dict".equals(genericName)
+                    || "Mapping".equals(genericName)) && argumentTypes.size() >= 2)
+            {
+                return new DictType(argumentTypes.get(0), argumentTypes.get(1));
+            }
+            if ("tuple".equals(genericName) || "Tuple".equals(genericName))
+            {
+                return new TupleType(argumentTypes);
+            }
+            return annotationValueType(visit(subscript.value, state));
+        }
+        return annotationValueType(visit(annotation, state));
+    }
+
+    @NotNull
+    private Type annotationValueType(@NotNull Type type)
+    {
+        if (type instanceof ClassType)
+        {
+            return ((ClassType) type).getInstance();
+        }
+        if (type instanceof UnionType)
+        {
+            Type result = Types.UNKNOWN;
+            for (Type member : ((UnionType) type).types)
+            {
+                result = UnionType.union(result, annotationValueType(member));
+            }
+            return result;
+        }
+        return type;
+    }
+
+    @Nullable
+    private String annotationName(@NotNull Node node)
+    {
+        if (node instanceof Name)
+        {
+            return ((Name) node).id;
+        }
+        if (node instanceof Attribute)
+        {
+            return ((Attribute) node).attr.id;
+        }
+        return null;
     }
 
     static void bindMethodAttrs(@NotNull FunType cl)

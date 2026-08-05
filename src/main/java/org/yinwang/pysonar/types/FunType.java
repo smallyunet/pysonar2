@@ -26,6 +26,8 @@ public class FunType extends Type {
     public State env;
     public List<Type> defaultTypes;       // types for default parameters (evaluated at def time)
     public List<Type> kwDefaultTypes;
+    @Nullable
+    public Type declaredReturnType;
 
 
     public FunType() {
@@ -68,6 +70,8 @@ public class FunType extends Type {
     public Type getReturnType() {
         if (!arrows.isEmpty()) {
             return arrows.values().iterator().next();
+        } else if (declaredReturnType != null) {
+            return declaredReturnType;
         } else {
             return Types.UNKNOWN;
         }
