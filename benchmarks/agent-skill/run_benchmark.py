@@ -18,7 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = "gpt-5.6-sol"
-CONDITIONS = ("control", "skill")
+CONDITIONS = ("control", "treatment")
+MODES = ("natural", "forced-tool")
 ANALYZER_COMMAND_RE = re.compile(
     r"(?<![A-Za-z0-9_.-])pysonar\s+(?:doctor|plan|context|impact|check)\b"
 )
@@ -29,14 +30,14 @@ def load_tasks() -> list[dict[str, str]]:
     return json.loads((BENCHMARK_DIR / "tasks.json").read_text())
 
 
-def make_codex_home(root: Path, condition: str) -> Path:
+def make_codex_home(root: Path, condition: str, mode: str) -> Path:
     home = root / f"codex-home-{condition}"
     home.mkdir(parents=True)
     auth = Path.home() / ".codex" / "auth.json"
     if not auth.exists():
         raise RuntimeError(f"Codex auth not found at {auth}")
     (home / "auth.json").symlink_to(auth)
-    if condition == "skill":
+    if mode == "natural" and condition == "treatment":
         skill_source = ROOT / "skills" / "pysonar-code-intelligence"
         skills = home / "skills"
         skills.mkdir()
@@ -44,10 +45,28 @@ def make_codex_home(root: Path, condition: str) -> Path:
     return home
 
 
-def trial_prompt(task: dict[str, str]) -> str:
+def trial_prompt(task: dict[str, str], condition: str, mode: str) -> str:
+    policy = ""
+    if mode == "forced-tool" and condition == "control":
+        policy = """
+You must not use PySonar2 or any `pysonar` command. Use ordinary source-search and file-reading tools.
+"""
+    elif mode == "forced-tool" and condition == "treatment":
+        pysonar_command = (
+            f"pysonar plan --root . --symbol {task['symbol']} --intent change "
+            "--max-results 8 --format compact-json"
+        )
+        policy = f"""
+You must use PySonar2 before broad source inspection. First run exactly this discovery command:
+`{pysonar_command}`
+Use its result to guide the implementation.
+Do not load or rely on a Skill to decide whether PySonar2 is needed. Do not run `pysonar doctor`
+unless an analysis command fails, and do not run `pysonar check` unless project validation is unavailable.
+"""
     return f"""You are completing one benchmark task in an isolated Python repository.
 
 Task: {task['prompt']}
+{policy}
 
 Do not commit. Do not read outside this repository except for automatically available task instructions.
 Finish with a concise summary and the tests you ran.
@@ -57,6 +76,7 @@ Finish with a concise summary and the tests you ran.
 def parse_events(stdout: str) -> dict[str, object]:
     usage: dict[str, int] = {}
     commands: list[str] = []
+    successful_commands: list[str] = []
     command_output_chars = 0
     source_read_output_chars = 0
     final = ""
@@ -78,6 +98,8 @@ def parse_events(stdout: str) -> dict[str, object]:
             command = item.get("command", "")
             output_length = len(item.get("aggregated_output", ""))
             commands.append(command)
+            if item.get("exit_code") == 0:
+                successful_commands.append(command)
             command_output_chars += output_length
             if SOURCE_READ_COMMAND_RE.search(command):
                 source_read_output_chars += output_length
@@ -85,7 +107,9 @@ def parse_events(stdout: str) -> dict[str, object]:
             final = item.get("text", final)
             if event.get("type") == "item.completed":
                 agent_messages += 1
-    pysonar_commands = [command for command in commands if ANALYZER_COMMAND_RE.search(command)]
+    pysonar_commands = [
+        command for command in successful_commands if ANALYZER_COMMAND_RE.search(command)
+    ]
     return {
         "usage": usage,
         "eventCount": event_count,
@@ -125,14 +149,15 @@ def run_trial(
     run_root: Path,
     results_dir: Path,
     allow_unsandboxed_child: bool,
+    mode: str,
 ) -> dict[str, object]:
     trial_id = f"{task['id']}--{condition}--r{repetition}"
     worktree = run_root / "worktrees" / trial_id
     shutil.copytree(BENCHMARK_DIR / "fixtures" / task["id"], worktree)
-    codex_home = make_codex_home(run_root / trial_id, condition)
+    codex_home = make_codex_home(run_root / trial_id, condition, mode)
     env = os.environ.copy()
     env["CODEX_HOME"] = str(codex_home)
-    if condition == "skill":
+    if condition == "treatment":
         env["PATH"] = f"{ROOT / 'bin'}:{env['PATH']}"
     command = [
         "codex", "exec", "--ephemeral", "--ignore-user-config",
@@ -146,12 +171,17 @@ def run_trial(
         command.append("--dangerously-bypass-approvals-and-sandbox")
     else:
         command.extend(("--sandbox", "workspace-write"))
-    command.extend(("--cd", str(worktree), trial_prompt(task)))
+    command.extend(("--cd", str(worktree), trial_prompt(task, condition, mode)))
     started = time.monotonic()
     process = subprocess.run(command, text=True, capture_output=True, env=env, timeout=900)
     duration = round(time.monotonic() - started, 3)
     parsed = parse_events(process.stdout)
     score = validate(task["id"], worktree)
+    pysonar_usage_valid = (
+        mode != "forced-tool"
+        or (condition == "control" and not parsed["pysonarCommands"])
+        or (condition == "treatment" and bool(parsed["pysonarCommands"]))
+    )
     raw_path = results_dir / "raw" / f"{trial_id}.jsonl"
     raw_path.parent.mkdir(parents=True, exist_ok=True)
     raw_path.write_text(process.stdout)
@@ -162,11 +192,13 @@ def run_trial(
         "taskId": task["id"],
         "category": task["category"],
         "condition": condition,
+        "mode": mode,
         "repetition": repetition,
         "model": model,
         "durationSeconds": duration,
         "agentExitCode": process.returncode,
         "score": score,
+        "pysonarUsageValid": pysonar_usage_valid,
         **parsed,
     }
 
@@ -176,6 +208,7 @@ def main() -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--seed", type=int, default=20260803)
+    parser.add_argument("--mode", choices=MODES, default="natural")
     parser.add_argument("--task", action="append", dest="tasks")
     parser.add_argument("--condition", action="append", choices=CONDITIONS)
     parser.add_argument("--results-dir", type=Path, required=True)
@@ -216,18 +249,22 @@ def main() -> int:
                 run_root,
                 args.results_dir,
                 args.allow_unsandboxed_child,
+                args.mode,
             )
             record["scheduleSeed"] = args.seed
             records.append(record)
             print(
                 f"  pass={record['score']['passed']} duration={record['durationSeconds']}s "
-                f"pysonar_calls={len(record['pysonarCommands'])}",
+                f"pysonar_calls={len(record['pysonarCommands'])} "
+                f"usage_valid={record['pysonarUsageValid']}",
                 flush=True,
             )
     output = args.results_dir / "results.json"
     output.write_text(json.dumps(records, indent=2) + "\n")
     print(f"wrote {output}")
-    return 0 if all(record["score"]["passed"] for record in records) else 1
+    return 0 if all(
+        record["score"]["passed"] and record["pysonarUsageValid"] for record in records
+    ) else 1
 
 
 if __name__ == "__main__":

@@ -1,4 +1,46 @@
-# PySonar2 Agent Skill benchmark
+# PySonar2 coding-tool integration benchmark
+
+These experiments evaluate one optional consumer of the semantic engine. They do not define PySonar2's
+product position, and token reduction is not treated as a general analyzer guarantee. The primary
+product boundary and success metrics are documented in
+[`product-positioning.md`](product-positioning.md).
+
+## 2026-08-05 forced analyzer comparison
+
+This comparison isolates PySonar2 usage from Skill routing. The control condition explicitly forbids
+PySonar2. The treatment condition does not install the Skill and requires a successful compact
+`pysonar plan` discovery query before broad source inspection. Both conditions start from the same
+fixture and use the same task, model, reasoning effort, validator, and randomized schedule.
+
+The first pass used seven task categories and one repetition per condition: 14 completed trials. All
+14 trials passed their hidden validators. All seven treatment trials recorded a successful analyzer
+call, all seven control trials recorded none, and neither condition loaded the Skill.
+
+| Task category | Never use PySonar2 | Always use PySonar2 | Delta |
+| --- | ---: | ---: | ---: |
+| Import-alias definition | 71,722 | 124,238 | +73.2% |
+| First-class callback flow | 105,244 | 108,149 | +2.8% |
+| Dynamic plugin dispatch | 101,242 | 86,909 | -14.2% |
+| Unannotated factory/type flow | 91,034 | 107,271 | +17.8% |
+| Localized boundary fix | 85,836 | 104,270 | +21.5% |
+| Cross-file rename impact | 103,142 | 90,332 | -12.4% |
+| Same-name/import-alias ambiguity | 91,194 | 145,154 | +59.2% |
+| **Total** | **649,414** | **766,323** | **+18.0%** |
+
+Treatment took 339.9 seconds versus 308.4 seconds for control (+10.2%). It reduced captured
+source-read output from 9,565 to 5,243 characters (-45.2%), but increased uncached input from 98,845
+to 115,144 tokens (+16.5%). In this single-pass small-fixture comparison, reduced source reading did
+not offset analyzer output and the additional interaction context. Two tasks used fewer total tokens
+with PySonar2, while five used more.
+
+This is direct evidence for the always-off versus always-on policy, but only a preliminary estimate:
+one repetition cannot separate stable treatment effects from model variance, and the synthetic
+repositories underrepresent large-project exploration. The treatment prompt includes the exact
+command syntax so the comparison does not charge PySonar2 for CLI recall or Skill loading. A stronger
+estimate requires at least three randomized repetitions of the same forced-tool matrix.
+
+Structured measurements and all 14 trial summaries are in
+[`2026-08-05-forced-tool.json`](../benchmarks/agent-skill/results/2026-08-05-forced-tool.json).
 
 ## 2026-08-03 natural-trigger follow-up
 

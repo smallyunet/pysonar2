@@ -1,9 +1,9 @@
 {
   "name": "pysonar2-code-intelligence",
   "displayName": "PySonar2 Code Intelligence",
-  "description": "Whole-project Python type inference, navigation, references, symbols, and diagnostics powered by PySonar2.",
+  "description": "Local whole-project Python semantics for change inspection, definitions, references, inferred types, and diagnostics.",
   "icon": "images/icon.png",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publisher": "smallyu",
   "license": "Apache-2.0",
   "repository": {
@@ -15,13 +15,15 @@
   },
   "categories": [
     "Programming Languages",
-    "Linters",
     "Other"
   ],
   "keywords": [
     "python",
     "static analysis",
     "type inference",
+    "change impact",
+    "refactoring",
+    "legacy python",
     "language server",
     "code intelligence"
   ],

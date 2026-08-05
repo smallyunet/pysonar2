@@ -1,4 +1,4 @@
 interface:
-  display_name: "PySonar2 Code Intelligence"
-  short_description: "Resolve Python ambiguity left after source search"
-  default_prompt: "Use $pysonar-code-intelligence only after direct search leaves cross-file Python binding, type, or impact uncertainty."
+  display_name: "PySonar2 Semantic Evidence"
+  short_description: "Inspect uncertain Python bindings and change impact"
+  default_prompt: "Use $pysonar-code-intelligence for one bounded semantic query when cross-file Python binding, type, or reference-impact uncertainty could change the implementation."

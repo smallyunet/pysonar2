@@ -1,4 +1,4 @@
-# PySonar2 agent CLI contract
+# PySonar2 semantic engine CLI contract
 
 All machine-readable commands emit one JSON object to stdout. Progress and errors use stderr. Paths in successful results are relative to `root` when they are inside the analyzed project.
 

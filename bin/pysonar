@@ -8,7 +8,7 @@ if [ -n "${PYSONAR_JAR:-}" ]; then
 elif [ -f "$script_dir/../lib/pysonar.jar" ]; then
   jar_path=$script_dir/../lib/pysonar.jar
 else
-  jar_path=$script_dir/../target/pysonar-3.3.1.jar
+  jar_path=$script_dir/../target/pysonar-3.3.2.jar
 fi
 
 if [ ! -f "$jar_path" ]; then

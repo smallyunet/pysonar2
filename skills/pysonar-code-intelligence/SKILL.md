@@ -3,9 +3,11 @@ name: pysonar-code-intelligence
 description: Use only after ordinary source search leaves unresolved cross-file Python binding, inferred-type, or reference-impact uncertainty that could change the implementation. Do not load for localized work, complete grep results, simple renames with obvious call sites, tests, formatting, non-Python code, or dynamic string/reflection dispatch.
 ---
 
-# PySonar2 code intelligence
+# PySonar2 semantic evidence
 
-Use PySonar2 to replace broad exploration, never to supplement evidence that is already sufficient.
+Use PySonar2 as a bounded consumer of the Python semantic engine. Its purpose is to resolve a concrete
+binding or static change-impact uncertainty, not to promise general token savings or replace runtime
+validation. Use it to replace broad exploration, never to supplement evidence that is already sufficient.
 
 1. If direct search already identifies the definition and executable call sites, stop using this Skill.
 2. Ask one unresolved question with one discovery command:

@@ -39,6 +39,7 @@ def aggregate(rows: list[dict[str, object]]) -> dict[str, object]:
             for row in rows
         ),
         "analyzerTrials": sum(bool(row["pysonarCommands"]) for row in rows),
+        "pysonarUsageValid": sum(bool(row.get("pysonarUsageValid", True)) for row in rows),
     }
 
 
@@ -84,20 +85,27 @@ def main() -> int:
     rows = sorted(merged.values(), key=lambda row: (
         row["taskId"], row["condition"], row["repetition"]
     ))
+    conditions = sorted(
+        {row["condition"] for row in rows}, key=lambda condition: condition != "control"
+    )
+    if "control" not in conditions or len(conditions) != 2:
+        raise ValueError(f"expected control plus one treatment condition, got {conditions}")
+    treatment_name = next(condition for condition in conditions if condition != "control")
     by_condition = {
         condition: aggregate([row for row in rows if row["condition"] == condition])
-        for condition in ("control", "skill")
+        for condition in conditions
     }
     by_task = defaultdict(dict)
     for task_id in sorted({row["taskId"] for row in rows}):
-        for condition in ("control", "skill"):
+        for condition in conditions:
             selected = [
                 row for row in rows
                 if row["taskId"] == task_id and row["condition"] == condition
             ]
             by_task[task_id][condition] = aggregate(selected)
     control = by_condition["control"]
-    skill = by_condition["skill"]
+    treatment = by_condition[treatment_name]
+    mode = rows[0].get("mode", "natural")
     output = {
         "date": args.date,
         "baseCommit": args.base_commit,
@@ -108,16 +116,22 @@ def main() -> int:
         "scheduleSeed": rows[0].get("scheduleSeed"),
         "repetitions": max(row["repetition"] for row in rows),
         "taskCount": len(by_task),
-        "promptConditions": "byte-identical; only Skill and CLI availability differ",
+        "promptConditions": (
+            "byte-identical; only Skill and CLI availability differ"
+            if mode == "natural"
+            else "control forbids PySonar2; treatment requires a successful analyzer discovery call"
+        ),
         "tokenDefinition": "input_tokens + output_tokens; cached input is a subset of input",
         "aggregate": by_condition,
-        "skillMinusControl": {
-            "totalTokens": skill["totalTokens"] - control["totalTokens"],
+        f"{treatment_name}MinusControl": {
+            "totalTokens": treatment["totalTokens"] - control["totalTokens"],
             "totalTokensPercent": round(
-                (skill["totalTokens"] / control["totalTokens"] - 1) * 100, 3
+                (treatment["totalTokens"] / control["totalTokens"] - 1) * 100, 3
             ),
-            "seconds": round(skill["seconds"] - control["seconds"], 3),
-            "secondsPercent": round((skill["seconds"] / control["seconds"] - 1) * 100, 3),
+            "seconds": round(treatment["seconds"] - control["seconds"], 3),
+            "secondsPercent": round(
+                (treatment["seconds"] / control["seconds"] - 1) * 100, 3
+            ),
         },
         "tasks": by_task,
         "trials": [trial_summary(row) for row in rows],

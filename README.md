@@ -5,16 +5,27 @@
 [![Live Demo](https://img.shields.io/badge/demo-live-0f766e.svg)](https://smallyunet.github.io/pysonar2/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-PySonar2 is a whole-project type inferencer and semantic indexer for Python. It follows values across
-files and function calls to locate definitions, references, and inferred types, making it suitable for
-IDEs, code browsers, and code-search infrastructure.
+**Whole-project semantic analysis for safe Python changes.**
 
-The project now includes four ways to use the analyzer:
+PySonar2 is a local-first Python semantic engine. It follows values across files and function calls to
+produce definitions, references, inferred types, import relationships, diagnostics, and explicit
+coverage limitations. Its primary role is to supply auditable language facts for change-impact
+analysis, safe refactoring, migration tooling, CI, and code-review infrastructure, especially in large
+or lightly annotated Python codebases.
 
-- **VS Code:** install the published extension for navigation, hovers, symbols, and diagnostics.
-- **Static code browser:** generate a self-contained HTML view of a Python project.
-- **Coding agents:** install the portable Agent Skill and query the local JSON CLI.
+PySonar2 is not positioned as another general-purpose type checker, linter, formatter, or standalone
+AI product. It complements those tools and can serve as the Python language provider for higher-level
+change-intelligence systems such as
+[CodeEngram](https://github.com/smallyunet/code-engram).
+
+The project exposes the engine through several integration surfaces:
+
+- **JSON CLI and sessions:** query stable, machine-readable semantic facts and incremental snapshots.
 - **Java integration:** embed the analyzer and consume its semantic index directly.
+- **VS Code:** inspect saved-workspace definitions, references, inferred types, symbols, and diagnostics.
+- **Static code browser:** generate a self-contained HTML view of a Python project.
+- **Experimental agent integration:** let coding tools consume the same local JSON contract without
+  making token reduction a product guarantee.
 
 Historically, PySonar2 has been used in large-scale code-indexing systems at Google, Sourcegraph, and
 Insight.io (now part of Elastic).
@@ -29,14 +40,13 @@ Insight.io (now part of Elastic).
 
 ### PySonar2 3.3
 
-The 3.3 release adds lower-overhead code intelligence for coding agents:
+The 3.3 release turns the analyzer into a more reusable semantic-change provider:
 
 - compact `plan` responses for one or more symbols and `inspect` or `change` intent;
 - persistent JSONL `session` mode with explicit atomic snapshot refresh;
 - exact semantic candidates with clearly labeled identifier-text fallback when reference coverage is incomplete;
-- a narrower agent skill that invokes semantic analysis only when ordinary repository search leaves uncertainty; and
-- a reproducible natural-trigger benchmark covering seven task types, paired control/treatment runs, quality,
-  token use, wall time, and analyzer-call attribution.
+- content-hash and reverse-import incremental rebuilds; and
+- reproducible benchmarks that separate analyzer behavior, integration overhead, correctness, and token use.
 
 ### PySonar2 3.2
 
@@ -52,7 +62,7 @@ the whole-project analysis model:
 - an explicit [Python support matrix](docs/python-support.md) separating inference, navigation, and
   traversal-only coverage.
 
-### VS Code extension 0.2.2
+### VS Code extension 0.2.3
 
 [PySonar2 Code Intelligence](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence)
 bundles the 3.3 analyzer in a Java Language Server with a TypeScript VS Code client providing:
@@ -98,18 +108,20 @@ multi-project workspaces can be narrowed with `pysonar2.analysis.exclude`; an op
 See the [VS Code extension guide](editors/vscode/README.md) for commands, settings, development setup,
 packaging, and current limitations.
 
-## Use PySonar2 with coding agents
+## Experimental coding-tool integration
 
-PySonar2 includes an actively installed, filesystem-based Agent Skill for Codex, Claude Code, GitHub
-Copilot, Gemini CLI, and Cursor. The Skill teaches an agent when to use PySonar2; all analysis remains in
-the local CLI, with one JSON object written to stdout and progress or errors written to stderr.
+PySonar2 includes a filesystem-based Agent Skill for Codex, Claude Code, GitHub Copilot, Gemini CLI, and
+Cursor. This is an experimental consumer of the semantic engine, not PySonar2's primary product
+identity. The Skill teaches a tool when a bounded semantic query may replace uncertain source
+exploration; all analysis remains in the local CLI, with one JSON object written to stdout and progress
+or errors written to stderr.
 
 Build the CLI bundle:
 
 ```sh
 mvn package
-unzip target/pysonar-cli-3.3.1.zip
-export PATH="$PWD/pysonar-cli-3.3.1/bin:$PATH"
+unzip target/pysonar-cli-3.3.2.zip
+export PATH="$PWD/pysonar-cli-3.3.2/bin:$PATH"
 pysonar doctor --format json
 ```
 
@@ -178,16 +190,23 @@ The CLI embeds that same directory in the packaged JAR, so installs and updates 
 CLI version. The public `SKILL.md` uses only portable `name` and `description` frontmatter; optional
 Codex UI metadata lives separately under `agents/openai.yaml`.
 
-### Agent Skill benchmark
+### Coding-tool integration benchmark
 
-The reproducible benchmark under [`benchmarks/agent-skill`](benchmarks/agent-skill) compares isolated
-Codex runs with and without the Skill. After narrowing the trigger and removing mandatory
-`doctor`/`check`, the 2026-08-03 natural-trigger run covered seven task types with three repetitions:
-both conditions passed 21/21 validators, and the Skill condition used 0.43% fewer total tokens with
-0.36% more wall-clock time. Only one treatment trial loaded the PySonar2 Skill, and none needed the
-analyzer because direct search resolved every small fixture. This demonstrates near-neutral routing
-overhead, not analyzer-driven token savings; a large-project semantic benchmark is still required. See the
+The reproducible benchmark under [`benchmarks/agent-skill`](benchmarks/agent-skill) treats agent use as
+an integration experiment rather than the product definition. A 2026-08-05 always-off versus always-on
+comparison passed all 14 hidden validators, reduced captured source-reading output by 45.2%, but used
+18.0% more total model tokens when PySonar2 was mandatory. The result shows that fewer source bytes do
+not automatically offset an additional tool round trip and context replay. Token efficiency is therefore
+a secondary, workload-dependent outcome, not a general PySonar2 claim. See the
 [`full method, result table, and limitations`](docs/agent-skill-benchmark.md).
+
+## Product boundary
+
+PySonar2 owns Python-specific semantic truth: parsing, binding resolution, value and type inference,
+definitions, references, import relationships, incremental invalidation, confidence, and limitations.
+Higher-level products should own versioned change comparison, safe write plans, policy, review UX, and
+cross-language orchestration. The intended boundary and success criteria are documented in
+[`docs/product-positioning.md`](docs/product-positioning.md).
 
 ## Generate a static code browser
 
@@ -195,7 +214,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.3.1.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.2.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -205,7 +224,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.3.1.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.3.2.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -214,11 +233,14 @@ Large source trees, such as a Python standard library, may take several minutes 
 
 ```mermaid
 flowchart LR
-    VSCode[VS Code extension] -->|stdio / LSP| Server[Java language server]
-    Browser[Static browser generator] --> Analyzer[PySonar2 analyzer]
-    Server --> Analyzer
-    Analyzer -->|persistent process| CPython[CPython ast parser]
-    Analyzer --> Index[Types, definitions, references, diagnostics]
+    Repo[Python workspace] --> Analyzer[PySonar2 semantic engine]
+    Analyzer -->|persistent process| CPython[CPython AST parser]
+    Analyzer --> Facts[Bindings, references, inferred types, imports, confidence]
+    Facts --> CLI[JSON CLI and sessions]
+    Facts --> Server[Language server]
+    Facts --> Integration[Change-intelligence providers]
+    Server --> VSCode[VS Code inspection surface]
+    Integration --> CodeEngram[CodeEngram snapshots, impact, refactoring, CI]
 ```
 
 The analyzer performs whole-project interprocedural analysis and supports first-class functions,
@@ -278,9 +300,10 @@ export PYTHONPATH=/usr/lib/python3
 | `src/test/java/org/yinwang/pysonar` | Parser, inference, traversal, demo, and LSP tests |
 | `editors/vscode` | Published VS Code extension and VSIX build tooling |
 | `demo_project` | Shared multi-file demo for the static browser and VS Code extension |
-| `benchmarks/agent-skill` | Reproducible natural-trigger Skill-vs-control agent benchmark |
+| `benchmarks/agent-skill` | Reproducible analyzer-integration and routing experiments |
 | `benchmarks/analyzer` | Auditable analyzer timing, allocation counters, and JFR profiling |
 | `docs/python-support.md` | Python syntax and semantic support contract |
+| `docs/product-positioning.md` | Product role, integration boundary, users, non-goals, and success metrics |
 
 ## Current limitations
 
@@ -304,7 +327,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.3.1.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.3.2.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.

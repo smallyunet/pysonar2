@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.2.3
+
+- Reposition PySonar2 as the local Python semantic engine for safe change inspection.
+- Update Marketplace metadata around change impact, refactoring, and lightly annotated Python code.
+- Treat coding-agent use as an experimental integration with explicit always-off/always-on benchmark evidence.
+- Bundle PySonar2 3.3.2 and its semantic-engine CLI identity.
+
 ## 0.2.2
 
 - Reuse content-addressed serialized ASTs across rebuilds and language-server restarts.

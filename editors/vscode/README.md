@@ -1,7 +1,8 @@
 # PySonar2 Code Intelligence for VS Code
 
-PySonar2 Code Intelligence brings PySonar2's whole-project Python type inference and cross-file index
-into VS Code through a Java language server.
+PySonar2 Code Intelligence is the inspection surface for PySonar2's whole-project Python semantic
+engine. It brings saved-workspace bindings, references, inferred types, symbols, and conservative
+diagnostics into VS Code through a Java language server.
 
 Project links: [interactive web demo](https://smallyunet.github.io/pysonar2/) ·
 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence) ·
@@ -30,8 +31,10 @@ The extension currently provides:
 - conservative semantic diagnostics with cascade suppression; and
 - one isolated language-server process per workspace folder.
 
-PySonar2 complements existing Python extensions. It does not provide formatting, debugging, completion,
-or environment management, so keeping the Microsoft Python extension and Pylance enabled is recommended.
+The extension is designed for semantic inspection while planning or reviewing changes. It complements
+existing Python extensions and does not compete with their formatting, debugging, completion, strict
+type-checking, or environment-management responsibilities, so keeping the Microsoft Python extension
+and Pylance enabled is recommended.
 
 ## Requirements
 
@@ -139,7 +142,7 @@ npm install
 npm run package
 ```
 
-The prepublish step builds the Java project, copies `target/pysonar-3.3.1.jar` to the extension package as
+The prepublish step builds the Java project, copies `target/pysonar-3.3.2.jar` to the extension package as
 `server/pysonar-lsp.jar`, bundles the TypeScript client, and produces `pysonar2-code-intelligence.vsix`.
 Set `PYSONAR_MAVEN_REPO_LOCAL` when the build needs to use a non-default Maven dependency cache.
 
