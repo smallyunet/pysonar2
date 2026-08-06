@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 /** Command-line interface intended for coding agents and local automation. */
 public final class Main {
 
-    public static final String VERSION = "3.3.2";
+    public static final String VERSION = "3.3.3";
     public static final int SCHEMA_VERSION = 1;
     private static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final Set<String> COMMANDS = new LinkedHashSet<>(Arrays.asList(
@@ -182,17 +182,49 @@ public final class Main {
         result.put("references", locations(root, references, maxResults, true));
         result.put("truncated", definitions.size() > maxResults || references.size() > maxResults);
         result.put("analysisMillis", elapsedMillis(started));
+        boolean queryResolved = snapshot.hasOccurrence(file, position);
+        boolean locallyApplicable = snapshot.isParsed(file) && queryResolved;
+        boolean applicable = impact ? locallyApplicable && snapshot.isCoverageComplete() : locallyApplicable;
+        result.put("coverageStatus", snapshot.coverageStatus());
+        result.put("applicable", applicable);
+        result.put("confidence", !locallyApplicable ? "unsupported"
+                : snapshot.isCoverageComplete() ? "high" : "partial");
+        result.put("coverage", coverage(snapshot));
+        List<String> limitations = new ArrayList<>();
         if (impact) {
             result.put("impactKind", "reference-based");
             result.put("affectedFiles", affectedFiles(root, definitions, references));
-            result.put("limitations", Arrays.asList(
-                    "This is a definition/reference impact surface, not a complete runtime call graph.",
-                    "Dynamic imports, reflection, monkey patching, and unresolved types may be omitted."));
+            limitations.add("This is a definition/reference impact surface, not a complete runtime call graph.");
+            limitations.add("Dynamic imports, reflection, monkey patching, and unresolved types may be omitted.");
         } else {
-            result.put("limitations", Collections.singletonList(
-                    "Results describe the saved workspace state and may be incomplete for dynamic Python behavior."));
+            limitations.add(
+                    "Results describe the saved workspace state and may be incomplete for dynamic Python behavior.");
         }
+        if (!snapshot.failedFiles().isEmpty()) {
+            limitations.add(snapshot.failedFiles().size()
+                    + " workspace file(s) failed to parse; project-wide references may be incomplete.");
+        }
+        if (!snapshot.unsupportedNodeTypes().isEmpty()) {
+            limitations.add("Unsupported AST node types were traversed conservatively: "
+                    + String.join(", ", snapshot.unsupportedNodeTypes()) + ".");
+        }
+        if (!applicable) {
+            limitations.add(impact
+                    ? "Do not use this result as a complete change-impact boundary."
+                    : "The query position did not resolve to an analyzed semantic occurrence.");
+        }
+        result.put("limitations", limitations);
         return result;
+    }
+
+    private static Map<String, Object> coverage(AnalysisSnapshot snapshot) {
+        Map<String, Object> coverage = new LinkedHashMap<>();
+        coverage.put("discoveredFiles", snapshot.discoveredFileCount());
+        coverage.put("parsedFiles", snapshot.parsedFileCount());
+        coverage.put("failedFileCount", snapshot.failedFiles().size());
+        coverage.put("failedFiles", snapshot.failedFiles());
+        coverage.put("unsupportedNodeTypes", snapshot.unsupportedNodeTypes());
+        return coverage;
     }
 
     private static Map<String, Object> plan(Arguments args) throws Exception {

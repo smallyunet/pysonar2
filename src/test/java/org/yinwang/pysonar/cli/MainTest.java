@@ -52,6 +52,10 @@ public class MainTest {
         JsonObject contextJson = JsonParser.parseString(context.stdout).getAsJsonObject();
         assertEquals("User", contextJson.get("symbol").getAsString());
         assertFalse(contextJson.getAsJsonArray("definitions").isEmpty());
+        assertEquals("complete", contextJson.get("coverageStatus").getAsString());
+        assertTrue(contextJson.get("applicable").getAsBoolean());
+        assertEquals(2, contextJson.getAsJsonObject("coverage").get("discoveredFiles").getAsInt());
+        assertEquals(2, contextJson.getAsJsonObject("coverage").get("parsedFiles").getAsInt());
 
         Result impact = run("impact", "--root", root.getAbsolutePath(), "--file", "app.py",
                 "--line", "3", "--character", "5", "--format", "json");
@@ -59,6 +63,42 @@ public class MainTest {
         JsonObject impactJson = JsonParser.parseString(impact.stdout).getAsJsonObject();
         assertEquals("reference-based", impactJson.get("impactKind").getAsString());
         assertTrue(impactJson.getAsJsonArray("affectedFiles").size() >= 1);
+        assertEquals("complete", impactJson.get("coverageStatus").getAsString());
+        assertTrue(impactJson.get("applicable").getAsBoolean());
+    }
+
+    @Test
+    public void partialCoverageKeepsContextUsableButRejectsCompleteImpact() throws Exception {
+        File root = temporaryFolder.newFolder("partial-project");
+        Files.write(new File(root, "good.py").toPath(), (
+                "def target():\n" +
+                "    return 1\n" +
+                "\n" +
+                "value = target()\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "broken.py").toPath(),
+                "def broken(:\n".getBytes(StandardCharsets.UTF_8));
+
+        Result context = run("context", "--root", root.getAbsolutePath(), "--file", "good.py",
+                "--line", "4", "--character", "10", "--format", "json");
+        assertEquals(context.stderr, 0, context.exitCode);
+        JsonObject contextJson = JsonParser.parseString(context.stdout).getAsJsonObject();
+        assertEquals("partial", contextJson.get("coverageStatus").getAsString());
+        assertEquals("partial", contextJson.get("confidence").getAsString());
+        assertTrue(contextJson.get("applicable").getAsBoolean());
+        JsonObject coverage = contextJson.getAsJsonObject("coverage");
+        assertEquals(2, coverage.get("discoveredFiles").getAsInt());
+        assertEquals(1, coverage.get("parsedFiles").getAsInt());
+        assertEquals(1, coverage.get("failedFileCount").getAsInt());
+        assertEquals("broken.py", coverage.getAsJsonArray("failedFiles").get(0).getAsString());
+
+        Result impact = run("impact", "--root", root.getAbsolutePath(), "--file", "good.py",
+                "--line", "1", "--character", "5", "--format", "json");
+        assertEquals(impact.stderr, 0, impact.exitCode);
+        JsonObject impactJson = JsonParser.parseString(impact.stdout).getAsJsonObject();
+        assertEquals("partial", impactJson.get("coverageStatus").getAsString());
+        assertFalse(impactJson.get("applicable").getAsBoolean());
+        assertTrue(impactJson.getAsJsonArray("limitations").toString()
+                .contains("Do not use this result as a complete change-impact boundary"));
     }
 
     @Test

@@ -77,7 +77,8 @@ or production-ready automated refactoring.
 The committed result is a regression baseline. Product work should target the measured misses rather
 than add favorable synthetic cases. A stronger follow-up should:
 
-1. report parse and module coverage in every `context` and `impact` response;
+1. ~~report parse and module coverage in every `context` and `impact` response;~~ completed in 3.3.3
+   with explicit coverage, confidence, and applicability fields;
 2. improve attribute references through inferred instances and inherited attributes;
 3. distinguish framework-injected names, such as pytest fixtures, as unsupported rather than silently
    complete;

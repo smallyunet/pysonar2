@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.2.4
+
+- Bundle PySonar2 3.3.3.
+- Add explicit analysis coverage, confidence, and applicability contracts to semantic CLI results.
+- Mark incomplete change-impact results as unsuitable for a complete change boundary.
+
 ## 0.2.3
 
 - Reposition PySonar2 as the local Python semantic engine for safe change inspection.

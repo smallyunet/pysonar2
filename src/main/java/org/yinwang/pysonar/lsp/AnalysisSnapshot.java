@@ -45,24 +45,37 @@ public final class AnalysisSnapshot {
     private final Map<Path, List<Occurrence>> occurrences;
     private final Map<Path, List<SymbolInformation>> symbols;
     private final Map<Path, List<org.eclipse.lsp4j.Diagnostic>> diagnostics;
+    private final Set<Path> discoveredFiles;
+    private final Set<Path> parsedFiles;
+    private final Set<Path> failedFiles;
+    private final Set<String> unsupportedNodeTypes;
 
     private AnalysisSnapshot(Path root,
                              Map<Path, String> sources,
                              Map<Path, PositionCodec.LineIndex> positionIndexes,
                              Map<Path, List<Occurrence>> occurrences,
                              Map<Path, List<SymbolInformation>> symbols,
-                             Map<Path, List<org.eclipse.lsp4j.Diagnostic>> diagnostics) {
+                             Map<Path, List<org.eclipse.lsp4j.Diagnostic>> diagnostics,
+                             Collection<Path> discoveredFiles,
+                             Collection<Path> parsedFiles,
+                             Collection<Path> failedFiles,
+                             Collection<String> unsupportedNodeTypes) {
         this.root = normalize(root);
         this.sources = immutableSources(sources);
         this.positionIndexes = Collections.unmodifiableMap(new LinkedHashMap<>(positionIndexes));
         this.occurrences = immutableMapOfLists(occurrences);
         this.symbols = immutableMapOfLists(symbols);
         this.diagnostics = immutableMapOfLists(diagnostics);
+        this.discoveredFiles = immutablePaths(discoveredFiles);
+        this.parsedFiles = immutablePaths(parsedFiles);
+        this.failedFiles = immutablePaths(failedFiles);
+        this.unsupportedNodeTypes = Collections.unmodifiableSet(new LinkedHashSet<>(unsupportedNodeTypes));
     }
 
     public static AnalysisSnapshot empty(Path root) {
         return new AnalysisSnapshot(root, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-                Collections.emptyMap(), Collections.emptyMap());
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(),
+                Collections.emptySet(), Collections.emptySet());
     }
 
     static AnalysisSnapshot from(Path root, Analyzer analyzer) {
@@ -70,6 +83,18 @@ public final class AnalysisSnapshot {
     }
 
     static AnalysisSnapshot from(Path root, Analyzer analyzer, DiagnosticPolicy diagnosticPolicy) {
+        List<Path> discoveredFiles = new ArrayList<>();
+        for (String filename : analyzer.getLoadedFiles()) {
+            Path file = pathOf(filename);
+            if (file != null) {
+                discoveredFiles.add(file);
+            }
+        }
+        return from(root, analyzer, diagnosticPolicy, discoveredFiles);
+    }
+
+    static AnalysisSnapshot from(Path root, Analyzer analyzer, DiagnosticPolicy diagnosticPolicy,
+                                 Collection<Path> discoveredFiles) {
         Path normalizedRoot = normalize(root);
         Map<Path, String> sources = loadSources(analyzer.getLoadedFiles());
         Map<Path, PositionCodec.LineIndex> positionIndexes = indexSources(sources);
@@ -147,7 +172,13 @@ public final class AnalysisSnapshot {
             }
         }
 
-        return new AnalysisSnapshot(normalizedRoot, sources, positionIndexes, occurrences, symbols, diagnostics);
+        Set<Path> discovered = workspacePaths(normalizedRoot, discoveredFiles);
+        Set<Path> parsed = workspacePaths(normalizedRoot, pathsOf(analyzer.getLoadedFiles()));
+        Set<Path> failed = workspacePaths(normalizedRoot, pathsOf(analyzer.failedToParse));
+        parsed.retainAll(discovered);
+        failed.retainAll(discovered);
+        return new AnalysisSnapshot(normalizedRoot, sources, positionIndexes, occurrences, symbols, diagnostics,
+                discovered, parsed, failed, analyzer.unsupportedNodeTypes);
     }
 
     /**
@@ -206,8 +237,18 @@ public final class AnalysisSnapshot {
             }
         }
 
+        Set<Path> mergedParsed = new LinkedHashSet<>(parsedFiles);
+        Set<Path> mergedFailed = new LinkedHashSet<>(failedFiles);
+        mergedParsed.removeAll(affected);
+        mergedFailed.removeAll(affected);
+        mergedParsed.addAll(replacement.parsedFiles);
+        mergedFailed.addAll(replacement.failedFiles);
+        Set<String> mergedUnsupported = new LinkedHashSet<>(unsupportedNodeTypes);
+        mergedUnsupported.addAll(replacement.unsupportedNodeTypes);
+
         return new AnalysisSnapshot(root, mergedSources, mergedIndexes, mergedOccurrences,
-                mergedSymbols, mergedDiagnostics);
+                mergedSymbols, mergedDiagnostics, replacement.discoveredFiles, mergedParsed, mergedFailed,
+                mergedUnsupported);
     }
 
     public Optional<Hover> hover(Path file, Position position) {
@@ -377,6 +418,49 @@ public final class AnalysisSnapshot {
         return count;
     }
 
+    public int discoveredFileCount() {
+        return discoveredFiles.size();
+    }
+
+    public int parsedFileCount() {
+        return parsedFiles.size();
+    }
+
+    public List<String> failedFiles() {
+        List<String> result = new ArrayList<>();
+        for (Path file : failedFiles) {
+            result.add(relativePath(file));
+        }
+        Collections.sort(result);
+        return result;
+    }
+
+    public List<String> unsupportedNodeTypes() {
+        List<String> result = new ArrayList<>(unsupportedNodeTypes);
+        Collections.sort(result);
+        return result;
+    }
+
+    public String coverageStatus() {
+        if (discoveredFiles.isEmpty()) {
+            return "empty";
+        }
+        return failedFiles.isEmpty() && unsupportedNodeTypes.isEmpty()
+                && parsedFiles.containsAll(discoveredFiles) ? "complete" : "partial";
+    }
+
+    public boolean isCoverageComplete() {
+        return "complete".equals(coverageStatus());
+    }
+
+    public boolean isParsed(Path file) {
+        return parsedFiles.contains(normalize(file));
+    }
+
+    public boolean hasOccurrence(Path file, Position position) {
+        return occurrenceAt(file, position).isPresent();
+    }
+
     private Optional<Occurrence> occurrenceAt(Path file, Position position) {
         Path normalized = normalize(file);
         String source = sources.get(normalized);
@@ -481,6 +565,40 @@ public final class AnalysisSnapshot {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private static Collection<Path> pathsOf(Collection<String> filenames) {
+        List<Path> result = new ArrayList<>();
+        for (String filename : filenames) {
+            Path file = pathOf(filename);
+            if (file != null) {
+                result.add(file);
+            }
+        }
+        return result;
+    }
+
+    private static Set<Path> workspacePaths(Path root, Collection<Path> paths) {
+        Set<Path> result = new LinkedHashSet<>();
+        for (Path path : paths) {
+            Path normalized = normalize(path);
+            if (normalized.startsWith(root)) {
+                result.add(normalized);
+            }
+        }
+        return result;
+    }
+
+    private static Set<Path> immutablePaths(Collection<Path> paths) {
+        Set<Path> result = new LinkedHashSet<>();
+        for (Path path : paths) {
+            result.add(normalize(path));
+        }
+        return Collections.unmodifiableSet(result);
+    }
+
+    private String relativePath(Path file) {
+        return file.startsWith(root) ? root.relativize(file).toString().replace('\\', '/') : file.toString();
     }
 
     private static Path normalize(Path path) {

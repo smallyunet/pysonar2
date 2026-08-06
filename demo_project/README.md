@@ -9,7 +9,7 @@ Generate the static site from the repository root:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.3.2.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.3.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser or publish the directory on any static host.

@@ -267,4 +267,33 @@ public class AnalysisSessionTest {
             assertTrue(references.stream().anyMatch(location -> location.getUri().endsWith("second.py")));
         }
     }
+
+    @Test
+    public void repairsParseCoverageAcrossIncrementalRebuilds() throws Exception {
+        File root = temporary.newFolder("incremental-coverage-workspace");
+        File good = new File(root, "good.py");
+        File broken = new File(root, "broken.py");
+        Files.write(good.toPath(), "value = 1\n".getBytes(StandardCharsets.UTF_8));
+        Files.write(broken.toPath(), "def broken(:\n".getBytes(StandardCharsets.UTF_8));
+
+        Path cache = temporary.newFolder("incremental-coverage-cache").toPath();
+        try (AnalysisSession session = new AnalysisSession(root.toPath(), Collections.emptyList(),
+                DiagnosticPolicy.conservative(), progress -> { }, cache)) {
+            AnalysisSnapshot initial = session.rebuildNow();
+            assertEquals("partial", initial.coverageStatus());
+            assertEquals(2, initial.discoveredFileCount());
+            assertEquals(1, initial.parsedFileCount());
+            assertEquals(Collections.singletonList("broken.py"), initial.failedFiles());
+
+            Files.write(broken.toPath(), "def repaired():\n    return 1\n".getBytes(StandardCharsets.UTF_8));
+            AnalysisSnapshot repaired = session.rebuildNow();
+            assertEquals(RebuildMetrics.Mode.INCREMENTAL, session.lastMetrics().getMode());
+            assertEquals("complete", repaired.coverageStatus());
+            assertEquals(2, repaired.discoveredFileCount());
+            assertEquals(2, repaired.parsedFileCount());
+            assertTrue(repaired.failedFiles().isEmpty());
+            assertTrue(repaired.isParsed(good.toPath()));
+            assertTrue(repaired.isParsed(broken.toPath()));
+        }
+    }
 }

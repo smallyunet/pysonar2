@@ -16,9 +16,16 @@ Exit codes:
 - `3`: installation safety check refused an unmanaged overwrite or removal.
 - `127`: launcher could not locate the PySonar2 JAR.
 
-`context` returns the query, symbol text, inferred hover text, definitions, references, truncation status, and limitations.
+`context` returns the query, symbol text, inferred hover text, definitions, references, truncation status, and limitations. It also reports:
 
-`impact` is a superset of `context`: it returns the same evidence plus `impactKind: reference-based` and `affectedFiles`. Do not call both commands for the same location. It does not claim complete dynamic call-graph coverage.
+- `coverageStatus`: `complete`, `partial`, or `empty`;
+- `applicable`: whether the query position resolved inside a parsed file;
+- `confidence`: `high`, `partial`, or `unsupported`; and
+- `coverage`: discovered and parsed file counts, failed paths, and conservatively traversed unsupported AST node types.
+
+Partial `context` results can still be useful for local inspection, but their project-wide references are not complete.
+
+`impact` is a superset of `context`: it returns the same evidence plus `impactKind: reference-based` and `affectedFiles`. Do not call both commands for the same location. Its `applicable` value is stricter: it is true only when the query resolves and workspace coverage is complete. A false value means the returned locations are evidence, not a complete change boundary. Even an applicable result does not claim complete dynamic call-graph coverage.
 
 `plan` accepts one or more repeated `--symbol` values and analyzes the project once. Each query contains semantic exact-name candidates plus explicitly labeled `exact-identifier-text` occurrences as a conservative fallback for incomplete alias or attribute references. For `--intent change`, it also returns the fallback affected-file shortlist. Treat occurrences as candidates, not proof that same-named symbols share a binding. `--format compact-json` omits verbose timing, root, kinds, inferred types, and repeated limitations.
 

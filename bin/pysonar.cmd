@@ -6,7 +6,7 @@ if defined PYSONAR_JAR (
 ) else if exist "%SCRIPT_DIR%..\lib\pysonar.jar" (
   set "JAR_PATH=%SCRIPT_DIR%..\lib\pysonar.jar"
 ) else (
-  set "JAR_PATH=%SCRIPT_DIR%..\target\pysonar-3.3.2.jar"
+  set "JAR_PATH=%SCRIPT_DIR%..\target\pysonar-3.3.3.jar"
 )
 if not exist "%JAR_PATH%" (
   echo PySonar2 JAR not found. Build with "mvn package" or set PYSONAR_JAR. 1>&2

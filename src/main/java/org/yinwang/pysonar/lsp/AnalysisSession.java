@@ -207,7 +207,11 @@ public final class AnalysisSession implements AutoCloseable {
             finished = true;
             progress.report("snapshot", analysisFiles.size(), analysisFiles.size(),
                     "Building editor snapshot", true);
-            AnalysisSnapshot next = AnalysisSnapshot.from(root, analyzer, diagnosticPolicy);
+            List<Path> discoveredFiles = new ArrayList<>();
+            for (String workspaceFile : workspaceFiles) {
+                discoveredFiles.add(Path.of(workspaceFile).toAbsolutePath().normalize());
+            }
+            AnalysisSnapshot next = AnalysisSnapshot.from(root, analyzer, diagnosticPolicy, discoveredFiles);
             return new AnalysisRun(next, analyzer.getLoadedFiles().size(),
                     analyzer.getStat("astCacheHits"), analyzer.getStat("astCacheMisses"));
         } finally {
