@@ -213,6 +213,15 @@ not automatically offset an additional tool round trip and context replay. Token
 a secondary, workload-dependent outcome, not a general PySonar2 claim. See the
 [`full method, result table, and limitations`](docs/agent-skill-benchmark.md).
 
+### Historical change-safety benchmark
+
+The reproducible benchmark under [`benchmarks/change-safety`](benchmarks/change-safety) replays 12
+identifier changes from pinned Click, Flask, and Werkzeug commits against PySonar2, Jedi, Rope, and
+exact-name search. The first pilot is intentionally retained as a negative baseline: PySonar2 returned
+high-precision evidence and exactly reproduced four changes, but its 0.479 reference recall did not
+beat exact-name search overall. See the
+[`method, results, valid claims, and next gates`](docs/change-safety-benchmark.md).
+
 ## Product boundary
 
 PySonar2 owns Python-specific semantic truth: parsing, binding resolution, value and type inference,
@@ -315,6 +324,7 @@ export PYTHONPATH=/usr/lib/python3
 | `demo_project` | Shared multi-file demo for the static browser and VS Code extension |
 | `benchmarks/agent-skill` | Reproducible analyzer-integration and routing experiments |
 | `benchmarks/analyzer` | Auditable analyzer timing, allocation counters, and JFR profiling |
+| `benchmarks/change-safety` | Historical rename replay against PySonar2, Jedi, Rope, and exact-name search |
 | `docs/python-support.md` | Python syntax and semantic support contract |
 | `docs/product-positioning.md` | Product role, integration boundary, users, non-goals, and success metrics |
 

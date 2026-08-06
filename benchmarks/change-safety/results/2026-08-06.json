@@ -1,0 +1,8495 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "historical-change-safety",
+  "caseCount": 12,
+  "adapters": [
+    "pysonar",
+    "jedi",
+    "rope",
+    "rg"
+  ],
+  "versions": {
+    "pysonar": "{\"schemaVersion\":1,\"cliVersion\":\"3.3.2\",\"command\":\"doctor\",\"javaVersion\":\"25\",\"pythonCommand\":\"python3\",\"python\":{\"available\":true,\"version\":\"Python 3.10.4\"},\"status\":\"ok\",\"capabilities\":[\"symbol-plan\",\"persistent-session\",\"context\",\"reference-impact\",\"diagnostics\",\"skill-install\"]}",
+    "python": "3.10.4 (main, Jun 20 2022, 11:16:30) [Clang 13.1.6 (clang-1316.0.21.2.5)]",
+    "jedi": "0.19.0",
+    "rope": "1.14.0",
+    "rg": "ripgrep 15.1.0"
+  },
+  "method": {
+    "gold": "executable identifier occurrences changed by the pinned upstream commit",
+    "unit": "one-based file, line, and character",
+    "safeComplete": "zero missed gold occurrences and zero non-gold candidate edits"
+  },
+  "aggregate": {
+    "pysonar": {
+      "cases": 12,
+      "errors": 0,
+      "safeComplete": 4,
+      "truePositive": 81,
+      "falsePositive": 0,
+      "falseNegative": 88,
+      "microPrecision": 1.0,
+      "microRecall": 0.47929,
+      "microF1": 0.648,
+      "seconds": 55.684
+    },
+    "jedi": {
+      "cases": 12,
+      "errors": 0,
+      "safeComplete": 4,
+      "truePositive": 86,
+      "falsePositive": 1,
+      "falseNegative": 83,
+      "microPrecision": 0.988506,
+      "microRecall": 0.508876,
+      "microF1": 0.671875,
+      "seconds": 2.356
+    },
+    "rope": {
+      "cases": 12,
+      "errors": 8,
+      "safeComplete": 2,
+      "truePositive": 46,
+      "falsePositive": 0,
+      "falseNegative": 123,
+      "microPrecision": 1.0,
+      "microRecall": 0.272189,
+      "microF1": 0.427907,
+      "seconds": 1.562
+    },
+    "rg": {
+      "cases": 12,
+      "errors": 0,
+      "safeComplete": 8,
+      "truePositive": 169,
+      "falsePositive": 14,
+      "falseNegative": 0,
+      "microPrecision": 0.923497,
+      "microRecall": 1.0,
+      "microF1": 0.960227,
+      "seconds": 0.119
+    }
+  },
+  "records": [
+    {
+      "caseId": "click-resultcallback-method",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "resultcallback",
+      "newName": "result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1430,
+        "column": 9
+      },
+      "adapter": "pysonar",
+      "seconds": 2.595,
+      "error": null,
+      "gold": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ]
+      ],
+      "goldCount": 4,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 3,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4,
+      "safeComplete": false,
+      "missed": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "click-resultcallback-method",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "resultcallback",
+      "newName": "result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1430,
+        "column": 9
+      },
+      "adapter": "jedi",
+      "seconds": 0.64,
+      "error": null,
+      "gold": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ]
+      ],
+      "goldCount": 4,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 3,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4,
+      "safeComplete": false,
+      "missed": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "click-resultcallback-method",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "resultcallback",
+      "newName": "result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1430,
+        "column": 9
+      },
+      "adapter": "rope",
+      "seconds": 0.171,
+      "error": null,
+      "gold": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ]
+      ],
+      "goldCount": 4,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 3,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4,
+      "safeComplete": false,
+      "missed": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "click-resultcallback-method",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "resultcallback",
+      "newName": "result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1430,
+        "column": 9
+      },
+      "adapter": "rg",
+      "seconds": 0.009,
+      "error": null,
+      "gold": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "candidates": [
+        [
+          "examples/imagepipe/imagepipe.py",
+          23,
+          6
+        ],
+        [
+          "src/click/core.py",
+          312,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1396,
+          39
+        ],
+        [
+          "src/click/core.py",
+          1430,
+          9
+        ],
+        [
+          "src/click/core.py",
+          1446,
+          18
+        ],
+        [
+          "tests/test_chain.py",
+          102,
+          10
+        ],
+        [
+          "tests/test_chain.py",
+          136,
+          10
+        ]
+      ],
+      "goldCount": 4,
+      "candidateCount": 7,
+      "truePositive": 4,
+      "falsePositive": 3,
+      "falseNegative": 0,
+      "precision": 0.571429,
+      "recall": 1.0,
+      "f1": 0.727273,
+      "safeComplete": false,
+      "missed": [],
+      "wrong": [
+        [
+          "src/click/core.py",
+          312,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1396,
+          39
+        ],
+        [
+          "src/click/core.py",
+          1446,
+          18
+        ]
+      ]
+    },
+    {
+      "caseId": "click-result-callback-field",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "result_callback",
+      "newName": "_result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1397,
+        "column": 14
+      },
+      "adapter": "pysonar",
+      "seconds": 2.598,
+      "error": null,
+      "gold": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "goldCount": 7,
+      "candidateCount": 6,
+      "truePositive": 6,
+      "falsePositive": 0,
+      "falseNegative": 1,
+      "precision": 1.0,
+      "recall": 0.857143,
+      "f1": 0.923077,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "click-result-callback-field",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "result_callback",
+      "newName": "_result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1397,
+        "column": 14
+      },
+      "adapter": "jedi",
+      "seconds": 0.071,
+      "error": null,
+      "gold": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "goldCount": 7,
+      "candidateCount": 6,
+      "truePositive": 6,
+      "falsePositive": 0,
+      "falseNegative": 1,
+      "precision": 1.0,
+      "recall": 0.857143,
+      "f1": 0.923077,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "click-result-callback-field",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "result_callback",
+      "newName": "_result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1397,
+        "column": 14
+      },
+      "adapter": "rope",
+      "seconds": 0.182,
+      "error": null,
+      "gold": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "goldCount": 7,
+      "candidateCount": 7,
+      "truePositive": 7,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "click-result-callback-field",
+      "repository": "click",
+      "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+      "parentCommit": "e3594e7f8a76dd15109d29570a6f263e56e412f2",
+      "oldName": "result_callback",
+      "newName": "_result_callback",
+      "query": {
+        "file": "src/click/core.py",
+        "line": 1397,
+        "column": 14
+      },
+      "adapter": "rg",
+      "seconds": 0.007,
+      "error": null,
+      "gold": [
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "candidates": [
+        [
+          "src/click/core.py",
+          1366,
+          12
+        ],
+        [
+          "src/click/core.py",
+          1380,
+          9
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          14
+        ],
+        [
+          "src/click/core.py",
+          1397,
+          32
+        ],
+        [
+          "src/click/core.py",
+          1457,
+          33
+        ],
+        [
+          "src/click/core.py",
+          1459,
+          22
+        ],
+        [
+          "src/click/core.py",
+          1465,
+          18
+        ],
+        [
+          "src/click/core.py",
+          1515,
+          21
+        ],
+        [
+          "src/click/core.py",
+          1516,
+          41
+        ]
+      ],
+      "goldCount": 7,
+      "candidateCount": 9,
+      "truePositive": 7,
+      "falsePositive": 2,
+      "falseNegative": 0,
+      "precision": 0.777778,
+      "recall": 1.0,
+      "f1": 0.875,
+      "safeComplete": false,
+      "missed": [],
+      "wrong": [
+        [
+          "src/click/core.py",
+          1366,
+          12
+        ],
+        [
+          "src/click/core.py",
+          1380,
+          9
+        ]
+      ]
+    },
+    {
+      "caseId": "flask-jinja-environment",
+      "repository": "flask",
+      "changeCommit": "d13a1b363e1065de98f44fe0446b570ce078007e",
+      "parentCommit": "66b4ea91b4f59c40b36ee2c5a5ccd1218387a891",
+      "oldName": "jinja_env_class",
+      "newName": "jinja_environment",
+      "query": {
+        "file": "flask/app.py",
+        "line": 163,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 5.037,
+      "error": null,
+      "gold": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ],
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "candidates": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ]
+      ],
+      "goldCount": 3,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 1,
+      "precision": 1.0,
+      "recall": 0.666667,
+      "f1": 0.8,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-jinja-environment",
+      "repository": "flask",
+      "changeCommit": "d13a1b363e1065de98f44fe0446b570ce078007e",
+      "parentCommit": "66b4ea91b4f59c40b36ee2c5a5ccd1218387a891",
+      "oldName": "jinja_env_class",
+      "newName": "jinja_environment",
+      "query": {
+        "file": "flask/app.py",
+        "line": 163,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.079,
+      "error": null,
+      "gold": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ],
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "candidates": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ]
+      ],
+      "goldCount": 3,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 1,
+      "precision": 1.0,
+      "recall": 0.666667,
+      "f1": 0.8,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-jinja-environment",
+      "repository": "flask",
+      "changeCommit": "d13a1b363e1065de98f44fe0446b570ce078007e",
+      "parentCommit": "66b4ea91b4f59c40b36ee2c5a5ccd1218387a891",
+      "oldName": "jinja_env_class",
+      "newName": "jinja_environment",
+      "query": {
+        "file": "flask/app.py",
+        "line": 163,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.097,
+      "error": "ModuleSyntaxError: Syntax error in file <docs/conf.py> line <55>: Missing parentheses in call to 'print'. Did you mean print(...)?",
+      "gold": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ],
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 3,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 3,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ],
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-jinja-environment",
+      "repository": "flask",
+      "changeCommit": "d13a1b363e1065de98f44fe0446b570ce078007e",
+      "parentCommit": "66b4ea91b4f59c40b36ee2c5a5ccd1218387a891",
+      "oldName": "jinja_env_class",
+      "newName": "jinja_environment",
+      "query": {
+        "file": "flask/app.py",
+        "line": 163,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.01,
+      "error": null,
+      "gold": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ],
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "candidates": [
+        [
+          "flask/app.py",
+          163,
+          5
+        ],
+        [
+          "flask/app.py",
+          688,
+          19
+        ],
+        [
+          "tests/test_templating.py",
+          370,
+          9
+        ]
+      ],
+      "goldCount": 3,
+      "candidateCount": 3,
+      "truePositive": 3,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-root-path",
+      "repository": "flask",
+      "changeCommit": "c3844d11026f84400d5a088dd5c24c6a4a04dcd1",
+      "parentCommit": "b3aaf6d5ca4fa53cc78456b2df01ab4d11cec84a",
+      "oldName": "get_package_path",
+      "newName": "get_root_path",
+      "query": {
+        "file": "flask/helpers.py",
+        "line": 469,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 0.637,
+      "error": null,
+      "gold": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "candidates": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "goldCount": 2,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-root-path",
+      "repository": "flask",
+      "changeCommit": "c3844d11026f84400d5a088dd5c24c6a4a04dcd1",
+      "parentCommit": "b3aaf6d5ca4fa53cc78456b2df01ab4d11cec84a",
+      "oldName": "get_package_path",
+      "newName": "get_root_path",
+      "query": {
+        "file": "flask/helpers.py",
+        "line": 469,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.019,
+      "error": null,
+      "gold": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "candidates": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "goldCount": 2,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-root-path",
+      "repository": "flask",
+      "changeCommit": "c3844d11026f84400d5a088dd5c24c6a4a04dcd1",
+      "parentCommit": "b3aaf6d5ca4fa53cc78456b2df01ab4d11cec84a",
+      "oldName": "get_package_path",
+      "newName": "get_root_path",
+      "query": {
+        "file": "flask/helpers.py",
+        "line": 469,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.018,
+      "error": "ModuleSyntaxError: Syntax error in file <flask/ctx.py> line <112>: multiple exception types must be parenthesized",
+      "gold": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 2,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 2,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-root-path",
+      "repository": "flask",
+      "changeCommit": "c3844d11026f84400d5a088dd5c24c6a4a04dcd1",
+      "parentCommit": "b3aaf6d5ca4fa53cc78456b2df01ab4d11cec84a",
+      "oldName": "get_package_path",
+      "newName": "get_root_path",
+      "query": {
+        "file": "flask/helpers.py",
+        "line": 469,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.008,
+      "error": null,
+      "gold": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "candidates": [
+        [
+          "flask/helpers.py",
+          469,
+          5
+        ],
+        [
+          "flask/helpers.py",
+          552,
+          26
+        ]
+      ],
+      "goldCount": 2,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir",
+      "newName": "modules_tmpdir",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 69,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 4.229,
+      "error": null,
+      "gold": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ]
+      ],
+      "goldCount": 43,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 42,
+      "precision": 1.0,
+      "recall": 0.023256,
+      "f1": 0.045455,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir",
+      "newName": "modules_tmpdir",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 69,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.501,
+      "error": null,
+      "gold": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "goldCount": 43,
+      "candidateCount": 11,
+      "truePositive": 11,
+      "falsePositive": 0,
+      "falseNegative": 32,
+      "precision": 1.0,
+      "recall": 0.255814,
+      "f1": 0.407407,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir",
+      "newName": "modules_tmpdir",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 69,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.072,
+      "error": "ModuleSyntaxError: Syntax error in file <docs/conf.py> line <55>: Missing parentheses in call to 'print'. Did you mean print(...)?",
+      "gold": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 43,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 43,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir",
+      "newName": "modules_tmpdir",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 69,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.012,
+      "error": null,
+      "gold": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/conftest.py",
+          69,
+          5
+        ],
+        [
+          "tests/conftest.py",
+          77,
+          24
+        ],
+        [
+          "tests/conftest.py",
+          78,
+          44
+        ],
+        [
+          "tests/conftest.py",
+          79,
+          12
+        ],
+        [
+          "tests/conftest.py",
+          83,
+          19
+        ],
+        [
+          "tests/conftest.py",
+          85,
+          10
+        ],
+        [
+          "tests/conftest.py",
+          94,
+          17
+        ],
+        [
+          "tests/conftest.py",
+          97,
+          26
+        ],
+        [
+          "tests/conftest.py",
+          115,
+          21
+        ],
+        [
+          "tests/conftest.py",
+          117,
+          21
+        ],
+        [
+          "tests/test_config.py",
+          185,
+          44
+        ],
+        [
+          "tests/test_config.py",
+          190,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          191,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          193,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          194,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          202,
+          45
+        ],
+        [
+          "tests/test_config.py",
+          203,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          212,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          214,
+          46
+        ],
+        [
+          "tests/test_config.py",
+          215,
+          15
+        ],
+        [
+          "tests/test_config.py",
+          226,
+          41
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          43
+        ],
+        [
+          "tests/test_config.py",
+          238,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          240,
+          58
+        ],
+        [
+          "tests/test_config.py",
+          243,
+          26
+        ],
+        [
+          "tests/test_config.py",
+          253,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          255,
+          55
+        ],
+        [
+          "tests/test_config.py",
+          265,
+          13
+        ],
+        [
+          "tests/test_config.py",
+          267,
+          53
+        ],
+        [
+          "tests/test_config.py",
+          269,
+          9
+        ],
+        [
+          "tests/test_config.py",
+          276,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          58,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          59,
+          9
+        ],
+        [
+          "tests/test_ext.py",
+          64,
+          19
+        ],
+        [
+          "tests/test_ext.py",
+          65,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          71,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          72,
+          11
+        ],
+        [
+          "tests/test_ext.py",
+          78,
+          20
+        ],
+        [
+          "tests/test_ext.py",
+          79,
+          16
+        ],
+        [
+          "tests/test_ext.py",
+          88,
+          21
+        ],
+        [
+          "tests/test_ext.py",
+          89,
+          11
+        ],
+        [
+          "tests/test_helpers.py",
+          580,
+          43
+        ],
+        [
+          "tests/test_helpers.py",
+          581,
+          9
+        ]
+      ],
+      "goldCount": 43,
+      "candidateCount": 43,
+      "truePositive": 43,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir-prefix",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir_prefix",
+      "newName": "modules_tmpdir_prefix",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 77,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 4.218,
+      "error": null,
+      "gold": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ]
+      ],
+      "goldCount": 5,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 4,
+      "precision": 1.0,
+      "recall": 0.2,
+      "f1": 0.333333,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir-prefix",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir_prefix",
+      "newName": "modules_tmpdir_prefix",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 77,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.039,
+      "error": null,
+      "gold": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ]
+      ],
+      "goldCount": 5,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 3,
+      "precision": 1.0,
+      "recall": 0.4,
+      "f1": 0.571429,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir-prefix",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir_prefix",
+      "newName": "modules_tmpdir_prefix",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 77,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.026,
+      "error": "ModuleSyntaxError: Syntax error in file <docs/conf.py> line <55>: Missing parentheses in call to 'print'. Did you mean print(...)?",
+      "gold": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 5,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "flask-apps-tmpdir-prefix",
+      "repository": "flask",
+      "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+      "parentCommit": "a00ccdce9429188d349cad5a2f5d6f21b2a84c39",
+      "oldName": "apps_tmpdir_prefix",
+      "newName": "modules_tmpdir_prefix",
+      "query": {
+        "file": "tests/conftest.py",
+        "line": 77,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.01,
+      "error": null,
+      "gold": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/conftest.py",
+          77,
+          5
+        ],
+        [
+          "tests/test_config.py",
+          228,
+          56
+        ],
+        [
+          "tests/test_config.py",
+          241,
+          38
+        ],
+        [
+          "tests/test_config.py",
+          256,
+          35
+        ],
+        [
+          "tests/test_config.py",
+          268,
+          34
+        ]
+      ],
+      "goldCount": 5,
+      "candidateCount": 5,
+      "truePositive": 5,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-cache-control-property",
+      "repository": "werkzeug",
+      "changeCommit": "ba0247874d744b602dd13dd3410ace2221981a2c",
+      "parentCommit": "7d9d5a8d72a31c9c6f30741a83e8f4155dec5037",
+      "oldName": "cache_property",
+      "newName": "cache_control_property",
+      "query": {
+        "file": "src/werkzeug/datastructures.py",
+        "line": 1969,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 7.788,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "goldCount": 16,
+      "candidateCount": 15,
+      "truePositive": 15,
+      "falsePositive": 0,
+      "falseNegative": 1,
+      "precision": 1.0,
+      "recall": 0.9375,
+      "f1": 0.967742,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-cache-control-property",
+      "repository": "werkzeug",
+      "changeCommit": "ba0247874d744b602dd13dd3410ace2221981a2c",
+      "parentCommit": "7d9d5a8d72a31c9c6f30741a83e8f4155dec5037",
+      "oldName": "cache_property",
+      "newName": "cache_control_property",
+      "query": {
+        "file": "src/werkzeug/datastructures.py",
+        "line": 1969,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.218,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.pyi",
+          408,
+          5
+        ]
+      ],
+      "goldCount": 16,
+      "candidateCount": 16,
+      "truePositive": 15,
+      "falsePositive": 1,
+      "falseNegative": 1,
+      "precision": 0.9375,
+      "recall": 0.9375,
+      "f1": 0.9375,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ]
+      ],
+      "wrong": [
+        [
+          "src/werkzeug/datastructures.pyi",
+          408,
+          5
+        ]
+      ]
+    },
+    {
+      "caseId": "werkzeug-cache-control-property",
+      "repository": "werkzeug",
+      "changeCommit": "ba0247874d744b602dd13dd3410ace2221981a2c",
+      "parentCommit": "7d9d5a8d72a31c9c6f30741a83e8f4155dec5037",
+      "oldName": "cache_property",
+      "newName": "cache_control_property",
+      "query": {
+        "file": "src/werkzeug/datastructures.py",
+        "line": 1969,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.329,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ]
+      ],
+      "goldCount": 16,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 15,
+      "precision": 1.0,
+      "recall": 0.0625,
+      "f1": 0.117647,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-cache-control-property",
+      "repository": "werkzeug",
+      "changeCommit": "ba0247874d744b602dd13dd3410ace2221981a2c",
+      "parentCommit": "7d9d5a8d72a31c9c6f30741a83e8f4155dec5037",
+      "oldName": "cache_property",
+      "newName": "cache_control_property",
+      "query": {
+        "file": "src/werkzeug/datastructures.py",
+        "line": 1969,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.01,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/datastructures.py",
+          1969,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2012,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2013,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2014,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2015,
+          20
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          5
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2069,
+          35
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2086,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2087,
+          17
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2088,
+          22
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2106,
+          14
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2107,
+          15
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2108,
+          23
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2109,
+          24
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2110,
+          16
+        ],
+        [
+          "src/werkzeug/datastructures.py",
+          2111,
+          17
+        ]
+      ],
+      "goldCount": 16,
+      "candidateCount": 16,
+      "truePositive": 16,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-to-str",
+      "repository": "werkzeug",
+      "changeCommit": "6669a4a6584612d4c3d4b68df5012d15bcc7fd72",
+      "parentCommit": "9777c0821eb1a5a645185e35f7523a8725897634",
+      "oldName": "_to_unicode",
+      "newName": "_to_str",
+      "query": {
+        "file": "src/werkzeug/_internal.py",
+        "line": 99,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 8.18,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "goldCount": 37,
+      "candidateCount": 31,
+      "truePositive": 31,
+      "falsePositive": 0,
+      "falseNegative": 6,
+      "precision": 1.0,
+      "recall": 0.837838,
+      "f1": 0.911765,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-to-str",
+      "repository": "werkzeug",
+      "changeCommit": "6669a4a6584612d4c3d4b68df5012d15bcc7fd72",
+      "parentCommit": "9777c0821eb1a5a645185e35f7523a8725897634",
+      "oldName": "_to_unicode",
+      "newName": "_to_str",
+      "query": {
+        "file": "src/werkzeug/_internal.py",
+        "line": 99,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.337,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ]
+      ],
+      "goldCount": 37,
+      "candidateCount": 1,
+      "truePositive": 1,
+      "falsePositive": 0,
+      "falseNegative": 36,
+      "precision": 1.0,
+      "recall": 0.027027,
+      "f1": 0.052632,
+      "safeComplete": false,
+      "missed": [
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-to-str",
+      "repository": "werkzeug",
+      "changeCommit": "6669a4a6584612d4c3d4b68df5012d15bcc7fd72",
+      "parentCommit": "9777c0821eb1a5a645185e35f7523a8725897634",
+      "oldName": "_to_unicode",
+      "newName": "_to_str",
+      "query": {
+        "file": "src/werkzeug/_internal.py",
+        "line": 99,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.393,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "goldCount": 37,
+      "candidateCount": 37,
+      "truePositive": 37,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-to-str",
+      "repository": "werkzeug",
+      "changeCommit": "6669a4a6584612d4c3d4b68df5012d15bcc7fd72",
+      "parentCommit": "9777c0821eb1a5a645185e35f7523a8725897634",
+      "oldName": "_to_unicode",
+      "newName": "_to_str",
+      "query": {
+        "file": "src/werkzeug/_internal.py",
+        "line": 99,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.011,
+      "error": null,
+      "gold": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "candidates": [
+        [
+          "src/werkzeug/_internal.py",
+          99,
+          5
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          23,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          417,
+          16
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          459,
+          25
+        ],
+        [
+          "src/werkzeug/debug/tbtools.py",
+          468,
+          20
+        ],
+        [
+          "src/werkzeug/http.py",
+          32,
+          24
+        ],
+        [
+          "src/werkzeug/http.py",
+          602,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          603,
+          29
+        ],
+        [
+          "src/werkzeug/http.py",
+          1120,
+          19
+        ],
+        [
+          "src/werkzeug/http.py",
+          1123,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          26,
+          24
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          40,
+          19
+        ],
+        [
+          "src/werkzeug/posixemulation.py",
+          41,
+          19
+        ],
+        [
+          "src/werkzeug/routing.py",
+          110,
+          24
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1677,
+          28
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1678,
+          23
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1682,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1683,
+          27
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1684,
+          26
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1685,
+          31
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1844,
+          25
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1976,
+          20
+        ],
+        [
+          "src/werkzeug/routing.py",
+          1981,
+          25
+        ],
+        [
+          "src/werkzeug/urls.py",
+          28,
+          24
+        ],
+        [
+          "src/werkzeug/urls.py",
+          635,
+          9
+        ],
+        [
+          "src/werkzeug/urls.py",
+          687,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          752,
+          21
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1103,
+          17
+        ],
+        [
+          "src/werkzeug/urls.py",
+          1114,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          5,
+          25
+        ],
+        [
+          "src/werkzeug/wrappers/base_request.py",
+          548,
+          35
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          20,
+          24
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          263,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          280,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          332,
+          12
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          358,
+          16
+        ],
+        [
+          "src/werkzeug/wsgi.py",
+          798,
+          21
+        ]
+      ],
+      "goldCount": 37,
+      "candidateCount": 37,
+      "truePositive": 37,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-unicodify-header-value",
+      "repository": "werkzeug",
+      "changeCommit": "c5463cd0aeb77b7c47ac5e36b9f87b426314eb47",
+      "parentCommit": "33c50d2a6324342fe55c6af5c2e30a252375d7ed",
+      "oldName": "_unicodify_value",
+      "newName": "_unicodify_header_value",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 820,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 6.236,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "goldCount": 8,
+      "candidateCount": 8,
+      "truePositive": 8,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-unicodify-header-value",
+      "repository": "werkzeug",
+      "changeCommit": "c5463cd0aeb77b7c47ac5e36b9f87b426314eb47",
+      "parentCommit": "33c50d2a6324342fe55c6af5c2e30a252375d7ed",
+      "oldName": "_unicodify_value",
+      "newName": "_unicodify_header_value",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 820,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.083,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "goldCount": 8,
+      "candidateCount": 8,
+      "truePositive": 8,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-unicodify-header-value",
+      "repository": "werkzeug",
+      "changeCommit": "c5463cd0aeb77b7c47ac5e36b9f87b426314eb47",
+      "parentCommit": "33c50d2a6324342fe55c6af5c2e30a252375d7ed",
+      "oldName": "_unicodify_value",
+      "newName": "_unicodify_header_value",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 820,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.057,
+      "error": "ModuleSyntaxError: Syntax error in file <examples/cupoftee/network.py> line <44>: Missing parentheses in call to 'print'. Did you mean print(...)?",
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 8,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 8,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-unicodify-header-value",
+      "repository": "werkzeug",
+      "changeCommit": "c5463cd0aeb77b7c47ac5e36b9f87b426314eb47",
+      "parentCommit": "33c50d2a6324342fe55c6af5c2e30a252375d7ed",
+      "oldName": "_unicodify_value",
+      "newName": "_unicodify_header_value",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 820,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.009,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/datastructures.py",
+          820,
+          5
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1060,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1100,
+          18
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1135,
+          26
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1243,
+          20
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1244,
+          16
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1256,
+          24
+        ],
+        [
+          "werkzeug/datastructures.py",
+          1259,
+          24
+        ]
+      ],
+      "goldCount": 8,
+      "candidateCount": 8,
+      "truePositive": 8,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-url-parse",
+      "repository": "werkzeug",
+      "changeCommit": "62a4307d6d17edb213fb18398e72626dba75a95e",
+      "parentCommit": "864a65407d7daa4a3b746641ddc78f8300b8dee8",
+      "oldName": "url_split",
+      "newName": "url_parse",
+      "query": {
+        "file": "werkzeug/urls.py",
+        "line": 210,
+        "column": 5
+      },
+      "adapter": "pysonar",
+      "seconds": 7.124,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "goldCount": 12,
+      "candidateCount": 12,
+      "truePositive": 12,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-url-parse",
+      "repository": "werkzeug",
+      "changeCommit": "62a4307d6d17edb213fb18398e72626dba75a95e",
+      "parentCommit": "864a65407d7daa4a3b746641ddc78f8300b8dee8",
+      "oldName": "url_split",
+      "newName": "url_parse",
+      "query": {
+        "file": "werkzeug/urls.py",
+        "line": 210,
+        "column": 5
+      },
+      "adapter": "jedi",
+      "seconds": 0.128,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "goldCount": 12,
+      "candidateCount": 12,
+      "truePositive": 12,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-url-parse",
+      "repository": "werkzeug",
+      "changeCommit": "62a4307d6d17edb213fb18398e72626dba75a95e",
+      "parentCommit": "864a65407d7daa4a3b746641ddc78f8300b8dee8",
+      "oldName": "url_split",
+      "newName": "url_parse",
+      "query": {
+        "file": "werkzeug/urls.py",
+        "line": 210,
+        "column": 5
+      },
+      "adapter": "rope",
+      "seconds": 0.155,
+      "error": "ModuleSyntaxError: Syntax error in file <examples/cupoftee/network.py> line <44>: Missing parentheses in call to 'print'. Did you mean print(...)?",
+      "gold": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 12,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 12,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-url-parse",
+      "repository": "werkzeug",
+      "changeCommit": "62a4307d6d17edb213fb18398e72626dba75a95e",
+      "parentCommit": "864a65407d7daa4a3b746641ddc78f8300b8dee8",
+      "oldName": "url_split",
+      "newName": "url_parse",
+      "query": {
+        "file": "werkzeug/urls.py",
+        "line": 210,
+        "column": 5
+      },
+      "adapter": "rg",
+      "seconds": 0.011,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/serving.py",
+          61,
+          27
+        ],
+        [
+          "werkzeug/serving.py",
+          73,
+          23
+        ],
+        [
+          "werkzeug/test.py",
+          33,
+          19
+        ],
+        [
+          "werkzeug/test.py",
+          361,
+          55
+        ],
+        [
+          "werkzeug/test.py",
+          664,
+          51
+        ],
+        [
+          "werkzeug/urls.py",
+          157,
+          45
+        ],
+        [
+          "werkzeug/urls.py",
+          210,
+          5
+        ],
+        [
+          "werkzeug/urls.py",
+          333,
+          40
+        ],
+        [
+          "werkzeug/urls.py",
+          594,
+          9
+        ],
+        [
+          "werkzeug/urls.py",
+          596,
+          9
+        ],
+        [
+          "werkzeug/wsgi.py",
+          292,
+          14
+        ],
+        [
+          "werkzeug/wsgi.py",
+          294,
+          14
+        ]
+      ],
+      "goldCount": 12,
+      "candidateCount": 12,
+      "truePositive": 12,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-native-dict-setmethod",
+      "repository": "werkzeug",
+      "changeCommit": "21dc8d527951e414dcb91be7c90cfb74985fcc1e",
+      "parentCommit": "4ae61b595f4bbfea175c6b7161daee963e8cad54",
+      "oldName": "apply",
+      "newName": "setmethod",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 50,
+        "column": 9
+      },
+      "adapter": "pysonar",
+      "seconds": 6.056,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "goldCount": 2,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-native-dict-setmethod",
+      "repository": "werkzeug",
+      "changeCommit": "21dc8d527951e414dcb91be7c90cfb74985fcc1e",
+      "parentCommit": "4ae61b595f4bbfea175c6b7161daee963e8cad54",
+      "oldName": "apply",
+      "newName": "setmethod",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 50,
+        "column": 9
+      },
+      "adapter": "jedi",
+      "seconds": 0.147,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "candidates": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "goldCount": 2,
+      "candidateCount": 2,
+      "truePositive": 2,
+      "falsePositive": 0,
+      "falseNegative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "safeComplete": true,
+      "missed": [],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-native-dict-setmethod",
+      "repository": "werkzeug",
+      "changeCommit": "21dc8d527951e414dcb91be7c90cfb74985fcc1e",
+      "parentCommit": "4ae61b595f4bbfea175c6b7161daee963e8cad54",
+      "oldName": "apply",
+      "newName": "setmethod",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 50,
+        "column": 9
+      },
+      "adapter": "rope",
+      "seconds": 0.056,
+      "error": "ModuleSyntaxError: Syntax error in file <examples/cupoftee/network.py> line <44>: Missing parentheses in call to 'print'. Did you mean print(...)?",
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 2,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 2,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-native-dict-setmethod",
+      "repository": "werkzeug",
+      "changeCommit": "21dc8d527951e414dcb91be7c90cfb74985fcc1e",
+      "parentCommit": "4ae61b595f4bbfea175c6b7161daee963e8cad54",
+      "oldName": "apply",
+      "newName": "setmethod",
+      "query": {
+        "file": "werkzeug/datastructures.py",
+        "line": 50,
+        "column": 9
+      },
+      "adapter": "rg",
+      "seconds": 0.01,
+      "error": null,
+      "gold": [
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ]
+      ],
+      "candidates": [
+        [
+          "examples/simplewiki/application.py",
+          35,
+          11
+        ],
+        [
+          "examples/simplewiki/application.py",
+          35,
+          39
+        ],
+        [
+          "werkzeug/contrib/kickstart.py",
+          148,
+          11
+        ],
+        [
+          "werkzeug/contrib/kickstart.py",
+          179,
+          11
+        ],
+        [
+          "werkzeug/datastructures.py",
+          50,
+          9
+        ],
+        [
+          "werkzeug/datastructures.py",
+          61,
+          13
+        ],
+        [
+          "werkzeug/testsuite/formparser.py",
+          160,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          1459,
+          55
+        ]
+      ],
+      "goldCount": 2,
+      "candidateCount": 8,
+      "truePositive": 2,
+      "falsePositive": 6,
+      "falseNegative": 0,
+      "precision": 0.25,
+      "recall": 1.0,
+      "f1": 0.4,
+      "safeComplete": false,
+      "missed": [],
+      "wrong": [
+        [
+          "examples/simplewiki/application.py",
+          35,
+          11
+        ],
+        [
+          "examples/simplewiki/application.py",
+          35,
+          39
+        ],
+        [
+          "werkzeug/contrib/kickstart.py",
+          148,
+          11
+        ],
+        [
+          "werkzeug/contrib/kickstart.py",
+          179,
+          11
+        ],
+        [
+          "werkzeug/testsuite/formparser.py",
+          160,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          1459,
+          55
+        ]
+      ]
+    },
+    {
+      "caseId": "werkzeug-cached-property",
+      "repository": "werkzeug",
+      "changeCommit": "dcdec22e558b035c23df539e0f447116e1008938",
+      "parentCommit": "57e82e2db3fb6990d4de173a435d6fa530aec1f7",
+      "oldName": "lazy_property",
+      "newName": "cached_property",
+      "query": {
+        "file": "werkzeug/utils.py",
+        "line": 640,
+        "column": 7
+      },
+      "adapter": "pysonar",
+      "seconds": 0.986,
+      "error": null,
+      "gold": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 30,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 30,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-cached-property",
+      "repository": "werkzeug",
+      "changeCommit": "dcdec22e558b035c23df539e0f447116e1008938",
+      "parentCommit": "57e82e2db3fb6990d4de173a435d6fa530aec1f7",
+      "oldName": "lazy_property",
+      "newName": "cached_property",
+      "query": {
+        "file": "werkzeug/utils.py",
+        "line": 640,
+        "column": 7
+      },
+      "adapter": "jedi",
+      "seconds": 0.094,
+      "error": null,
+      "gold": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "candidates": [
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "goldCount": 30,
+      "candidateCount": 24,
+      "truePositive": 24,
+      "falsePositive": 0,
+      "falseNegative": 6,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.888889,
+      "safeComplete": false,
+      "missed": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-cached-property",
+      "repository": "werkzeug",
+      "changeCommit": "dcdec22e558b035c23df539e0f447116e1008938",
+      "parentCommit": "57e82e2db3fb6990d4de173a435d6fa530aec1f7",
+      "oldName": "lazy_property",
+      "newName": "cached_property",
+      "query": {
+        "file": "werkzeug/utils.py",
+        "line": 640,
+        "column": 7
+      },
+      "adapter": "rope",
+      "seconds": 0.006,
+      "error": "ModuleSyntaxError: Syntax error in file <werkzeug/utils.py> line <1021>: invalid syntax",
+      "gold": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "candidates": [],
+      "goldCount": 30,
+      "candidateCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "falseNegative": 30,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "safeComplete": false,
+      "missed": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "wrong": []
+    },
+    {
+      "caseId": "werkzeug-cached-property",
+      "repository": "werkzeug",
+      "changeCommit": "dcdec22e558b035c23df539e0f447116e1008938",
+      "parentCommit": "57e82e2db3fb6990d4de173a435d6fa530aec1f7",
+      "oldName": "lazy_property",
+      "newName": "cached_property",
+      "query": {
+        "file": "werkzeug/utils.py",
+        "line": 640,
+        "column": 7
+      },
+      "adapter": "rg",
+      "seconds": 0.012,
+      "error": null,
+      "gold": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "candidates": [
+        [
+          "examples/plnt/utils.py",
+          15,
+          50
+        ],
+        [
+          "examples/plnt/utils.py",
+          107,
+          6
+        ],
+        [
+          "examples/plnt/utils.py",
+          116,
+          13
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          18,
+          39
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          131,
+          6
+        ],
+        [
+          "examples/simplewiki/utils.py",
+          152,
+          6
+        ],
+        [
+          "tests/test_utils.py",
+          168,
+          16
+        ],
+        [
+          "tests/test_utils.py",
+          181,
+          16
+        ],
+        [
+          "werkzeug/__init__.py",
+          98,
+          56
+        ],
+        [
+          "werkzeug/contrib/securecookie.py",
+          42,
+          43
+        ],
+        [
+          "werkzeug/contrib/securecookie.py",
+          51,
+          14
+        ],
+        [
+          "werkzeug/utils.py",
+          640,
+          7
+        ],
+        [
+          "werkzeug/wrappers.py",
+          23,
+          31
+        ],
+        [
+          "werkzeug/wrappers.py",
+          152,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          159,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          171,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          176,
+          14
+        ],
+        [
+          "werkzeug/wrappers.py",
+          183,
+          13
+        ],
+        [
+          "werkzeug/wrappers.py",
+          193,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          198,
+          15
+        ],
+        [
+          "werkzeug/wrappers.py",
+          205,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          212,
+          23
+        ],
+        [
+          "werkzeug/wrappers.py",
+          223,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          230,
+          24
+        ],
+        [
+          "werkzeug/wrappers.py",
+          242,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          248,
+          19
+        ],
+        [
+          "werkzeug/wrappers.py",
+          253,
+          11
+        ],
+        [
+          "werkzeug/wrappers.py",
+          258,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          263,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          268,
+          16
+        ],
+        [
+          "werkzeug/wrappers.py",
+          273,
+          12
+        ],
+        [
+          "werkzeug/wrappers.py",
+          295,
+          20
+        ],
+        [
+          "werkzeug/wrappers.py",
+          391,
+          21
+        ]
+      ],
+      "goldCount": 30,
+      "candidateCount": 33,
+      "truePositive": 30,
+      "falsePositive": 3,
+      "falseNegative": 0,
+      "precision": 0.909091,
+      "recall": 1.0,
+      "f1": 0.952381,
+      "safeComplete": false,
+      "missed": [],
+      "wrong": [
+        [
+          "werkzeug/__init__.py",
+          98,
+          56
+        ],
+        [
+          "werkzeug/contrib/securecookie.py",
+          42,
+          43
+        ],
+        [
+          "werkzeug/contrib/securecookie.py",
+          51,
+          14
+        ]
+      ]
+    }
+  ]
+}

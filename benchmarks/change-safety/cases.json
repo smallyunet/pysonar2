@@ -1,0 +1,122 @@
+[
+  {
+    "id": "click-resultcallback-method",
+    "repository": "click",
+    "url": "https://github.com/pallets/click.git",
+    "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+    "oldName": "resultcallback",
+    "newName": "result_callback",
+    "queryFile": "src/click/core.py",
+    "queryText": "def resultcallback"
+  },
+  {
+    "id": "click-result-callback-field",
+    "repository": "click",
+    "url": "https://github.com/pallets/click.git",
+    "changeCommit": "b1e7858cae16957d2d9eb2fc462b29e67cf9d320",
+    "oldName": "result_callback",
+    "newName": "_result_callback",
+    "queryFile": "src/click/core.py",
+    "queryText": "self.result_callback = result_callback"
+  },
+  {
+    "id": "flask-jinja-environment",
+    "repository": "flask",
+    "url": "https://github.com/pallets/flask.git",
+    "changeCommit": "d13a1b363e1065de98f44fe0446b570ce078007e",
+    "oldName": "jinja_env_class",
+    "newName": "jinja_environment",
+    "queryFile": "flask/app.py",
+    "queryText": "jinja_env_class = Environment"
+  },
+  {
+    "id": "flask-root-path",
+    "repository": "flask",
+    "url": "https://github.com/pallets/flask.git",
+    "changeCommit": "c3844d11026f84400d5a088dd5c24c6a4a04dcd1",
+    "oldName": "get_package_path",
+    "newName": "get_root_path",
+    "queryFile": "flask/helpers.py",
+    "queryText": "def get_package_path"
+  },
+  {
+    "id": "flask-apps-tmpdir",
+    "repository": "flask",
+    "url": "https://github.com/pallets/flask.git",
+    "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+    "oldName": "apps_tmpdir",
+    "newName": "modules_tmpdir",
+    "queryFile": "tests/conftest.py",
+    "queryText": "def apps_tmpdir("
+  },
+  {
+    "id": "flask-apps-tmpdir-prefix",
+    "repository": "flask",
+    "url": "https://github.com/pallets/flask.git",
+    "changeCommit": "77d887526d9776b15acbb43f31d00148debf0db9",
+    "oldName": "apps_tmpdir_prefix",
+    "newName": "modules_tmpdir_prefix",
+    "queryFile": "tests/conftest.py",
+    "queryText": "def apps_tmpdir_prefix"
+  },
+  {
+    "id": "werkzeug-cache-control-property",
+    "repository": "werkzeug",
+    "url": "https://github.com/pallets/werkzeug.git",
+    "changeCommit": "ba0247874d744b602dd13dd3410ace2221981a2c",
+    "oldName": "cache_property",
+    "newName": "cache_control_property",
+    "queryFile": "src/werkzeug/datastructures.py",
+    "queryText": "def cache_property"
+  },
+  {
+    "id": "werkzeug-to-str",
+    "repository": "werkzeug",
+    "url": "https://github.com/pallets/werkzeug.git",
+    "changeCommit": "6669a4a6584612d4c3d4b68df5012d15bcc7fd72",
+    "oldName": "_to_unicode",
+    "newName": "_to_str",
+    "queryFile": "src/werkzeug/_internal.py",
+    "queryText": "def _to_unicode"
+  },
+  {
+    "id": "werkzeug-unicodify-header-value",
+    "repository": "werkzeug",
+    "url": "https://github.com/pallets/werkzeug.git",
+    "changeCommit": "c5463cd0aeb77b7c47ac5e36b9f87b426314eb47",
+    "oldName": "_unicodify_value",
+    "newName": "_unicodify_header_value",
+    "queryFile": "werkzeug/datastructures.py",
+    "queryText": "def _unicodify_value"
+  },
+  {
+    "id": "werkzeug-url-parse",
+    "repository": "werkzeug",
+    "url": "https://github.com/pallets/werkzeug.git",
+    "changeCommit": "62a4307d6d17edb213fb18398e72626dba75a95e",
+    "oldName": "url_split",
+    "newName": "url_parse",
+    "queryFile": "werkzeug/urls.py",
+    "queryText": "def url_split"
+  },
+  {
+    "id": "werkzeug-native-dict-setmethod",
+    "repository": "werkzeug",
+    "url": "https://github.com/pallets/werkzeug.git",
+    "changeCommit": "21dc8d527951e414dcb91be7c90cfb74985fcc1e",
+    "oldName": "apply",
+    "newName": "setmethod",
+    "queryFile": "werkzeug/datastructures.py",
+    "queryText": "def apply(cls, name)"
+  },
+  {
+    "id": "werkzeug-cached-property",
+    "repository": "werkzeug",
+    "url": "https://github.com/pallets/werkzeug.git",
+    "changeCommit": "dcdec22e558b035c23df539e0f447116e1008938",
+    "oldName": "lazy_property",
+    "newName": "cached_property",
+    "queryFile": "werkzeug/utils.py",
+    "queryText": "class lazy_property"
+  }
+]
