@@ -10,7 +10,7 @@ small, isolated Python tasks that cover:
 - unannotated factory/type flow;
 - first-class callback flow;
 - a localized change where the analyzer should be skipped; and
-- dynamic dispatch that exposes an analyzer boundary; and
+- dynamic dispatch that exposes an analyzer boundary;
 - ambiguous same-name bindings connected through import aliases.
 
 Each task has a visible `unittest` test and a separate validator that scores the completed workspace.

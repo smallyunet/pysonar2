@@ -112,7 +112,7 @@ take effect consistently.
 From `editors/vscode`:
 
 ```sh
-npm install
+npm ci
 npm run build
 code .
 ```
@@ -138,11 +138,11 @@ npm run smoke
 ## Build a VSIX
 
 ```sh
-npm install
+npm ci
 npm run package
 ```
 
-The prepublish step builds the Java project, copies `target/pysonar-3.3.5.jar` to the extension package as
+The prepublish step builds the current Java project, copies its analyzer JAR to the extension package as
 `server/pysonar-lsp.jar`, bundles the TypeScript client, and produces `pysonar2-code-intelligence.vsix`.
 Set `PYSONAR_MAVEN_REPO_LOCAL` when the build needs to use a non-default Maven dependency cache.
 

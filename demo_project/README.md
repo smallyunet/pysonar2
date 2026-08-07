@@ -1,17 +1,17 @@
 # PySonar2 demo project
 
-This small project exists specifically to demonstrate PySonar2's generated code browser. It combines
-package re-exports and aliases, module-attribute references, annotation-assisted inference, properties,
-C3 multiple-inheritance resolution, constructors, collection inference, branching, recursion, and
-async/await result types without requiring third-party packages. It also includes decorator factories,
-same-name static method aliases, positional and keyword-only parameters, walrus bindings, structural
-pattern matching, match captures, and typed comprehensions.
+This dependency-free project demonstrates PySonar2 across three representative surfaces:
+
+- cross-file navigation through imports, re-exports, aliases, properties, and C3 inheritance;
+- type flow through annotations, constructors, collections, recursion, decorators, and async results;
+- modern syntax including keyword-only parameters, walrus bindings, structural matching, captures, and
+  typed comprehensions.
 
 Generate the static site from the repository root:
 
 ```sh
-mvn package
-java -jar target/pysonar-3.3.5.jar demo_project ./demo-html
+brew install smallyunet/tap/pysonar2
+pysonar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser or publish the directory on any static host.
@@ -24,7 +24,7 @@ build the extension, then press `F5` using the **Run PySonar2 Extension Demo** l
 
 ```sh
 cd editors/vscode
-npm install
+npm ci
 npm run build
 code .
 ```
