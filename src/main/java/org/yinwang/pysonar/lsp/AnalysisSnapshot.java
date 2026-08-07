@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /** Immutable, editor-oriented projection of a completed PySonar2 analysis. */
 public final class AnalysisSnapshot {
@@ -49,6 +50,11 @@ public final class AnalysisSnapshot {
     private final Set<Path> parsedFiles;
     private final Set<Path> failedFiles;
     private final Set<String> unsupportedNodeTypes;
+    private final Set<String> pytestFixtureNames;
+
+    private static final Pattern PYTEST_FIXTURE_DECORATOR = Pattern.compile(
+            "(?ms)^\\s*@pytest\\.(?:fixture|yield_fixture)(?:\\s*\\([^\\n]*\\))?\\s*\\n"
+                    + "(?:\\s*@[^\\n]+\\n)*\\s*(?:async\\s+)?def\\s+([A-Za-z_]\\w*)\\s*\\(");
 
     private AnalysisSnapshot(Path root,
                              Map<Path, String> sources,
@@ -59,7 +65,8 @@ public final class AnalysisSnapshot {
                              Collection<Path> discoveredFiles,
                              Collection<Path> parsedFiles,
                              Collection<Path> failedFiles,
-                             Collection<String> unsupportedNodeTypes) {
+                             Collection<String> unsupportedNodeTypes,
+                             Collection<String> pytestFixtureNames) {
         this.root = normalize(root);
         this.sources = immutableSources(sources);
         this.positionIndexes = Collections.unmodifiableMap(new LinkedHashMap<>(positionIndexes));
@@ -70,12 +77,13 @@ public final class AnalysisSnapshot {
         this.parsedFiles = immutablePaths(parsedFiles);
         this.failedFiles = immutablePaths(failedFiles);
         this.unsupportedNodeTypes = Collections.unmodifiableSet(new LinkedHashSet<>(unsupportedNodeTypes));
+        this.pytestFixtureNames = Collections.unmodifiableSet(new LinkedHashSet<>(pytestFixtureNames));
     }
 
     public static AnalysisSnapshot empty(Path root) {
         return new AnalysisSnapshot(root, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
                 Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(),
-                Collections.emptySet(), Collections.emptySet());
+                Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
     }
 
     static AnalysisSnapshot from(Path root, Analyzer analyzer) {
@@ -178,7 +186,8 @@ public final class AnalysisSnapshot {
         parsed.retainAll(discovered);
         failed.retainAll(discovered);
         return new AnalysisSnapshot(normalizedRoot, sources, positionIndexes, occurrences, symbols, diagnostics,
-                discovered, parsed, failed, analyzer.unsupportedNodeTypes);
+                discovered, parsed, failed, analyzer.unsupportedNodeTypes,
+                detectPytestFixtureNames(sources));
     }
 
     /**
@@ -248,7 +257,7 @@ public final class AnalysisSnapshot {
 
         return new AnalysisSnapshot(root, mergedSources, mergedIndexes, mergedOccurrences,
                 mergedSymbols, mergedDiagnostics, replacement.discoveredFiles, mergedParsed, mergedFailed,
-                mergedUnsupported);
+                mergedUnsupported, detectPytestFixtureNames(mergedSources));
     }
 
     public Optional<Hover> hover(Path file, Position position) {
@@ -441,12 +450,44 @@ public final class AnalysisSnapshot {
         return result;
     }
 
+    public List<String> unsupportedSemantics() {
+        List<String> result = new ArrayList<>();
+        if (!pytestFixtureNames.isEmpty()) {
+            result.add("pytest-fixture-parameter-injection");
+        }
+        return result;
+    }
+
+    public List<String> unsupportedSemanticSymbols() {
+        List<String> result = new ArrayList<>(pytestFixtureNames);
+        Collections.sort(result);
+        return result;
+    }
+
+    public List<String> unsupportedSemanticsFor(String symbol) {
+        if (symbol != null && pytestFixtureNames.contains(symbol)) {
+            return Collections.singletonList("pytest-fixture-parameter-injection");
+        }
+        return Collections.emptyList();
+    }
+
     public String coverageStatus() {
         if (discoveredFiles.isEmpty()) {
             return "empty";
         }
         return failedFiles.isEmpty() && unsupportedNodeTypes.isEmpty()
                 && parsedFiles.containsAll(discoveredFiles) ? "complete" : "partial";
+    }
+
+    private static Set<String> detectPytestFixtureNames(Map<Path, String> sources) {
+        Set<String> result = new LinkedHashSet<>();
+        for (String source : sources.values()) {
+            java.util.regex.Matcher matcher = PYTEST_FIXTURE_DECORATOR.matcher(source);
+            while (matcher.find()) {
+                result.add(matcher.group(1));
+            }
+        }
+        return result;
     }
 
     public boolean isCoverageComplete() {

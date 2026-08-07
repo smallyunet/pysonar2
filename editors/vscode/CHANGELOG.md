@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.2.5
+
+- Bundle PySonar2 3.3.4 with stronger instance, inherited attribute, and decorator reference coverage.
+- Report pytest fixture injection as explicitly unsupported for complete change-impact analysis.
+- Add modern Python benchmark cases and a richer guided semantic-analysis demo.
+
 ## 0.2.4
 
 - Bundle PySonar2 3.3.3.

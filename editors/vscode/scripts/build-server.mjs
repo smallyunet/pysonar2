@@ -25,7 +25,7 @@ if (build.status !== 0) {
   process.exit(build.status ?? 1);
 }
 
-const source = join(repositoryRoot, "target", "pysonar-3.3.3.jar");
+const source = join(repositoryRoot, "target", "pysonar-3.3.4.jar");
 const destinationDirectory = join(extensionDirectory, "server");
 mkdirSync(destinationDirectory, { recursive: true });
 copyFileSync(source, join(destinationDirectory, "pysonar-lsp.jar"));

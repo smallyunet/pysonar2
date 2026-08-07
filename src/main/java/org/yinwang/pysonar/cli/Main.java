@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 /** Command-line interface intended for coding agents and local automation. */
 public final class Main {
 
-    public static final String VERSION = "3.3.3";
+    public static final String VERSION = "3.3.4";
     public static final int SCHEMA_VERSION = 1;
     private static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final Set<String> COMMANDS = new LinkedHashSet<>(Arrays.asList(
@@ -176,19 +176,23 @@ public final class Main {
         Map<String, Object> result = envelope(impact ? "impact" : "context");
         result.put("root", root.toString());
         result.put("query", query(root, file, line, character));
-        result.put("symbol", symbolAt(file, line, character));
+        String symbol = symbolAt(file, line, character);
+        result.put("symbol", symbol);
         result.put("inferredType", hoverText(snapshot.hover(file, position)));
         result.put("definitions", locations(root, definitions, maxResults, true));
         result.put("references", locations(root, references, maxResults, true));
         result.put("truncated", definitions.size() > maxResults || references.size() > maxResults);
         result.put("analysisMillis", elapsedMillis(started));
         boolean queryResolved = snapshot.hasOccurrence(file, position);
-        boolean locallyApplicable = snapshot.isParsed(file) && queryResolved;
+        List<String> unsupportedSemantics = snapshot.unsupportedSemanticsFor(symbol);
+        boolean locallyApplicable = snapshot.isParsed(file) && queryResolved
+                && unsupportedSemantics.isEmpty();
         boolean applicable = impact ? locallyApplicable && snapshot.isCoverageComplete() : locallyApplicable;
         result.put("coverageStatus", snapshot.coverageStatus());
         result.put("applicable", applicable);
         result.put("confidence", !locallyApplicable ? "unsupported"
                 : snapshot.isCoverageComplete() ? "high" : "partial");
+        result.put("unsupportedSemantics", unsupportedSemantics);
         result.put("coverage", coverage(snapshot));
         List<String> limitations = new ArrayList<>();
         if (impact) {
@@ -208,6 +212,11 @@ public final class Main {
             limitations.add("Unsupported AST node types were traversed conservatively: "
                     + String.join(", ", snapshot.unsupportedNodeTypes()) + ".");
         }
+        if (!unsupportedSemantics.isEmpty()) {
+            limitations.add("Unsupported dynamic framework semantics were detected: "
+                    + String.join(", ", unsupportedSemantics)
+                    + "; injected references may be omitted.");
+        }
         if (!applicable) {
             limitations.add(impact
                     ? "Do not use this result as a complete change-impact boundary."
@@ -224,6 +233,8 @@ public final class Main {
         coverage.put("failedFileCount", snapshot.failedFiles().size());
         coverage.put("failedFiles", snapshot.failedFiles());
         coverage.put("unsupportedNodeTypes", snapshot.unsupportedNodeTypes());
+        coverage.put("detectedFrameworkSemantics", snapshot.unsupportedSemantics());
+        coverage.put("unsupportedSemanticSymbols", snapshot.unsupportedSemanticSymbols());
         return coverage;
     }
 

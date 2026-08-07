@@ -102,6 +102,32 @@ public class MainTest {
     }
 
     @Test
+    public void pytestFixtureInjectionMakesImpactExplicitlyUnsupported() throws Exception {
+        File root = temporaryFolder.newFolder("pytest-fixture-project");
+        Files.write(new File(root, "conftest.py").toPath(), (
+                "import pytest\n\n" +
+                "@pytest.fixture\n" +
+                "def workspace():\n" +
+                "    return object()\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "test_feature.py").toPath(), (
+                "def test_feature(workspace):\n" +
+                "    assert workspace is not None\n").getBytes(StandardCharsets.UTF_8));
+
+        Result impact = run("impact", "--root", root.getAbsolutePath(), "--file", "conftest.py",
+                "--line", "4", "--character", "5", "--format", "json");
+        assertEquals(impact.stderr, 0, impact.exitCode);
+        JsonObject json = JsonParser.parseString(impact.stdout).getAsJsonObject();
+        assertEquals("complete", json.get("coverageStatus").getAsString());
+        assertFalse(json.get("applicable").getAsBoolean());
+        assertTrue(json.getAsJsonArray("unsupportedSemantics")
+                .toString().contains("pytest-fixture-parameter-injection"));
+        assertTrue(json.getAsJsonObject("coverage").getAsJsonArray("unsupportedSemanticSymbols")
+                .toString().contains("workspace"));
+        assertTrue(json.getAsJsonArray("limitations").toString()
+                .contains("injected references may be omitted"));
+    }
+
+    @Test
     public void compactPlanResolvesSymbolsAndBatchesOneAnalysis() throws Exception {
         File root = temporaryFolder.newFolder("plan-project");
         Files.write(new File(root, "rules.py").toPath(), (

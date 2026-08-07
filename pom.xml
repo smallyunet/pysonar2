@@ -6,7 +6,7 @@
 
     <groupId>org.yinwang</groupId>
     <artifactId>pysonar</artifactId>
-    <version>3.3.3</version>
+    <version>3.3.4</version>
     <packaging>jar</packaging>
     <name>pysonar2</name>
     <description>Whole-project semantic analysis engine for safe Python changes</description>

@@ -168,6 +168,69 @@ public class SemanticCoreFeaturesTest
         }
     }
 
+    @Test
+    public void connectsInheritedAndOverriddenMethodFamilies() throws Exception
+    {
+        Analyzer analyzer = analyzeProject("overrides.py",
+                "class Base:\n" +
+                "    def render(self): return 'base'\n\n" +
+                "class Middle(Base):\n" +
+                "    def render(self): return 'middle'\n\n" +
+                "class Leaf(Middle):\n" +
+                "    def render(self): return 'leaf'\n\n" +
+                "Base().render()\n" +
+                "Leaf().render()\n");
+
+        Binding base = binding(analyzer, "Base.render");
+        Binding middle = binding(analyzer, "Middle.render");
+        Binding leaf = binding(analyzer, "Leaf.render");
+        assertTrue(base.refs.contains(middle.node));
+        assertTrue(base.refs.contains(leaf.node));
+        assertTrue(leaf.refs.contains(base.node));
+    }
+
+    @Test
+    public void propagatesTypesThroughDecoratorFactories() throws Exception
+    {
+        Analyzer analyzer = analyzeProject("decorators.py",
+                "class Command:\n" +
+                "    def resultcallback(self):\n" +
+                "        def register(function): return function\n" +
+                "        return register\n\n" +
+                "def group():\n" +
+                "    def decorate(function): return Command()\n" +
+                "    return decorate\n\n" +
+                "@group()\n" +
+                "def cli(): pass\n\n" +
+                "@cli.resultcallback()\n" +
+                "def handle(result): return result\n");
+
+        Binding resultcallback = binding(analyzer, "Command.resultcallback");
+        assertTrue("decorated function should expose the decorator's returned instance type",
+                resultcallback.refs.stream().anyMatch(node -> node instanceof Name
+                        && "resultcallback".equals(((Name) node).id)));
+    }
+
+    @Test
+    public void connectsSameNameFunctionAliases() throws Exception
+    {
+        Analyzer analyzer = analyzeProject("aliases.py",
+                "def transform(value): return value\n\n" +
+                "class Pipeline:\n" +
+                "    transform = staticmethod(transform)\n\n" +
+                "Pipeline.transform('value')\n");
+
+        Binding function = analyzer.allBindings.stream()
+                .filter(binding -> "transform".equals(binding.name)
+                        && binding.kind == Binding.Kind.FUNCTION)
+                .findFirst().orElse(null);
+        assertNotNull(function);
+        assertTrue("same-name semantic aliases should be part of one impact surface",
+                function.refs.stream().anyMatch(node -> node instanceof Name
+                        && "transform".equals(((Name) node).id)
+                        && node.line == 4));
+    }
+
     private Analyzer analyzeProject(String name, String source) throws Exception
     {
         File root = temporaryFolder.newFolder("project_" + System.nanoTime());

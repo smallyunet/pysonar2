@@ -541,6 +541,8 @@ public class Analyzer {
         $.msg("\nFinished loading files. " + nCalled + " functions were called.");
         $.msg("Analyzing uncalled functions");
         applyUncalled();
+        linkOverrideFamilies();
+        linkSameNameSemanticAliases();
 
         // mark unused variables
         for (List<Binding> bset : $.correlateBindings(allBindings)) {
@@ -552,6 +554,65 @@ public class Analyzer {
 
         $.msg(getAnalysisSummary());
         close();
+    }
+
+    /**
+     * Connect declarations that participate in the same class override
+     * family. Python dispatch can resolve a call to any member of that family
+     * depending on the runtime instance, so change-impact queries must expose
+     * the relationship without pretending it is an ordinary direct call.
+     */
+    private void linkOverrideFamilies() {
+        for (Binding classBinding : new ArrayList<>(allBindings)) {
+            if (!(classBinding.type instanceof ClassType)) {
+                continue;
+            }
+            State classState = classBinding.type.table;
+            for (String name : new ArrayList<>(classState.keySet())) {
+                Set<Binding> local = classState.lookupLocal(name);
+                Set<Binding> inherited = classState.lookupInheritedAttrs(name);
+                if (local == null || inherited.isEmpty()) {
+                    continue;
+                }
+                for (Binding child : local) {
+                    if (child.isSynthetic()) {
+                        continue;
+                    }
+                    for (Binding parent : inherited) {
+                        if (parent.isSynthetic() || child == parent) {
+                            continue;
+                        }
+                        putRef(child.node, parent);
+                        putRef(parent.node, child);
+                    }
+                }
+            }
+        }
+    }
+
+    /** Connect same-name aliases that retain the exact semantic type object. */
+    private void linkSameNameSemanticAliases() {
+        Map<Type, Map<String, List<Binding>>> aliases = new IdentityHashMap<>();
+        for (Binding binding : allBindings) {
+            if (binding.isSynthetic() || !(binding.type instanceof FunType
+                    || binding.type instanceof ClassType || binding.type instanceof ModuleType)) {
+                continue;
+            }
+            aliases.computeIfAbsent(binding.type, ignored -> new LinkedHashMap<>())
+                    .computeIfAbsent(binding.name, ignored -> new ArrayList<>())
+                    .add(binding);
+        }
+        for (Map<String, List<Binding>> byName : aliases.values()) {
+            for (List<Binding> group : byName.values()) {
+                for (Binding source : group) {
+                    for (Binding target : group) {
+                        if (source != target) {
+                            putRef(source.node, target);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean unusedBindingSet(List<Binding> bindings) {

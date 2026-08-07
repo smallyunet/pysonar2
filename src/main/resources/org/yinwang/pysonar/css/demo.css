@@ -109,6 +109,25 @@ a:focus-visible, button:focus-visible {
     font-size: 14px;
 }
 
+.topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.topbar-nav a {
+    min-height: 40px;
+    padding: 10px 11px;
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 13px;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.topbar-nav a:hover { background: var(--surface-raised); color: var(--text); }
+.landing-page .topbar-link { margin-left: 8px; }
+
 .browser-shell {
     display: grid;
     grid-template-columns: minmax(230px, 290px) minmax(0, 1fr);
@@ -312,7 +331,7 @@ pre a.active {
 .symbol-tooltip.is-visible { opacity: 1; }
 
 .landing {
-    width: min(1240px, calc(100% - 36px));
+    width: min(1280px, calc(100% - 36px));
     margin: 0 auto;
     padding: 72px 0 84px;
 }
@@ -483,6 +502,107 @@ pre a.active {
     gap: 12px;
 }
 
+.guided-section { scroll-margin-top: 76px; }
+
+.guided-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.guided-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 24px;
+    gap: 12px;
+    min-height: 196px;
+    padding: 22px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.94), rgba(23, 32, 51, 0.78));
+    color: var(--text);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.guided-card::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--accent);
+    content: "";
+    opacity: 0;
+    transform: scaleY(0.45);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.guided-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.guided-card:hover::before { opacity: 1; transform: scaleY(1); }
+.guided-number { color: var(--accent-strong); font: 600 12px/1.5 var(--mono); }
+.guided-category { color: var(--subtle); font: 600 11px/1.4 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; }
+.guided-content h3 { margin: 9px 0 7px; font-size: 19px; line-height: 1.25; letter-spacing: -0.02em; }
+.guided-content p { margin: 0; color: var(--muted); font-size: 14px; }
+.guided-arrow { align-self: start; color: var(--accent-strong); font: 20px/1 var(--mono); transition: transform 180ms ease; }
+.guided-card:hover .guided-arrow { transform: translateX(3px); }
+
+.guided-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.guided-meta code,
+.guided-meta span {
+    padding: 4px 7px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--subtle);
+    font: 10px/1.3 var(--mono);
+}
+
+.guided-meta code { color: var(--accent-strong); }
+
+.contract-section {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(480px, 1.2fr);
+    gap: clamp(30px, 6vw, 76px);
+    align-items: center;
+    margin: 64px 0 14px;
+    padding: clamp(26px, 5vw, 54px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 92% 12%, rgba(34, 197, 94, 0.10), transparent 22rem),
+        rgba(23, 32, 51, 0.72);
+}
+
+.contract-copy h2 { margin: 8px 0 12px; font-size: clamp(27px, 4vw, 42px); line-height: 1.08; letter-spacing: -0.035em; }
+.contract-copy p { margin: 0; color: var(--muted); }
+.text-link { display: inline-flex; min-height: 44px; align-items: center; margin-top: 16px; color: var(--accent-strong); font-weight: 650; }
+
+.contract-console {
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: #0b1220;
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.24);
+}
+
+.contract-example { padding: 16px 18px; border-bottom: 1px solid rgba(82, 100, 125, 0.5); }
+.contract-example > div { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; color: var(--muted); font-size: 12px; }
+.contract-example code { display: block; overflow-x: auto; color: #dbeafe; font: 12px/1.6 var(--mono); white-space: nowrap; }
+.contract-status { margin-left: auto; padding: 4px 7px; border-radius: 999px; font: normal 600 10px/1 var(--mono); text-transform: uppercase; }
+.contract-status.ready { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+.contract-status.stop { background: rgba(248, 113, 113, 0.14); color: #fca5a5; }
+.contract-console > p { margin: 0; padding: 14px 18px; color: var(--subtle); font-size: 12px; }
+.contract-console > p code { color: #93c5fd; font: 12px/1.4 var(--mono); }
+
 .capability-card {
     display: grid;
     grid-template-columns: 36px minmax(0, 1fr);
@@ -517,6 +637,8 @@ pre a.active {
     .topbar { padding: 0 14px; }
     .topbar-path { margin-left: 12px; padding-left: 12px; }
     .topbar-link { display: none; }
+    .topbar-nav { margin-left: auto; gap: 0; }
+    .topbar-nav a { padding-inline: 8px; font-size: 12px; }
     .browser-shell { grid-template-columns: 1fr; padding: 10px; }
     .outline-panel { position: static; max-height: 250px; }
     .outline-nav { max-height: 200px; }
@@ -526,6 +648,10 @@ pre a.active {
     .hero-grid { grid-template-columns: 1fr; }
     .analysis-preview { margin-top: 8px; }
     .capability-grid { grid-template-columns: 1fr; }
+    .guided-grid { grid-template-columns: 1fr; }
+    .guided-card { grid-template-columns: 34px minmax(0, 1fr) 18px; min-height: 0; padding: 18px 16px; }
+    .contract-section { grid-template-columns: 1fr; padding: 24px 18px; }
+    .contract-example code { font-size: 11px; }
     .analysis-context { align-items: flex-start; flex-wrap: wrap; }
     .analysis-context > span:first-child { width: 100%; }
 }
@@ -534,6 +660,7 @@ pre a.active {
     .hero-grid { grid-template-columns: 1fr; }
     .analysis-preview { max-width: 760px; }
     .capability-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .contract-section { grid-template-columns: 1fr; }
     .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 

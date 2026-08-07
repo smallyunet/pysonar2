@@ -5,8 +5,14 @@ tool starts from the parent commit and returns the source occurrences it would e
 derived independently from executable Python identifier occurrences changed by the upstream commit.
 
 The primary metric is `safeComplete`: the candidate plan contains every gold occurrence and no other
-occurrence. Precision, recall, F1, missed locations, wrong locations, elapsed time, tool versions, and
-the complete normalized candidate sets are retained in the result JSON.
+occurrence, and the analyzer declares the impact query applicable. Precision, recall, F1, missed
+locations, wrong locations, applicability, coverage, elapsed time, tool versions, and the complete
+normalized candidate sets are retained in the result JSON.
+
+Cases are explicitly tagged `modern` or `legacy`. The modern slice contains the Python-3-only Click 8
+and Werkzeug 2 transitions from 2020-2021; the legacy slice keeps older compatibility-heavy snapshots.
+The result JSON reports both the full aggregate and `aggregateBySlice`, so parser compatibility is not
+silently mixed with semantic reference accuracy.
 
 The comparison includes:
 
@@ -25,6 +31,11 @@ python3 benchmarks/change-safety/run_benchmark.py \
   --rope-path /private/tmp/pysonar-change-safety-tools \
   --output benchmarks/change-safety/results/YYYY-MM-DD.json
 ```
+
+Run only the modern slice with `--slice modern`; repeat `--slice` to select multiple slices. PySonar2
+records `coverageStatus`, `applicable`, query-specific `unsupportedSemantics`, and the full coverage
+object for each case. In particular, direct pytest fixture declarations are reported as dynamic
+parameter injection rather than silently treated as complete static references.
 
 Repositories are cached under `/private/tmp/pysonar-change-safety-cache` and every case is materialized
 into a fresh temporary directory. Commits, queries, gold locations, candidates, and tool versions are

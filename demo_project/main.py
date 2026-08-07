@@ -1,6 +1,7 @@
 """Entry point for the PySonar2 code intelligence demo."""
 
-from pysonar_demo import PredictionEngine
+from pysonar_demo import PredictionEngine, SymbolTools, build_command_registry
+from pysonar_demo import classify_market, visible_market_names
 
 
 def run_demo():
@@ -27,6 +28,11 @@ def run_demo():
     print(report.title)
     for prediction in report.predictions:
         print(prediction.summary())
+
+    commands = build_command_registry()
+    print(commands["inspect"].run(SymbolTools.normalize_symbol("market-score")))
+    print(classify_market(report.strongest().market, threshold=0.6))
+    print(visible_market_names([prediction.market for prediction in report.predictions]))
     return report
 
 

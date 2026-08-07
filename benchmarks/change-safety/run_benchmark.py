@@ -23,6 +23,7 @@ BENCHMARK_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BENCHMARK_DIR.parents[1]
 DEFAULT_CACHE = Path("/private/tmp/pysonar-change-safety-cache")
 Location = tuple[str, int, int]
+AdapterOutput = tuple[set[Location], dict[str, Any]]
 
 
 def run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
@@ -146,7 +147,7 @@ def normalize_path(root: Path, candidate: Path | str) -> str | None:
 
 
 def pysonar_adapter(root: Path, case: dict[str, str], line: int, column: int,
-                    pysonar: Path, _: Path | None) -> set[Location]:
+                    pysonar: Path, _: Path | None) -> AdapterOutput:
     result = run([
         str(pysonar), "impact", "--root", str(root), "--file", case["queryFile"],
         "--line", str(line), "--character", str(column), "--max-results", "10000",
@@ -154,11 +155,21 @@ def pysonar_adapter(root: Path, case: dict[str, str], line: int, column: int,
     ], timeout=300)
     payload = json.loads(result.stdout)
     locations = payload.get("definitions", []) + payload.get("references", [])
-    return {(item["file"], item["startLine"], item["startCharacter"]) for item in locations}
+    candidates = {(item["file"], item["startLine"], item["startCharacter"])
+                  for item in locations}
+    metadata = {
+        "coverageStatus": payload.get("coverageStatus"),
+        "applicable": payload.get("applicable"),
+        "confidence": payload.get("confidence"),
+        "coverage": payload.get("coverage"),
+        "unsupportedSemantics": payload.get("unsupportedSemantics", []),
+        "limitations": payload.get("limitations", []),
+    }
+    return candidates, metadata
 
 
 def jedi_adapter(root: Path, case: dict[str, str], line: int, column: int,
-                 _: Path, __: Path | None) -> set[Location]:
+                 _: Path, __: Path | None) -> AdapterOutput:
     import jedi
 
     jedi.settings.cache_directory = str(root.parent / "jedi-cache")
@@ -173,7 +184,7 @@ def jedi_adapter(root: Path, case: dict[str, str], line: int, column: int,
         relative = normalize_path(root, name.module_path)
         if relative is not None:
             result.add((relative, name.line, name.column + 1))
-    return result
+    return result, {}
 
 
 def changed_locations(before: str, after: str, name: str, relative: str) -> set[Location]:
@@ -191,7 +202,7 @@ def changed_locations(before: str, after: str, name: str, relative: str) -> set[
 
 
 def rope_adapter(root: Path, case: dict[str, str], line: int, column: int,
-                 _: Path, tool_path: Path | None) -> set[Location]:
+                 _: Path, tool_path: Path | None) -> AdapterOutput:
     if tool_path is None:
         raise RuntimeError("Rope tool path was not configured")
     sys.path.insert(0, str(tool_path))
@@ -215,7 +226,7 @@ def rope_adapter(root: Path, case: dict[str, str], line: int, column: int,
                 relative = changed_resource.path
                 before = (root / relative).read_text(errors="replace")
                 result.update(changed_locations(before, new_contents, case["oldName"], relative))
-            return result
+            return result, {}
         finally:
             project.close()
     finally:
@@ -223,7 +234,7 @@ def rope_adapter(root: Path, case: dict[str, str], line: int, column: int,
 
 
 def rg_adapter(root: Path, case: dict[str, str], _: int, __: int,
-               ___: Path, ____: Path | None) -> set[Location]:
+               ___: Path, ____: Path | None) -> AdapterOutput:
     pattern = rf"\b{re.escape(case['oldName'])}\b"
     process = subprocess.run(
         ["rg", "--json", "--glob", "*.py", pattern, str(root)],
@@ -242,10 +253,10 @@ def rg_adapter(root: Path, case: dict[str, str], _: int, __: int,
             continue
         for match in data["submatches"]:
             result.add((relative, data["line_number"], match["start"] + 1))
-    return result
+    return result, {}
 
 
-ADAPTERS: dict[str, Callable[..., set[Location]]] = {
+ADAPTERS: dict[str, Callable[..., AdapterOutput]] = {
     "pysonar": pysonar_adapter,
     "jedi": jedi_adapter,
     "rope": rope_adapter,
@@ -283,18 +294,43 @@ def version(command: list[str]) -> str:
         return f"unavailable: {error}"
 
 
+def aggregate_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    tp = sum(row["truePositive"] for row in rows)
+    fp = sum(row["falsePositive"] for row in rows)
+    fn = sum(row["falseNegative"] for row in rows)
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    return {
+        "cases": len(rows),
+        "errors": sum(row["error"] is not None for row in rows),
+        "applicable": sum(row.get("applicable") is not False for row in rows),
+        "safeComplete": sum(row["safeComplete"] for row in rows),
+        "truePositive": tp,
+        "falsePositive": fp,
+        "falseNegative": fn,
+        "microPrecision": round(precision, 6),
+        "microRecall": round(recall, 6),
+        "microF1": round(2 * precision * recall / (precision + recall), 6)
+        if precision + recall else 0.0,
+        "seconds": round(sum(row["seconds"] for row in rows), 3),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--adapter", action="append", choices=sorted(ADAPTERS))
     parser.add_argument("--case", action="append", dest="case_ids")
+    parser.add_argument("--slice", action="append", dest="slices",
+                        choices=["modern", "legacy"])
     parser.add_argument("--pysonar", type=Path, default=PROJECT_ROOT / "bin" / "pysonar")
     parser.add_argument("--rope-path", type=Path)
     args = parser.parse_args()
 
     selected_cases = [case for case in load_cases()
-                      if not args.case_ids or case["id"] in args.case_ids]
+                      if (not args.case_ids or case["id"] in args.case_ids)
+                      and (not args.slices or case["slice"] in args.slices)]
     adapters = args.adapter or list(ADAPTERS)
     records: list[dict[str, Any]] = []
     args.cache.mkdir(parents=True, exist_ok=True)
@@ -311,15 +347,20 @@ def main() -> int:
                 started = time.monotonic()
                 error = None
                 candidates: set[Location] = set()
+                metadata: dict[str, Any] = {}
                 try:
-                    candidates = ADAPTERS[adapter_name](
+                    candidates, metadata = ADAPTERS[adapter_name](
                         root, case, line, column, args.pysonar.resolve(), args.rope_path
                     )
                 except Exception as caught:
                     error = f"{type(caught).__name__}: {caught}"
                 elapsed = round(time.monotonic() - started, 3)
+                scored = score(candidates, gold)
+                if metadata.get("applicable") is False:
+                    scored["safeComplete"] = False
                 record = {
                     "caseId": case["id"],
+                    "slice": case["slice"],
                     "repository": case["repository"],
                     "changeCommit": case["changeCommit"],
                     "parentCommit": parent,
@@ -331,7 +372,8 @@ def main() -> int:
                     "error": error,
                     "gold": [list(value) for value in sorted(gold)],
                     "candidates": [list(value) for value in sorted(candidates)],
-                    **score(candidates, gold),
+                    **metadata,
+                    **scored,
                 }
                 records.append(record)
                 print(f"{case['id']} {adapter_name}: f1={record['f1']:.3f} "
@@ -340,24 +382,15 @@ def main() -> int:
     aggregate: dict[str, Any] = {}
     for adapter_name in adapters:
         rows = [row for row in records if row["adapter"] == adapter_name]
-        tp = sum(row["truePositive"] for row in rows)
-        fp = sum(row["falsePositive"] for row in rows)
-        fn = sum(row["falseNegative"] for row in rows)
-        precision = tp / (tp + fp) if tp + fp else 0.0
-        recall = tp / (tp + fn) if tp + fn else 0.0
-        aggregate[adapter_name] = {
-            "cases": len(rows),
-            "errors": sum(row["error"] is not None for row in rows),
-            "safeComplete": sum(row["safeComplete"] for row in rows),
-            "truePositive": tp,
-            "falsePositive": fp,
-            "falseNegative": fn,
-            "microPrecision": round(precision, 6),
-            "microRecall": round(recall, 6),
-            "microF1": round(2 * precision * recall / (precision + recall), 6)
-            if precision + recall else 0.0,
-            "seconds": round(sum(row["seconds"] for row in rows), 3),
-        }
+        aggregate[adapter_name] = aggregate_rows(rows)
+
+    aggregate_by_slice: dict[str, dict[str, Any]] = {}
+    for slice_name in sorted({case["slice"] for case in selected_cases}):
+        aggregate_by_slice[slice_name] = {}
+        for adapter_name in adapters:
+            rows = [row for row in records
+                    if row["adapter"] == adapter_name and row["slice"] == slice_name]
+            aggregate_by_slice[slice_name][adapter_name] = aggregate_rows(rows)
 
     payload = {
         "schemaVersion": 1,
@@ -377,6 +410,7 @@ def main() -> int:
             "safeComplete": "zero missed gold occurrences and zero non-gold candidate edits",
         },
         "aggregate": aggregate,
+        "aggregateBySlice": aggregate_by_slice,
         "records": records,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

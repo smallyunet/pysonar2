@@ -55,11 +55,17 @@ public class DemoSmokeTest
         File indexFile = new File(outputDir, "index.html");
         assertTrue("demo index was not generated", indexFile.isFile());
         String index = new String(Files.readAllBytes(indexFile.toPath()), StandardCharsets.UTF_8);
-        assertTrue(index.contains("Follow Python symbols across the whole project"));
+        assertTrue(index.contains("See what the analyzer knows—not just what it parsed"));
         assertTrue(index.contains("class='analysis-preview'"));
-        assertTrue(index.contains("What this snapshot demonstrates"));
+        assertTrue(index.contains("Six short paths through the semantic graph"));
+        assertTrue(index.contains("class='guided-grid'"));
+        assertTrue(index.contains("Useful evidence includes knowing when to stop"));
+        assertTrue(index.contains("class='contract-console'"));
+        assertTrue(index.contains("More than go-to-definition"));
         assertTrue(index.contains("Imports &amp; re-exports"));
-        assertTrue(index.contains("C3 inheritance"));
+        assertTrue(index.contains("C3 override families"));
+        assertTrue(index.contains("Decorator factories"));
+        assertTrue(index.contains("Pattern captures"));
         assertTrue(index.contains("class='project-root'>demo_project/</code>"));
         assertTrue(index.contains("sample.py.html"));
         assertFalse("the project root is a label, not a duplicated output directory",

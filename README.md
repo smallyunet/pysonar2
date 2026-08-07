@@ -133,8 +133,8 @@ Build the CLI bundle:
 
 ```sh
 mvn package
-unzip target/pysonar-cli-3.3.3.zip
-export PATH="$PWD/pysonar-cli-3.3.3/bin:$PATH"
+unzip target/pysonar-cli-3.3.4.zip
+export PATH="$PWD/pysonar-cli-3.3.4/bin:$PATH"
 pysonar doctor --format json
 ```
 
@@ -176,7 +176,9 @@ pysonar check --root . --changed app.py --format json
 
 `context` and `impact` report an explicit analysis-completeness contract. The response includes
 `coverageStatus`, `applicable`, `confidence`, and a `coverage` object with discovered/parsed file counts,
-failed paths, and unsupported AST node types. A partial `context` can still support local inspection;
+failed paths, unsupported AST node types, and detected framework-injected symbols. Queries for known
+pytest fixtures report `pytest-fixture-parameter-injection` in `unsupportedSemantics` and are not
+applicable as complete impact boundaries. A partial `context` can still support local inspection;
 `impact.applicable` is false unless the query resolves and the full discovered workspace was analyzed.
 Treat an inapplicable impact result as evidence to investigate, not as a complete safe-change boundary.
 
@@ -242,7 +244,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.3.3.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.4.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -252,7 +254,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.3.3.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.3.4.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -345,6 +347,8 @@ export PYTHONPATH=/usr/lib/python3
 - The extension requires a desktop or remote extension host and cannot run as a browser-only web
   extension.
 - Standard-library models and several newer Python semantic features remain conservative.
+- Direct `@pytest.fixture` declarations are detected and reported as unsupported dynamic parameter
+  injection; alias-based or plugin-defined fixture mechanisms may still require manual review.
 
 ## Contributing
 
@@ -356,7 +360,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.3.3.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.3.4.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.

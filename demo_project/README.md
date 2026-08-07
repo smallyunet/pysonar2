@@ -3,13 +3,15 @@
 This small project exists specifically to demonstrate PySonar2's generated code browser. It combines
 package re-exports and aliases, module-attribute references, annotation-assisted inference, properties,
 C3 multiple-inheritance resolution, constructors, collection inference, branching, recursion, and
-async/await result types without requiring third-party packages.
+async/await result types without requiring third-party packages. It also includes decorator factories,
+same-name static method aliases, positional and keyword-only parameters, walrus bindings, structural
+pattern matching, match captures, and typed comprehensions.
 
 Generate the static site from the repository root:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.3.3.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.4.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser or publish the directory on any static host.
@@ -29,4 +31,6 @@ code .
 
 In the Extension Development Host, hover over inferred values in `main.py`, follow `PredictionEngine`
 and `build_report` across modules, find references to `Market`, `display_name`, or `adjust`, and save a
-file to watch the workspace index refresh.
+file to watch the workspace index refresh. For the newer guided examples, follow `inspect_symbol`
+through its decorator factory, inspect both `normalize_symbol` declarations, and navigate the `label`
+and `captured` bindings in `syntax.py`.

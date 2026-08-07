@@ -193,18 +193,22 @@ public class Demo {
                 + "<style>" + CSS + "</style></head><body class='landing-page'>"
                 + "<a class='skip-link' href='#main-content'>Skip to demo content</a>"
                 + "<header class='topbar'><a class='brand' href='index.html'><span class='brand-mark'>P2</span><span>PySonar2</span></a>"
+                + "<nav class='topbar-nav' aria-label='Demo sections'><a href='#examples'>Examples</a><a href='#capabilities'>Capabilities</a><a href='#files'>Files</a></nav>"
                 + "<a class='topbar-link' href='https://github.com/smallyunet/pysonar2'>GitHub repository</a></header>"
                 + "<main id='main-content' class='landing'><section class='hero-grid'><div class='hero'>"
                 + "<span class='release-pill'>Local semantic engine · Python 3.10–3.14</span>"
-                + "<h1>Follow Python symbols across the whole project.</h1>"
-                + "<p>Inspect a realistic multi-file application with package re-exports, annotation-assisted inference, properties, C3 inheritance, and async result types. Every link is generated locally—no runtime service required.</p>"
-                + "<div class='hero-actions'><a class='button primary' href='" + escapeAttribute(entryHref) + "'>Explore analyzed source</a>"
+                + "<h1>See what the analyzer knows—not just what it parsed.</h1>"
+                + "<p>Walk through a real multi-file Python project and inspect definitions, references, inferred types, overrides, decorators, modern syntax, and explicit safety boundaries. Every page is generated locally—no hosted analysis service required.</p>"
+                + "<div class='hero-actions'><a class='button primary' href='#examples'>Start a guided example</a>"
+                + "<a class='button' href='" + escapeAttribute(entryHref) + "'>Open analyzed source</a>"
                 + "<a class='button' href='https://github.com/smallyunet/pysonar2/tree/main/demo_project'>View demo on GitHub</a></div>"
                 + "</div>" + analysisPreview() + "</section><section class='metrics' aria-label='Analysis summary'>"
                 + metric(files.size(), "Python files") + metric(definitions, "Definitions") + metric(references, "Cross references")
                 + metric(resolution, "Names resolved", "%")
-                + "</section><div class='section-heading'><span class='section-kicker'>Core semantics</span><h2>What this snapshot demonstrates</h2>"
-                + "<p>Each capability is exercised by source you can open, inspect, and navigate.</p></div>"
+                + "</section>" + guidedExamples()
+                + safetyContract()
+                + "<div id='capabilities' class='section-heading'><span class='section-kicker'>Capability matrix</span><h2>More than go-to-definition</h2>"
+                + "<p>Every capability below is backed by a small source example you can open and navigate.</p></div>"
                 + capabilityCards()
                 + "<div class='section-heading'><span class='section-kicker'>Analyzed workspace</span><h2>Project files "
                 + "<code class='project-root'>" + escapeText(projectRoot) + "</code></h2>"
@@ -229,9 +233,11 @@ public class Demo {
                 + "<div class='preview-heading'><span class='preview-dot'></span><code>semantic snapshot</code><span>local</span></div>"
                 + previewRow("Binding", "PredictionEngine → service.DemoApp", "semantic")
                 + previewRow("Property", "market.display_name → str", "inferred")
-                + previewRow("MRO", "Audited → Weighted → Base", "C3")
+                + previewRow("Override", "Audited → Weighted → Base", "C3 MRO")
+                + previewRow("Decorator", "@command → DemoCommand", "propagated")
+                + previewRow("Pattern", "captured → local binding", "navigable")
                 + previewRow("Async", "await fetch() → list[dict]", "unwrapped")
-                + "<p>Hover symbols in the browser to inspect inferred types, then follow references back to their definitions.</p>"
+                + "<p>Hover a linked symbol to inspect its inferred type, then click it to move between definitions and references.</p>"
                 + "</aside>";
     }
 
@@ -242,13 +248,64 @@ public class Demo {
 
     private String capabilityCards() {
         return "<section class='capability-grid' aria-label='Demonstrated semantic capabilities'>"
-                + capability("01", "Imports & re-exports", "Follow aliases through package APIs and module attributes.", "pysonar_demo/__init__.py")
-                + capability("02", "Annotation seeds", "Use declared types only when runtime evidence remains unknown.", "pysonar_demo/models.py")
-                + capability("03", "Properties & types", "Resolve property references to their inferred value types.", "pysonar_demo/models.py")
-                + capability("04", "C3 inheritance", "Choose attributes with Python's modern multiple-inheritance order.", "pysonar_demo/strategies.py")
-                + capability("05", "Async results", "Distinguish an awaitable call from its awaited result.", "pysonar_demo/feed.py")
-                + capability("06", "Cross-file flow", "Trace constructor values and calls across service boundaries.", "pysonar_demo/service.py")
+                + capability("01", "Imports & re-exports", "Follow public aliases through package APIs and module attributes.", "pysonar_demo/__init__.py")
+                + capability("02", "Annotation-assisted flow", "Use declared types when runtime evidence remains unknown.", "pysonar_demo/models.py")
+                + capability("03", "Properties & attributes", "Resolve computed properties to their inferred value types.", "pysonar_demo/models.py")
+                + capability("04", "C3 override families", "Connect base methods, overrides, and calls in Python MRO order.", "pysonar_demo/strategies.py")
+                + capability("05", "Decorator factories", "Propagate a decorator's returned object type to the exposed name.", "pysonar_demo/decorators.py")
+                + capability("06", "Descriptor aliases", "Keep same-name static method aliases in one impact surface.", "pysonar_demo/decorators.py")
+                + capability("07", "Walrus bindings", "Navigate assignment-expression targets and later reads.", "pysonar_demo/syntax.py")
+                + capability("08", "Pattern captures", "Retain bindings created inside structural match cases.", "pysonar_demo/syntax.py")
+                + capability("09", "Typed comprehensions", "Carry element types through filtered list comprehensions.", "pysonar_demo/syntax.py")
+                + capability("10", "Async results", "Distinguish an awaitable call from its awaited result.", "pysonar_demo/feed.py")
+                + capability("11", "Recursive inference", "Track values through recursive calls and numeric branches.", "pysonar_demo/scoring.py")
+                + capability("12", "Cross-file orchestration", "Trace constructors, collections, and calls across service boundaries.", "pysonar_demo/service.py")
                 + "</section>";
+    }
+
+    private String guidedExamples() {
+        return "<section id='examples' class='guided-section' aria-labelledby='guided-title'>"
+                + "<div class='section-heading'><span class='section-kicker'>Guided examples</span><h2 id='guided-title'>Six short paths through the semantic graph</h2>"
+                + "<p>Pick a question, open the source, then follow the highlighted symbols and hover facts.</p></div>"
+                + "<div class='guided-grid'>"
+                + guidedExample("01", "Public API", "Where does an exported name really come from?", "Follow PredictionEngine through the package re-export to DemoApp.", "pysonar_demo/__init__.py", "cross-file binding")
+                + guidedExample("02", "Type flow", "What type does this property produce?", "Open Market.display_name and trace its str result into Prediction.summary.", "pysonar_demo/models.py", "property inference")
+                + guidedExample("03", "Inheritance", "Which override wins at runtime?", "Inspect adjust and audit_label across the AuditedStrategy diamond.", "pysonar_demo/strategies.py", "C3 resolution")
+                + guidedExample("04", "Decorators", "What replaces a decorated function?", "Follow @command from inspect_symbol to the returned DemoCommand instance.", "pysonar_demo/decorators.py", "returned type")
+                + guidedExample("05", "Modern Python", "Do new bindings stay navigable?", "Trace label from a walrus expression and captured from a match case.", "pysonar_demo/syntax.py", "binding preservation")
+                + guidedExample("06", "Async", "What changes after await?", "Compare MarketFeed.fetch with the concrete payload list used by refresh.", "pysonar_demo/feed.py", "await unwrapping")
+                + "</div></section>";
+    }
+
+    private String guidedExample(String number, String category, String title, String body,
+                                 String file, String evidence) {
+        return "<a class='guided-card' href='" + escapeAttribute(file + ".html") + "'>"
+                + "<span class='guided-number'>" + escapeText(number) + "</span>"
+                + "<div class='guided-content'><span class='guided-category'>" + escapeText(category) + "</span>"
+                + "<h3>" + escapeText(title) + "</h3><p>" + escapeText(body) + "</p>"
+                + "<div class='guided-meta'><code>" + escapeText(file) + "</code><span>" + escapeText(evidence) + "</span></div>"
+                + "</div><span class='guided-arrow' aria-hidden='true'>→</span></a>";
+    }
+
+    private String safetyContract() {
+        return "<section class='contract-section' aria-labelledby='contract-title'>"
+                + "<div class='contract-copy'><span class='section-kicker'>Fail-closed analysis</span><h2 id='contract-title'>Useful evidence includes knowing when to stop.</h2>"
+                + "<p>PySonar2 reports coverage and applicability alongside references. A resolved symbol in a fully parsed workspace can support impact review; detected dynamic injection remains explicit and inapplicable.</p>"
+                + "<a class='text-link' href='https://github.com/smallyunet/pysonar2/blob/main/docs/change-safety-benchmark.md'>Read the change-safety benchmark →</a></div>"
+                + "<div class='contract-console' aria-label='Example impact responses'>"
+                + contractExample("static symbol", "complete", "true", "high", "ready")
+                + contractExample("pytest fixture", "complete", "false", "unsupported", "stop")
+                + "<p><code>unsupportedSemantics</code> is reported for fixture parameter injection instead of presenting missed references as complete.</p>"
+                + "</div></section>";
+    }
+
+    private String contractExample(String label, String coverage, String applicable,
+                                   String confidence, String status) {
+        return "<div class='contract-example'><div><span>" + escapeText(label) + "</span>"
+                + "<em class='contract-status " + escapeAttribute(status) + "'>" + escapeText(status) + "</em></div>"
+                + "<code>{ &quot;coverageStatus&quot;: &quot;" + escapeText(coverage)
+                + "&quot;, &quot;applicable&quot;: " + escapeText(applicable)
+                + ", &quot;confidence&quot;: &quot;" + escapeText(confidence) + "&quot; }</code></div>";
     }
 
     private String capability(String number, String title, String body, String file) {
@@ -313,6 +370,12 @@ public class Demo {
         if (relativePath.endsWith("strategies.py")) {
             return "C3 inheritance, overrides, class methods, and static methods.";
         }
+        if (relativePath.endsWith("decorators.py")) {
+            return "Decorator factories, returned object types, and descriptor aliases.";
+        }
+        if (relativePath.endsWith("syntax.py")) {
+            return "Walrus bindings, match captures, typed comprehensions, and modern parameters.";
+        }
         if (relativePath.endsWith("__init__.py")) {
             return "Package exports and cross-file references.";
         }
@@ -376,9 +439,9 @@ public class Demo {
 
 
     private static void usage() {
-        $.msg("Usage:  java -jar pysonar-3.3.3.jar <file-or-dir> <output-dir>");
+        $.msg("Usage:  java -jar pysonar-3.3.4.jar <file-or-dir> <output-dir>");
         $.msg("Example that generates an index for a Python 3 standard library:");
-        $.msg(" java -jar pysonar-3.3.3.jar /usr/lib/python3 ./html");
+        $.msg(" java -jar pysonar-3.3.4.jar /usr/lib/python3 ./html");
         System.exit(0);
     }
 

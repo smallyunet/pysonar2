@@ -60,6 +60,30 @@ could not parse. This is retained as an out-of-the-box compatibility result, not
 that PySonar2 resolved those files: the PySonar2 zero-result legacy case shows that successful process
 exit is not the same as complete analysis.
 
+## 2026-08-07 follow-up
+
+The fixed corpus was rerun after adding C3 override-family links, same-name descriptor aliases,
+decorator-factory type propagation, query-specific pytest fixture limitations, and explicit
+modern/legacy slices. The auditable PySonar2-only result is
+[`benchmarks/change-safety/results/2026-08-07.json`](../benchmarks/change-safety/results/2026-08-07.json).
+
+| Slice | Cases | Applicable | Safe complete | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full corpus | 12 | 4 | 1 | 1.000 | 0.491 | 0.659 |
+| Modern Python | 4 | 4 | 1 | 1.000 | 0.844 | 0.915 |
+| Legacy compatibility | 8 | 0 | 0 | 1.000 | 0.276 | 0.433 |
+
+The raw full-corpus true positives increased from 81 to 83 with zero false positives, moving recall
+from 0.479 to 0.491. This is a measurable regression-baseline improvement, but not a material enough
+increase to support a general safe-change claim. The modern slice is substantially healthier and all
+four queries are coverage-applicable, while every legacy query fails closed because some workspace
+files do not parse.
+
+The Werkzeug `cache_property` case improved from 15/16 to 16/16 after linking the class-level
+`cache_property = staticmethod(cache_property)` alias. Flask's `apps_tmpdir` and
+`apps_tmpdir_prefix` cases now explicitly return `pytest-fixture-parameter-injection` and
+`applicable: false`; their injected parameter references remain deliberately unclaimed.
+
 ## Valid claims and non-claims
 
 This pilot supports only the following claims:
@@ -79,13 +103,14 @@ than add favorable synthetic cases. A stronger follow-up should:
 
 1. ~~report parse and module coverage in every `context` and `impact` response;~~ completed in 3.3.3
    with explicit coverage, confidence, and applicability fields;
-2. improve attribute references through inferred instances and inherited attributes;
-3. distinguish framework-injected names, such as pytest fixtures, as unsupported rather than silently
-   complete;
-4. add a modern-Python-only historical slice so compatibility and semantic accuracy are reported
-   separately; and
+2. continue improving attribute references through inferred instances; override families and
+   same-name `staticmethod` / `classmethod` aliases are now linked, but dynamic instance flows remain;
+3. ~~distinguish direct pytest fixture declarations as unsupported rather than silently complete;~~
+   completed with query-specific `unsupportedSemantics` and fail-closed applicability;
+4. ~~add a modern-Python-only historical slice so compatibility and semantic accuracy are reported
+   separately;~~ completed with `aggregateBySlice` and `--slice modern`; and
 5. rerun the exact pinned corpus after each change, requiring no regression in precision and a material
-   increase over the current 0.479 recall before making a safe-change claim.
+   increase over the current 0.491 full-corpus recall before making a safe-change claim.
 
 The benchmark implementation and reproduction command are documented in
 [`benchmarks/change-safety/README.md`](../benchmarks/change-safety/README.md).

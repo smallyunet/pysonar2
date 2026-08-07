@@ -259,6 +259,26 @@ public class State {
     }
 
 
+    /**
+     * Return every inherited binding for an attribute in C3 order.  Normal
+     * attribute lookup intentionally stops at the first match, but change
+     * impact also needs the complete override family so a base declaration,
+     * an override, and calls resolved to either side remain connected.
+     */
+    @NotNull
+    public Set<Binding> lookupInheritedAttrs(String attr) {
+        Set<Binding> result = new LinkedHashSet<>();
+        List<State> order = resolutionOrder();
+        for (int i = 1; i < order.size(); i++) {
+            Set<Binding> binding = order.get(i).lookupLocal(attr);
+            if (binding != null) {
+                result.addAll(binding);
+            }
+        }
+        return result;
+    }
+
+
     /** Returns a deterministic C3 linearization, with this state first. */
     @NotNull
     List<State> resolutionOrder() {

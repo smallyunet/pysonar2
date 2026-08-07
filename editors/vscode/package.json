@@ -3,7 +3,7 @@
   "displayName": "PySonar2 Code Intelligence",
   "description": "Local whole-project Python semantics for change inspection, definitions, references, inferred types, and diagnostics.",
   "icon": "images/icon.png",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "publisher": "smallyu",
   "license": "Apache-2.0",
   "repository": {

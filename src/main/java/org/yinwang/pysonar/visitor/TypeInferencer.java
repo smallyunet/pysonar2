@@ -92,8 +92,36 @@ public class TypeInferencer implements Visitor1<Type, State>
     public Type visit(Assign node, State s)
     {
         Type valueType = visit(node.value, s);
+        List<Binding> wrappedAlias = sameNameDescriptorAlias(node);
         bind(s, node.target, valueType);
+        if (!wrappedAlias.isEmpty())
+        {
+            Analyzer.self.putRef(node.target, wrappedAlias);
+        }
         return Types.CONT;
+    }
+
+    @NotNull
+    private List<Binding> sameNameDescriptorAlias(@NotNull Assign node)
+    {
+        if (!(node.target instanceof Name) || !(node.value instanceof Call))
+        {
+            return Collections.emptyList();
+        }
+        Call call = (Call) node.value;
+        if (!(call.func instanceof Name) || call.args.size() != 1 || !(call.args.get(0) instanceof Name))
+        {
+            return Collections.emptyList();
+        }
+        String wrapper = ((Name) call.func).id;
+        Name target = (Name) node.target;
+        Name source = (Name) call.args.get(0);
+        if (!("staticmethod".equals(wrapper) || "classmethod".equals(wrapper))
+                || !target.id.equals(source.id))
+        {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(Analyzer.self.references.get(source));
     }
 
     @NotNull
@@ -520,7 +548,7 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(FunctionDef node, State s)
     {
-        visit(node.decorators, s);
+        List<Type> decoratorTypes = visit(node.decorators, s);
         // Do not treat annotations as executable expressions until generics and
         // forward references are interpreted by the type engine.
         State env = s.getForwarding();
@@ -579,9 +607,60 @@ public class TypeInferencer implements Visitor1<Type, State>
                 fun.setCls((ClassType) outType);
             }
 
-            bind(s, node.name, fun, funkind);
+            Type exposedType = applyFunctionDecorators(node, fun, decoratorTypes);
+            bind(s, node.name, exposedType, funkind);
             return Types.CONT;
         }
+    }
+
+    /**
+     * Apply ordinary decorator factories in Python's inside-out order. Marker
+     * decorators already interpreted directly by FunctionDef keep the original
+     * FunType. Unknown decorator results also preserve it so navigation does
+     * not disappear merely because a third-party decorator is opaque.
+     */
+    @NotNull
+    private Type applyFunctionDecorators(@NotNull FunctionDef node,
+                                         @NotNull FunType function,
+                                         @NotNull List<Type> decoratorTypes)
+    {
+        Type result = function;
+        for (int i = decoratorTypes.size() - 1; i >= 0; i--)
+        {
+            if (isFunctionMarkerDecorator(node.decorators.get(i)))
+            {
+                continue;
+            }
+            Type decorator = decoratorTypes.get(i);
+            if (decorator instanceof FunType)
+            {
+                Type decorated = apply((FunType) decorator, null,
+                        Collections.singletonList(result), Collections.emptyMap(),
+                        null, null, node);
+                if (!decorated.isUnknownType())
+                {
+                    result = decorated;
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean isFunctionMarkerDecorator(@NotNull Node decorator)
+    {
+        if (decorator instanceof Name)
+        {
+            String name = ((Name) decorator).id;
+            return "property".equals(name) || "staticmethod".equals(name)
+                    || "classmethod".equals(name);
+        }
+        if (decorator instanceof Attribute)
+        {
+            String name = ((Attribute) decorator).attr.id;
+            return "setter".equals(name) || "deleter".equals(name)
+                    || "getter".equals(name);
+        }
+        return false;
     }
 
     @NotNull
