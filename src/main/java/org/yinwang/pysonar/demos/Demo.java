@@ -439,9 +439,9 @@ public class Demo {
 
 
     private static void usage() {
-        $.msg("Usage:  java -jar pysonar-3.3.4.jar <file-or-dir> <output-dir>");
+        $.msg("Usage:  java -jar pysonar-3.3.5.jar <file-or-dir> <output-dir>");
         $.msg("Example that generates an index for a Python 3 standard library:");
-        $.msg(" java -jar pysonar-3.3.4.jar /usr/lib/python3 ./html");
+        $.msg(" java -jar pysonar-3.3.5.jar /usr/lib/python3 ./html");
         System.exit(0);
     }
 

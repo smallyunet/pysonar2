@@ -12,8 +12,8 @@ result="$output_dir/analyzer-$timestamp.json"
 
 mkdir -p "$output_dir"
 
-if [ ! -f "$project_root/target/pysonar-3.3.4.jar" ]; then
-  echo "Build target/pysonar-3.3.4.jar with mvn package first." >&2
+if [ ! -f "$project_root/target/pysonar-3.3.5.jar" ]; then
+  echo "Build target/pysonar-3.3.5.jar with mvn package first." >&2
   exit 2
 fi
 
@@ -21,7 +21,7 @@ if [ -n "$change_file" ]; then
   java \
     -Xlog:jfr+startup=off \
     -XX:StartFlightRecording="filename=$recording,settings=profile,dumponexit=true" \
-    -cp "$project_root/target/pysonar-3.3.4.jar" \
+    -cp "$project_root/target/pysonar-3.3.5.jar" \
     org.yinwang.pysonar.bench.AnalyzerBenchmark \
     --root "$corpus" \
     --warmups 1 \
@@ -32,7 +32,7 @@ else
   java \
     -Xlog:jfr+startup=off \
     -XX:StartFlightRecording="filename=$recording,settings=profile,dumponexit=true" \
-    -cp "$project_root/target/pysonar-3.3.4.jar" \
+    -cp "$project_root/target/pysonar-3.3.5.jar" \
     org.yinwang.pysonar.bench.AnalyzerBenchmark \
     --root "$corpus" \
     --warmups 1 \

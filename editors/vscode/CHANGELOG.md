@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.2.6
+
+- Bundle PySonar2 3.3.5.
+- Add conventional `pysonar version`, `pysonar --version`, and `pysonar -V` commands.
+- Document the Homebrew tap installation path for the standalone semantic CLI.
+
 ## 0.2.5
 
 - Bundle PySonar2 3.3.4 with stronger instance, inherited attribute, and decorator reference coverage.

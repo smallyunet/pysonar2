@@ -23,6 +23,19 @@ public class MainTest {
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
+    public void reportsVersionThroughConventionalCommands() {
+        for (String command : new String[]{"version", "--version", "-V"}) {
+            Result result = run(command);
+            assertEquals(result.stderr, 0, result.exitCode);
+            assertEquals(Main.VERSION + System.lineSeparator(), result.stdout);
+        }
+
+        Result extraArgument = run("version", "unexpected");
+        assertEquals(2, extraArgument.exitCode);
+        assertTrue(extraArgument.stderr.contains("does not accept arguments"));
+    }
+
+    @Test
     public void doctorReportsStableSchema() {
         Result result = run("doctor", "--format", "json");
         assertEquals(0, result.exitCode);

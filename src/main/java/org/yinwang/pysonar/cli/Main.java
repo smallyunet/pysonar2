@@ -43,11 +43,12 @@ import java.util.concurrent.TimeUnit;
 /** Command-line interface intended for coding agents and local automation. */
 public final class Main {
 
-    public static final String VERSION = "3.3.4";
+    public static final String VERSION = "3.3.5";
     public static final int SCHEMA_VERSION = 1;
     private static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final Set<String> COMMANDS = new LinkedHashSet<>(Arrays.asList(
-            "doctor", "plan", "session", "context", "impact", "check", "skill", "help", "--help", "-h"));
+            "version", "--version", "-V", "doctor", "plan", "session", "context", "impact", "check",
+            "skill", "help", "--help", "-h"));
     private static final List<String> SKILL_FILES = Arrays.asList(
             "SKILL.md", "agents/openai.yaml", "references/cli-schema.md");
 
@@ -77,6 +78,15 @@ public final class Main {
             }
             Arguments options = Arguments.parse(Arrays.copyOfRange(args, 1, args.length));
             switch (args[0]) {
+                case "version":
+                case "--version":
+                case "-V":
+                    options.assertOnly();
+                    if (!options.positionals.isEmpty()) {
+                        throw new CliException("Version command does not accept arguments", 2);
+                    }
+                    out.println(VERSION);
+                    return 0;
                 case "doctor":
                     options.assertOnly("format");
                     options.requireJson();
@@ -772,6 +782,7 @@ public final class Main {
     private static void usage(PrintStream out) {
         out.println("PySonar2 semantic engine CLI " + VERSION);
         out.println("Usage:");
+        out.println("  pysonar version | --version | -V");
         out.println("  pysonar doctor --format json");
         out.println("  pysonar plan --root DIR --symbol NAME [--intent inspect|change] [--max-results N] [--format compact-json]");
         out.println("  pysonar session --root DIR --format json  # JSONL plan/refresh/quit protocol on stdin/stdout");

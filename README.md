@@ -129,12 +129,20 @@ identity. The Skill teaches a tool when a bounded semantic query may replace unc
 exploration; all analysis remains in the local CLI, with one JSON object written to stdout and progress
 or errors written to stderr.
 
-Build the CLI bundle:
+Install the CLI with Homebrew on macOS or Linux:
+
+```sh
+brew install smallyunet/tap/pysonar2
+pysonar --version
+pysonar doctor --format json
+```
+
+Or build the CLI bundle from source:
 
 ```sh
 mvn package
-unzip target/pysonar-cli-3.3.4.zip
-export PATH="$PWD/pysonar-cli-3.3.4/bin:$PATH"
+unzip target/pysonar-cli-3.3.5.zip
+export PATH="$PWD/pysonar-cli-3.3.5/bin:$PATH"
 pysonar doctor --format json
 ```
 
@@ -244,7 +252,7 @@ Build PySonar2 and analyze the included multi-file demo:
 
 ```sh
 mvn package
-java -jar target/pysonar-3.3.4.jar demo_project ./demo-html
+java -jar target/pysonar-3.3.5.jar demo_project ./demo-html
 ```
 
 Open `demo-html/index.html` in a browser. Hover over or focus a symbol to inspect its inferred type, and
@@ -254,7 +262,7 @@ can be hosted on any static file server.
 Use the same command with another Python file or directory to analyze your own code:
 
 ```sh
-java -jar target/pysonar-3.3.4.jar /path/to/python/project ./demo-html
+java -jar target/pysonar-3.3.5.jar /path/to/python/project ./demo-html
 ```
 
 Large source trees, such as a Python standard library, may take several minutes to analyze.
@@ -360,7 +368,7 @@ To regenerate legacy inference fixtures after an intentional semantic change:
 
 ```sh
 mvn package -DskipTests
-java -classpath target/pysonar-3.3.4.jar org.yinwang.pysonar.TestInference -generate tests
+java -classpath target/pysonar-3.3.5.jar org.yinwang.pysonar.TestInference -generate tests
 ```
 
 Test cases live under directories whose names end in `.test`; existing cases in `tests` provide examples.
