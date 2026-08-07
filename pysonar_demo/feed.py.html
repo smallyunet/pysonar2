@@ -116,6 +116,25 @@ a:focus-visible, button:focus-visible {
     font-size: 14px;
 }
 
+.topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.topbar-nav a {
+    min-height: 40px;
+    padding: 10px 11px;
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 13px;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.topbar-nav a:hover { background: var(--surface-raised); color: var(--text); }
+.landing-page .topbar-link { margin-left: 8px; }
+
 .browser-shell {
     display: grid;
     grid-template-columns: minmax(230px, 290px) minmax(0, 1fr);
@@ -202,6 +221,29 @@ a:focus-visible, button:focus-visible {
 
 .editor-heading { padding: 0 16px; }
 
+.analysis-context {
+    display: flex;
+    min-height: 42px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #fbfdff;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.analysis-context > span:first-child { margin-right: auto; }
+.context-stat {
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--subtle);
+    font: 11px/1.3 var(--mono);
+    white-space: nowrap;
+}
+
 .file-dot {
     width: 9px;
     height: 9px;
@@ -229,7 +271,7 @@ a:focus-visible, button:focus-visible {
 }
 
 .code-scroll {
-    min-height: calc(100vh - 126px);
+    min-height: calc(100vh - 168px);
     overflow: auto;
 }
 
@@ -296,12 +338,44 @@ pre a.active {
 .symbol-tooltip.is-visible { opacity: 1; }
 
 .landing {
-    width: min(1160px, calc(100% - 36px));
+    width: min(1280px, calc(100% - 36px));
     margin: 0 auto;
     padding: 72px 0 84px;
 }
 
-.hero { max-width: 780px; }
+.landing-page {
+    --bg: #0f172a;
+    --surface: #172033;
+    --surface-raised: #1e293b;
+    --surface-hover: #22314a;
+    --border: #34445c;
+    --border-strong: #52647d;
+    --text: #f8fafc;
+    --muted: #b4c1d2;
+    --subtle: #91a2b8;
+    --accent: #22c55e;
+    --accent-strong: #4ade80;
+    --accent-soft: rgba(34, 197, 94, 0.13);
+    background:
+        radial-gradient(circle at 82% 2%, rgba(34, 197, 94, 0.12), transparent 30rem),
+        radial-gradient(circle at 10% 18%, rgba(37, 99, 235, 0.13), transparent 34rem),
+        var(--bg);
+}
+
+.landing-page .topbar {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(14px);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(390px, 0.95fr);
+    gap: clamp(36px, 7vw, 90px);
+    align-items: center;
+}
+
+.hero { max-width: 720px; }
 
 .release-pill {
     display: inline-flex;
@@ -315,8 +389,9 @@ pre a.active {
 
 .hero h1 {
     margin: 20px 0 16px;
-    font-size: clamp(42px, 8vw, 76px);
-    line-height: 0.98;
+    max-width: 760px;
+    font-size: clamp(44px, 6.5vw, 78px);
+    line-height: 0.99;
     letter-spacing: -0.055em;
 }
 
@@ -344,26 +419,70 @@ pre a.active {
 
 .button:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--text); }
 .button.primary { border-color: var(--accent); background: var(--accent); color: #ffffff; }
+.landing-page .button.primary { color: #07140c; }
+
+.analysis-preview {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(23, 32, 51, 0.92);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+}
+
+.preview-heading {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 9px;
+    padding: 0 15px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.preview-heading > span:last-child { margin-left: auto; color: var(--accent-strong); }
+.preview-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+.preview-row {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    min-height: 56px;
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(82, 100, 125, 0.46);
+}
+
+.preview-row > span { color: var(--subtle); font-size: 12px; }
+.preview-row code { overflow: hidden; color: #e2e8f0; font: 12px/1.45 var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.preview-row em { color: var(--accent-strong); font: normal 11px/1 var(--mono); }
+.analysis-preview > p { margin: 0; padding: 15px; color: var(--muted); font-size: 13px; }
 
 .metrics {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     margin: 54px 0 20px;
 }
 
 .metric,
-.file-card {
+.file-card,
+.capability-card {
     border: 1px solid var(--border);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.88);
 }
 
+.landing-page .metric,
+.landing-page .file-card,
+.landing-page .capability-card { background: rgba(23, 32, 51, 0.82); }
+
 .metric { padding: 18px; }
 .metric strong { display: block; font: 700 24px/1.2 var(--mono); }
 .metric span { color: var(--muted); font-size: 13px; }
 
-.section-heading { margin: 44px 0 16px; }
+.section-heading { margin: 54px 0 18px; }
+.section-kicker { display: block; margin-bottom: 5px; color: var(--accent-strong); font: 600 11px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
 .section-heading h2 { margin: 0 0 5px; font-size: 24px; letter-spacing: -0.025em; }
 .section-heading p { margin: 0; color: var(--muted); }
 .project-root {
@@ -384,6 +503,129 @@ pre a.active {
     gap: 12px;
 }
 
+.capability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.guided-section { scroll-margin-top: 76px; }
+
+.guided-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.guided-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 24px;
+    gap: 12px;
+    min-height: 196px;
+    padding: 22px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.94), rgba(23, 32, 51, 0.78));
+    color: var(--text);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.guided-card::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--accent);
+    content: "";
+    opacity: 0;
+    transform: scaleY(0.45);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.guided-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.guided-card:hover::before { opacity: 1; transform: scaleY(1); }
+.guided-number { color: var(--accent-strong); font: 600 12px/1.5 var(--mono); }
+.guided-category { color: var(--subtle); font: 600 11px/1.4 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; }
+.guided-content h3 { margin: 9px 0 7px; font-size: 19px; line-height: 1.25; letter-spacing: -0.02em; }
+.guided-content p { margin: 0; color: var(--muted); font-size: 14px; }
+.guided-arrow { align-self: start; color: var(--accent-strong); font: 20px/1 var(--mono); transition: transform 180ms ease; }
+.guided-card:hover .guided-arrow { transform: translateX(3px); }
+
+.guided-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.guided-meta code,
+.guided-meta span {
+    padding: 4px 7px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--subtle);
+    font: 10px/1.3 var(--mono);
+}
+
+.guided-meta code { color: var(--accent-strong); }
+
+.contract-section {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(480px, 1.2fr);
+    gap: clamp(30px, 6vw, 76px);
+    align-items: center;
+    margin: 64px 0 14px;
+    padding: clamp(26px, 5vw, 54px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 92% 12%, rgba(34, 197, 94, 0.10), transparent 22rem),
+        rgba(23, 32, 51, 0.72);
+}
+
+.contract-copy h2 { margin: 8px 0 12px; font-size: clamp(27px, 4vw, 42px); line-height: 1.08; letter-spacing: -0.035em; }
+.contract-copy p { margin: 0; color: var(--muted); }
+.text-link { display: inline-flex; min-height: 44px; align-items: center; margin-top: 16px; color: var(--accent-strong); font-weight: 650; }
+
+.contract-console {
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: #0b1220;
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.24);
+}
+
+.contract-example { padding: 16px 18px; border-bottom: 1px solid rgba(82, 100, 125, 0.5); }
+.contract-example > div { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; color: var(--muted); font-size: 12px; }
+.contract-example code { display: block; overflow-x: auto; color: #dbeafe; font: 12px/1.6 var(--mono); white-space: nowrap; }
+.contract-status { margin-left: auto; padding: 4px 7px; border-radius: 999px; font: normal 600 10px/1 var(--mono); text-transform: uppercase; }
+.contract-status.ready { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+.contract-status.stop { background: rgba(248, 113, 113, 0.14); color: #fca5a5; }
+.contract-console > p { margin: 0; padding: 14px 18px; color: var(--subtle); font-size: 12px; }
+.contract-console > p code { color: #93c5fd; font: 12px/1.4 var(--mono); }
+
+.capability-card {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    min-height: 176px;
+    padding: 18px;
+    color: var(--text);
+    transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.capability-card:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--surface-raised); color: var(--text); }
+.capability-number { color: var(--accent-strong); font: 600 12px/1.5 var(--mono); }
+.capability-card h3 { margin: 0; font-size: 17px; letter-spacing: -0.015em; }
+.capability-card p { margin: 8px 0 16px; color: var(--muted); font-size: 13px; }
+.capability-card code { color: var(--subtle); font: 11px/1.45 var(--mono); overflow-wrap: anywhere; }
+
 .file-card {
     display: block;
     min-height: 116px;
@@ -402,12 +644,31 @@ pre a.active {
     .topbar { padding: 0 14px; }
     .topbar-path { margin-left: 12px; padding-left: 12px; }
     .topbar-link { display: none; }
+    .topbar-nav { margin-left: auto; gap: 0; }
+    .topbar-nav a { padding-inline: 8px; font-size: 12px; }
     .browser-shell { grid-template-columns: 1fr; padding: 10px; }
     .outline-panel { position: static; max-height: 250px; }
     .outline-nav { max-height: 200px; }
     .code-scroll { min-height: 60vh; }
     .landing { padding-top: 48px; }
     .metrics { grid-template-columns: 1fr; }
+    .hero-grid { grid-template-columns: 1fr; }
+    .analysis-preview { margin-top: 8px; }
+    .capability-grid { grid-template-columns: 1fr; }
+    .guided-grid { grid-template-columns: 1fr; }
+    .guided-card { grid-template-columns: 34px minmax(0, 1fr) 18px; min-height: 0; padding: 18px 16px; }
+    .contract-section { grid-template-columns: 1fr; padding: 24px 18px; }
+    .contract-example code { font-size: 11px; }
+    .analysis-context { align-items: flex-start; flex-wrap: wrap; }
+    .analysis-context > span:first-child { width: 100%; }
+}
+
+@media (min-width: 761px) and (max-width: 1040px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .analysis-preview { max-width: 760px; }
+    .capability-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .contract-section { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -421,24 +682,24 @@ pre a.active {
 <li><a href='#pysonar_demo.feed.MarketFeed' xid='pysonar_demo.feed.MarketFeed'>MarketFeed</a><ul class='outline-list'>
 <li><a href='#pysonar_demo.feed.MarketFeed.fetch' xid='pysonar_demo.feed.MarketFeed.fetch'>fetch</a></li></ul>
 </li><li><a href='#pysonar_demo.feed.refresh' xid='pysonar_demo.feed.refresh'>refresh</a></li></ul>
-</nav></aside><section class='editor-panel' aria-label='Analyzed source code'><div class='editor-heading'><span class='file-dot'></span><span class='file-name'>pysonar_demo/feed.py</span><span class='static-badge'>Static analysis</span></div><div class='code-scroll'><pre><span class='lineno'>   1</span> &quot;&quot;&quot;Async examples for modern Python AST navigation.&quot;&quot;&quot;
+</nav></aside><section class='editor-panel' aria-label='Analyzed source code'><div class='editor-heading'><span class='file-dot'></span><span class='file-name'>pysonar_demo/feed.py</span><span class='static-badge'>Static analysis</span></div><div class='analysis-context'><span>Awaitable calls, awaited result types, and data normalization.</span><span class='context-stat'>10 definitions</span><span class='context-stat'>19 references</span></div><div class='code-scroll'><pre><span class='lineno'>   1</span> &quot;&quot;&quot;Async examples for modern Python AST navigation.&quot;&quot;&quot;
 <span class='lineno'>   2</span>
 <span class='lineno'>   3</span> from .<a href='models.py.html#pysonar_demo.models' xid='pysonar_demo.models' data-tooltip='models' aria-describedby='symbol-tooltip'>models</a> import <a href='models.py.html#pysonar_demo.models.Market' xid='pysonar_demo.models.Market' data-tooltip='&lt;Market&gt;' aria-describedby='symbol-tooltip'>Market</a>
 <span class='lineno'>   4</span>
 <span class='lineno'>   5</span>
 <span class='lineno'>   6</span> class <a id='pysonar_demo.feed.MarketFeed' xid='pysonar_demo.feed.MarketFeed' data-tooltip='&lt;MarketFeed&gt;' aria-describedby='symbol-tooltip'>MarketFeed</a>:
-<span class='lineno'>   7</span>     async def <a id='pysonar_demo.feed.MarketFeed.fetch' xid='pysonar_demo.feed.MarketFeed.fetch' data-tooltip='MarketFeed -&gt; [dict]' aria-describedby='symbol-tooltip'>fetch</a>(<a id='pysonar_demo.feed.MarketFeed.fetch.self' xid='pysonar_demo.feed.MarketFeed.fetch.self' data-tooltip='MarketFeed' aria-describedby='symbol-tooltip'>sel</a>f):
+<span class='lineno'>   7</span>     async def <a id='pysonar_demo.feed.MarketFeed.fetch' xid='pysonar_demo.feed.MarketFeed.fetch' data-tooltip='MarketFeed -&gt; Awaitable[[dict]]' aria-describedby='symbol-tooltip'>fetch</a>(<a id='pysonar_demo.feed.MarketFeed.fetch.self' xid='pysonar_demo.feed.MarketFeed.fetch.self' data-tooltip='MarketFeed' aria-describedby='symbol-tooltip'>sel</a>f) -&gt; list[dict]:
 <span class='lineno'>   8</span>         return [
 <span class='lineno'>   9</span>             {&quot;question&quot;: &quot;Example market&quot;, &quot;yes_price&quot;: 0.58, &quot;volume&quot;: 32000},
 <span class='lineno'>  10</span>         ]
 <span class='lineno'>  11</span>
 <span class='lineno'>  12</span>
-<span class='lineno'>  13</span> async def <a id='pysonar_demo.feed.refresh' xid='pysonar_demo.feed.refresh' data-tooltip='? -&gt; [Market]' aria-describedby='symbol-tooltip'>refresh</a>(<a id='pysonar_demo.feed.refresh.feed' xid='pysonar_demo.feed.refresh.feed' data-tooltip='?' aria-describedby='symbol-tooltip'>fee</a>d):
-<span class='lineno'>  14</span>     <a id='pysonar_demo.feed.refresh.payloads' xid='pysonar_demo.feed.refresh.payloads' data-tooltip='?' aria-describedby='symbol-tooltip'>payloads</a> = await <a href='#pysonar_demo.feed.refresh.feed' xid='pysonar_demo.feed.refresh.feed' data-tooltip='?' aria-describedby='symbol-tooltip'>feed</a>.fetch()
-<span class='lineno'>  15</span>     <a id='pysonar_demo.feed.refresh.markets' xid='pysonar_demo.feed.refresh.markets' data-tooltip='[Market]' aria-describedby='symbol-tooltip'>markets</a> = []
-<span class='lineno'>  16</span>     for <a id='pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='?' aria-describedby='symbol-tooltip'>payload</a> in <a href='#pysonar_demo.feed.refresh.payloads' xid='pysonar_demo.feed.refresh.payloads' data-tooltip='?' aria-describedby='symbol-tooltip'>payloads</a>:
+<span class='lineno'>  13</span> async def <a id='pysonar_demo.feed.refresh' xid='pysonar_demo.feed.refresh' data-tooltip='MarketFeed -&gt; Awaitable[[Market]]' aria-describedby='symbol-tooltip'>refresh</a>(<a id='pysonar_demo.feed.refresh.feed' xid='pysonar_demo.feed.refresh.feed' data-tooltip='MarketFeed' aria-describedby='symbol-tooltip'>fee</a>d: <a href='#pysonar_demo.feed.MarketFeed' xid='pysonar_demo.feed.MarketFeed' data-tooltip='&lt;MarketFeed&gt;' aria-describedby='symbol-tooltip'>MarketFeed</a>) -&gt; list[<a href='models.py.html#pysonar_demo.models.Market' xid='pysonar_demo.models.Market' data-tooltip='&lt;Market&gt;' aria-describedby='symbol-tooltip'>Market</a>]:
+<span class='lineno'>  14</span>     <a id='pysonar_demo.feed.refresh.payloads' xid='pysonar_demo.feed.refresh.payloads' data-tooltip='[dict]' aria-describedby='symbol-tooltip'>payloads</a> = await <a href='#pysonar_demo.feed.refresh.feed' xid='pysonar_demo.feed.refresh.feed' data-tooltip='MarketFeed' aria-describedby='symbol-tooltip'>feed</a>.<a href='#pysonar_demo.feed.MarketFeed.fetch' xid='pysonar_demo.feed.MarketFeed.fetch' data-tooltip='MarketFeed -&gt; Awaitable[[dict]]' aria-describedby='symbol-tooltip'>fetch</a>()
+<span class='lineno'>  15</span>     <a id='pysonar_demo.feed.refresh.markets' xid='pysonar_demo.feed.refresh.markets' data-tooltip='[Market]' aria-describedby='symbol-tooltip'>markets</a>: list[<a href='models.py.html#pysonar_demo.models.Market' xid='pysonar_demo.models.Market' data-tooltip='&lt;Market&gt;' aria-describedby='symbol-tooltip'>Market</a>] = []
+<span class='lineno'>  16</span>     for <a id='pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='dict' aria-describedby='symbol-tooltip'>payload</a> in <a href='#pysonar_demo.feed.refresh.payloads' xid='pysonar_demo.feed.refresh.payloads' data-tooltip='[dict]' aria-describedby='symbol-tooltip'>payloads</a>:
 <span class='lineno'>  17</span>         <a href='#pysonar_demo.feed.refresh.markets' xid='pysonar_demo.feed.refresh.markets' data-tooltip='[Market]' aria-describedby='symbol-tooltip'>markets</a>.append(
-<span class='lineno'>  18</span>             <a href='models.py.html#pysonar_demo.models.Market' xid='pysonar_demo.models.Market' data-tooltip='&lt;Market&gt;' aria-describedby='symbol-tooltip'>Market</a>(<a href='#pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='?' aria-describedby='symbol-tooltip'>payload</a>[&quot;question&quot;], <a href='#pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='?' aria-describedby='symbol-tooltip'>payload</a>[&quot;yes_price&quot;], <a href='#pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='?' aria-describedby='symbol-tooltip'>payload</a>[&quot;volume&quot;])
+<span class='lineno'>  18</span>             <a href='models.py.html#pysonar_demo.models.Market' xid='pysonar_demo.models.Market' data-tooltip='&lt;Market&gt;' aria-describedby='symbol-tooltip'>Market</a>(<a href='#pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='dict' aria-describedby='symbol-tooltip'>payload</a>[&quot;question&quot;], <a href='#pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='dict' aria-describedby='symbol-tooltip'>payload</a>[&quot;yes_price&quot;], <a href='#pysonar_demo.feed.refresh.payload' xid='pysonar_demo.feed.refresh.payload' data-tooltip='dict' aria-describedby='symbol-tooltip'>payload</a>[&quot;volume&quot;])
 <span class='lineno'>  19</span>         )
 <span class='lineno'>  20</span>     return <a href='#pysonar_demo.feed.refresh.markets' xid='pysonar_demo.feed.refresh.markets' data-tooltip='[Market]' aria-describedby='symbol-tooltip'>markets</a>
 </pre></div></section></main><div id='symbol-tooltip' class='symbol-tooltip' role='tooltip' aria-hidden='true'></div>
