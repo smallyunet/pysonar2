@@ -3,9 +3,10 @@
 This dependency-free project demonstrates PySonar2 across three representative surfaces:
 
 - cross-file navigation through imports, re-exports, aliases, properties, and C3 inheritance;
-- type flow through annotations, constructors, collections, recursion, decorators, and async results;
+- type flow through annotations, constructors, typed sets/generators, recursion, decorators, context
+  managers, and async protocols;
 - modern syntax including keyword-only parameters, walrus bindings, structural matching, captures, and
-  typed comprehensions.
+  typed comprehensions and pattern-capture propagation.
 
 Generate the static site from the repository root:
 

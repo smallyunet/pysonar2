@@ -525,7 +525,9 @@ public class Parser {
             List<Name> captures = new ArrayList<>();
             addCapture(captures, map.get("name"), start, end, line, col);
             addCapture(captures, map.get("rest"), start, end, line, col);
+            List<String> keywordAttributes = stringList(map.get("kwd_attrs"));
             return new MatchPattern(type, valueExpressions, patterns, captures,
+                    keywordAttributes,
                     file, start, end, line, col);
         }
 
@@ -859,6 +861,19 @@ public class Parser {
             captureStart = start;
         }
         captures.add(new Name(id, file, captureStart, captureStart + id.length(), line, col));
+    }
+
+    @NotNull
+    private List<String> stringList(@Nullable Object value) {
+        List<String> result = new ArrayList<>();
+        if (value instanceof List) {
+            for (Object element : (List<?>) value) {
+                if (element instanceof String) {
+                    result.add((String) element);
+                }
+            }
+        }
+        return result;
     }
 
     @NotNull

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.0
+
+- Bundle PySonar2 3.4.0 with typed sets, generators, modern annotations, and union protocols.
+- Propagate structural-pattern capture, context-manager, async-iterator, and class-decorator types.
+- Preserve property types across setter decorators and isolate Python 3 comprehension scopes.
+
 ## 0.2.6
 
 - Bundle PySonar2 3.3.5.

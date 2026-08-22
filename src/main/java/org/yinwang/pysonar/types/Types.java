@@ -19,6 +19,9 @@ public class Types {
     public static ClassType StrClass = new ClassType("str", null, ObjectClass);
     public static Type StrInstance = StrClass.getInstance();
 
+    public static ClassType BytesClass = new ClassType("bytes", null, ObjectClass);
+    public static Type BytesInstance = BytesClass.getInstance();
+
     public static ClassType FloatClass = new ClassType("float", null, ObjectClass);
     public static Type FloatInstance = FloatClass.getInstance();
 
@@ -27,6 +30,9 @@ public class Types {
 
     public static ClassType NoneClass = new ClassType("None", null, ObjectClass);
     public static Type NoneInstance = NoneClass.getInstance();
+
+    public static ClassType EllipsisClass = new ClassType("ellipsis", null, ObjectClass);
+    public static Type EllipsisInstance = EllipsisClass.getInstance();
 
     // Synthetic types used only for inference purposes
     // They don't exist in Python

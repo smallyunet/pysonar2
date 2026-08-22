@@ -131,6 +131,10 @@ public class ModernPythonSyntaxTest
         TypeParameter t = pair.typeParams.get(0);
         assertEquals("TypeVar", t.parameterKind);
         assertNotNull(t.bound);
+        assertFalse("bounded generic aliases should expose useful semantic shape",
+                result.analyzer.allBindings.stream()
+                        .filter(binding -> "Pair".equals(binding.name))
+                        .findFirst().get().type.isUnknownType());
         assertEquals("TypeVarTuple", ((TypeAlias) result.module.body.seq.get(1))
                 .typeParams.get(0).parameterKind);
         assertEquals("ParamSpec", ((TypeAlias) result.module.body.seq.get(2))

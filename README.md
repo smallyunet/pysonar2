@@ -22,8 +22,8 @@ for current Python, editor, CLI, and automation workflows.
 - Whole-project interprocedural inference across imports, calls, closures, and control flow.
 - Definitions, references, inferred types, symbols, diagnostics, and import relationships.
 - Modern Python 3.10-3.14 parsing with an explicit [semantic support matrix](docs/python-support.md).
-- C3 method resolution, package re-exports, properties, annotations, async results, decorators, pattern
-  captures, and other modern navigation flows.
+- C3 method resolution, package re-exports, properties, modern annotations, typed generators and sets,
+  async protocols, decorator transforms, pattern-capture types, and other modern navigation flows.
 - Atomic incremental snapshots with content-hash caching and reverse-import invalidation.
 - Machine-readable coverage, confidence, truncation, and unsupported-semantics reporting.
 

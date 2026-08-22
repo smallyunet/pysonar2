@@ -13,9 +13,11 @@ import org.yinwang.pysonar.types.ClassType;
 import org.yinwang.pysonar.types.AwaitableType;
 import org.yinwang.pysonar.types.DictType;
 import org.yinwang.pysonar.types.FunType;
+import org.yinwang.pysonar.types.GeneratorType;
 import org.yinwang.pysonar.types.InstanceType;
 import org.yinwang.pysonar.types.ListType;
 import org.yinwang.pysonar.types.ModuleType;
+import org.yinwang.pysonar.types.SetType;
 import org.yinwang.pysonar.types.TupleType;
 import org.yinwang.pysonar.types.Type;
 import org.yinwang.pysonar.types.Types;
@@ -32,8 +34,10 @@ import static org.yinwang.pysonar.Binding.Kind.SCOPE;
 import static org.yinwang.pysonar.Binding.Kind.VARIABLE;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +45,10 @@ import java.util.Set;
 
 public class TypeInferencer implements Visitor1<Type, State>
 {
+    @NotNull
+    private Type currentMatchSubject = Types.UNKNOWN;
+    @NotNull
+    private final Deque<Type> generatorYieldTypes = new ArrayDeque<>();
 
     @NotNull
     @Override
@@ -159,6 +167,16 @@ public class TypeInferencer implements Visitor1<Type, State>
             if (valueType instanceof AwaitableType)
             {
                 return ((AwaitableType) valueType).resultType;
+            }
+            if (valueType instanceof UnionType)
+            {
+                Type result = Types.UNKNOWN;
+                for (Type member : ((UnionType) valueType).types)
+                {
+                    result = UnionType.union(result, member instanceof AwaitableType
+                            ? ((AwaitableType) member).resultType : member);
+                }
+                return result;
             }
             return valueType.isUnknownType() ? Types.UNKNOWN : valueType;
         }
@@ -298,7 +316,7 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(Bytes node, State s)
     {
-        return Types.StrInstance;
+        return Types.BytesInstance;
     }
 
     @NotNull
@@ -372,7 +390,7 @@ public class TypeInferencer implements Visitor1<Type, State>
     public Type visit(ClassDef node, State s)
     {
         ClassType classType = new ClassType(node.name.id, s);
-        visit(node.decorators, s);
+        List<Type> decoratorTypes = visit(node.decorators, s);
         visit(node.keywords, s);
         visit(node.typeParams, classType.table);
         List<Type> baseTypes = new ArrayList<>();
@@ -413,14 +431,51 @@ public class TypeInferencer implements Visitor1<Type, State>
         {
             visit(node.body, classType.table);
         }
+        Type exposedType = applyClassDecorators(node, classType, decoratorTypes);
+        if (exposedType != classType)
+        {
+            Set<Binding> bindings = s.lookupLocal(node.name.id);
+            if (bindings != null)
+            {
+                for (Binding binding : bindings)
+                {
+                    if (binding.node == node.name)
+                    {
+                        binding.setType(exposedType);
+                    }
+                }
+            }
+        }
         return Types.CONT;
+    }
+
+    @NotNull
+    private Type applyClassDecorators(@NotNull ClassDef node, @NotNull ClassType classType,
+                                      @NotNull List<Type> decoratorTypes)
+    {
+        Type result = classType;
+        for (int i = decoratorTypes.size() - 1; i >= 0; i--)
+        {
+            Type decorator = decoratorTypes.get(i);
+            if (decorator instanceof FunType)
+            {
+                Type decorated = apply((FunType) decorator, null,
+                        Collections.singletonList(result), Collections.emptyMap(),
+                        null, null, node);
+                if (!decorated.isUnknownType())
+                {
+                    result = decorated;
+                }
+            }
+        }
+        return result;
     }
 
     @NotNull
     @Override
     public Type visit(Comprehension node, State s)
     {
-        bindIter(s, node.target, node.iter, SCOPE);
+        bindIter(s, node.target, node.iter, SCOPE, node.isAsync);
         visit(node.ifs, s);
         return visit(node.target, s);
     }
@@ -460,9 +515,10 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(DictComp node, State s)
     {
-        visit(node.generators, s);
-        Type keyType = visit(node.key, s);
-        Type valueType = visit(node.value, s);
+        State comprehension = comprehensionScope(s);
+        visit(node.generators, comprehension);
+        Type keyType = visit(node.key, comprehension);
+        Type valueType = visit(node.value, comprehension);
         return new DictType(keyType, valueType);
     }
 
@@ -477,7 +533,7 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(Ellipsis node, State s)
     {
-        return Types.NoneInstance;
+        return Types.EllipsisInstance;
     }
 
     @NotNull
@@ -507,7 +563,7 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(For node, State s)
     {
-        bindIter(s, node.target, node.iter, SCOPE);
+        bindIter(s, node.target, node.iter, SCOPE, node.isAsync);
         Type t1 = Types.UNKNOWN;
         Type t2 = Types.UNKNOWN;
         Type t3 = Types.UNKNOWN;
@@ -654,12 +710,6 @@ public class TypeInferencer implements Visitor1<Type, State>
             return "property".equals(name) || "staticmethod".equals(name)
                     || "classmethod".equals(name);
         }
-        if (decorator instanceof Attribute)
-        {
-            String name = ((Attribute) decorator).attr.id;
-            return "setter".equals(name) || "deleter".equals(name)
-                    || "getter".equals(name);
-        }
         return false;
     }
 
@@ -667,8 +717,10 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(GeneratorExp node, State s)
     {
-        visit(node.generators, s);
-        return new ListType(visit(node.elt, s));
+        State comprehension = comprehensionScope(s);
+        visit(node.generators, comprehension);
+        boolean async = node.generators.stream().anyMatch(generator -> generator.isAsync);
+        return new GeneratorType(visit(node.elt, comprehension), async);
     }
 
     @NotNull
@@ -942,26 +994,35 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(ListComp node, State s)
     {
-        visit(node.generators, s);
-        return new ListType(visit(node.elt, s));
+        State comprehension = comprehensionScope(s);
+        visit(node.generators, comprehension);
+        return new ListType(visit(node.elt, comprehension));
     }
 
     @NotNull
     @Override
     public Type visit(Match node, State s)
     {
-        visit(node.subject, s);
+        Type previousSubject = currentMatchSubject;
+        currentMatchSubject = visit(node.subject, s);
         Type result = Types.UNKNOWN;
         boolean exhaustive = false;
-        for (MatchCase matchCase : node.cases)
+        try
         {
-            State caseState = s.copy();
-            result = UnionType.union(result, visit(matchCase, caseState));
-            s.merge(caseState);
-            if (matchCase.guard == null && matchCase.pattern.isIrrefutable())
+            for (MatchCase matchCase : node.cases)
             {
-                exhaustive = true;
+                State caseState = s.copy();
+                result = UnionType.union(result, visit(matchCase, caseState));
+                s.merge(caseState);
+                if (matchCase.guard == null && matchCase.pattern.isIrrefutable())
+                {
+                    exhaustive = true;
+                }
             }
+        }
+        finally
+        {
+            currentMatchSubject = previousSubject;
         }
         return exhaustive ? result : UnionType.union(result, Types.CONT);
     }
@@ -970,7 +1031,7 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(MatchCase node, State s)
     {
-        visit(node.pattern, s);
+        visitMatchPattern(node.pattern, currentMatchSubject, s);
         if (node.guard != null)
         {
             visit(node.guard, s);
@@ -982,6 +1043,12 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(MatchPattern node, State s)
     {
+        return visitMatchPattern(node, currentMatchSubject, s);
+    }
+
+    @NotNull
+    private Type visitMatchPattern(@NotNull MatchPattern node, @NotNull Type subjectType, @NotNull State s)
+    {
         visit(node.valueExpressions, s);
         if ("MatchOr".equals(node.patternKind))
         {
@@ -989,7 +1056,7 @@ public class TypeInferencer implements Visitor1<Type, State>
             for (MatchPattern pattern : node.patterns)
             {
                 State alternative = s.copy();
-                visit(pattern, alternative);
+                visitMatchPattern(pattern, subjectType, alternative);
                 if (alternatives == null)
                 {
                     alternatives = alternative;
@@ -1004,15 +1071,103 @@ public class TypeInferencer implements Visitor1<Type, State>
                 s.overwrite(alternatives);
             }
         }
+        else if ("MatchSequence".equals(node.patternKind))
+        {
+            List<Type> elements = sequencePatternTypes(subjectType, node.patterns.size());
+            for (int i = 0; i < node.patterns.size(); i++)
+            {
+                MatchPattern nestedPattern = node.patterns.get(i);
+                Type nestedType = "MatchStar".equals(nestedPattern.patternKind)
+                        ? new ListType(elements.get(i)) : elements.get(i);
+                visitMatchPattern(nestedPattern, nestedType, s);
+            }
+        }
+        else if ("MatchMapping".equals(node.patternKind))
+        {
+            Type valueType = subjectType instanceof DictType
+                    ? ((DictType) subjectType).valueType : Types.UNKNOWN;
+            for (MatchPattern pattern : node.patterns)
+            {
+                visitMatchPattern(pattern, valueType, s);
+            }
+        }
+        else if ("MatchClass".equals(node.patternKind))
+        {
+            Type classSubject = classPatternType(node, s, subjectType);
+            int positionalCount = Math.max(0, node.patterns.size() - node.keywordAttributes.size());
+            for (int i = 0; i < node.patterns.size(); i++)
+            {
+                Type nested = Types.UNKNOWN;
+                if (i >= positionalCount && classSubject != Types.UNKNOWN)
+                {
+                    String attribute = node.keywordAttributes.get(i - positionalCount);
+                    Type attributeType = classSubject.table.lookupAttrType(attribute);
+                    nested = attributeType == null ? Types.UNKNOWN : attributeType;
+                }
+                visitMatchPattern(node.patterns.get(i), nested, s);
+            }
+            subjectType = classSubject;
+        }
         else
         {
-            visit(node.patterns, s);
+            for (MatchPattern pattern : node.patterns)
+            {
+                visitMatchPattern(pattern, subjectType, s);
+            }
         }
         for (Name capture : node.captures)
         {
-            bind(s, capture, Types.UNKNOWN, VARIABLE);
+            Type captureType = "MatchStar".equals(node.patternKind)
+                    ? (subjectType instanceof ListType ? subjectType
+                    : new ListType(iterableElementWithoutDiagnostics(subjectType))) : subjectType;
+            bind(s, capture, captureType, VARIABLE);
         }
         return Types.CONT;
+    }
+
+    @NotNull
+    private List<Type> sequencePatternTypes(@NotNull Type subjectType, int size)
+    {
+        List<Type> result = new ArrayList<>();
+        if (subjectType instanceof TupleType && ((TupleType) subjectType).size() == size)
+        {
+            result.addAll(((TupleType) subjectType).eltTypes);
+            return result;
+        }
+        Type element = iterableElementWithoutDiagnostics(subjectType);
+        for (int i = 0; i < size; i++)
+        {
+            result.add(element);
+        }
+        return result;
+    }
+
+    @NotNull
+    private Type classPatternType(@NotNull MatchPattern pattern, @NotNull State s,
+                                  @NotNull Type fallback)
+    {
+        if (!pattern.valueExpressions.isEmpty())
+        {
+            Type cls = visit(pattern.valueExpressions.get(0), s);
+            if (cls instanceof ClassType)
+            {
+                return ((ClassType) cls).getInstance();
+            }
+        }
+        return fallback;
+    }
+
+    @NotNull
+    private Type iterableElementWithoutDiagnostics(@NotNull Type type)
+    {
+        if (type instanceof ListType) return ((ListType) type).eltType;
+        if (type instanceof SetType) return ((SetType) type).eltType;
+        if (type instanceof GeneratorType) return ((GeneratorType) type).elementType;
+        if (type instanceof DictType) return ((DictType) type).keyType;
+        if (type == Types.StrInstance) return Types.StrInstance;
+        if (type == Types.BytesInstance) return Types.IntInstance;
+        if (type instanceof TupleType) return ((TupleType) type).toListType().eltType;
+        return Types.UNKNOWN;
     }
 
     @NotNull
@@ -1102,23 +1257,23 @@ public class TypeInferencer implements Visitor1<Type, State>
     {
         if (node.elts.size() == 0)
         {
-            return new ListType();
+            return new SetType(Types.UNKNOWN);
         }
 
-        ListType listType = null;
+        SetType setType = null;
         for (Node elt : node.elts)
         {
-            if (listType == null)
+            if (setType == null)
             {
-                listType = new ListType(visit(elt, s));
+                setType = new SetType(visit(elt, s));
             }
             else
             {
-                listType.add(visit(elt, s));
+                setType.add(visit(elt, s));
             }
         }
 
-        return listType;
+        return setType;
     }
 
     @NotNull
@@ -1166,8 +1321,17 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(SetComp node, State s)
     {
-        visit(node.generators, s);
-        return new ListType(visit(node.elt, s));
+        State comprehension = comprehensionScope(s);
+        visit(node.generators, comprehension);
+        return new SetType(visit(node.elt, comprehension));
+    }
+
+    @NotNull
+    private State comprehensionScope(@NotNull State parent)
+    {
+        State scope = new State(parent, State.StateType.SCOPE);
+        scope.setPath(parent.extendPath("<comprehension>"));
+        return scope;
     }
 
     @NotNull
@@ -1264,10 +1428,10 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(TypeAlias node, State s)
     {
-        bind(s, node.nameNode, Types.UNKNOWN, VARIABLE);
         State aliasState = s.copy();
         visit(node.typeParams, aliasState);
-        visit(node.value, aliasState);
+        Type aliasType = resolveAnnotation(node.value, aliasState);
+        bind(s, node.nameNode, aliasType, VARIABLE);
         return Types.CONT;
     }
 
@@ -1275,15 +1439,16 @@ public class TypeInferencer implements Visitor1<Type, State>
     @Override
     public Type visit(TypeParameter node, State s)
     {
+        Type parameterType = Types.UNKNOWN;
         if (node.bound != null)
         {
-            visit(node.bound, s);
+            parameterType = resolveAnnotation(node.bound, s);
         }
-        if (node.defaultValue != null)
+        if (parameterType.isUnknownType() && node.defaultValue != null)
         {
-            visit(node.defaultValue, s);
+            parameterType = resolveAnnotation(node.defaultValue, s);
         }
-        bind(s, node.nameNode, Types.UNKNOWN, VARIABLE);
+        bind(s, node.nameNode, parameterType, VARIABLE);
         return Types.CONT;
     }
 
@@ -1360,7 +1525,7 @@ public class TypeInferencer implements Visitor1<Type, State>
             Type val = visit(item.context_expr, s);
             if (item.optional_vars != null)
             {
-                bind(s, item.optional_vars, val);
+                bind(s, item.optional_vars, contextManagerValue(val, node.isAsync, item.context_expr));
             }
         }
         return visit(node.body, s);
@@ -1374,16 +1539,59 @@ public class TypeInferencer implements Visitor1<Type, State>
     }
 
     @NotNull
+    private Type contextManagerValue(@NotNull Type contextType, boolean async, @NotNull Node node)
+    {
+        if (contextType instanceof UnionType)
+        {
+            Type result = Types.UNKNOWN;
+            for (Type member : ((UnionType) contextType).types)
+            {
+                result = UnionType.union(result, contextManagerValue(member, async, node));
+            }
+            return result;
+        }
+        String method = async ? "__aenter__" : "__enter__";
+        Type enter = contextType.table.lookupAttrType(method);
+        if (enter instanceof FunType)
+        {
+            Type result = apply((FunType) enter, contextType, Collections.emptyList(),
+                    Collections.emptyMap(), null, null, node);
+            if (async && result instanceof AwaitableType)
+            {
+                return ((AwaitableType) result).resultType;
+            }
+            return result;
+        }
+        return contextType.isUnknownType() ? Types.UNKNOWN : contextType;
+    }
+
+    private boolean enclosingFunctionIsAsync(@NotNull Node node)
+    {
+        Node current = node.parent;
+        while (current != null)
+        {
+            if (current instanceof FunctionDef)
+            {
+                return ((FunctionDef) current).isAsync;
+            }
+            current = current.parent;
+        }
+        return false;
+    }
+
+    @NotNull
     @Override
     public Type visit(Yield node, State s)
     {
+        Type yielded = node.value == null ? Types.NoneInstance : visit(node.value, s);
+        recordYield(yielded);
         if (node.value != null)
         {
-            return new ListType(visit(node.value, s));
+            return new GeneratorType(yielded, enclosingFunctionIsAsync(node));
         }
         else
         {
-            return Types.NoneInstance;
+            return new GeneratorType(Types.NoneInstance, enclosingFunctionIsAsync(node));
         }
     }
 
@@ -1393,11 +1601,22 @@ public class TypeInferencer implements Visitor1<Type, State>
     {
         if (node.value != null)
         {
-            return new ListType(visit(node.value, s));
+            Type yielded = iterElementType(visit(node.value, s), false, node.value);
+            recordYield(yielded);
+            return new GeneratorType(yielded, false);
         }
         else
         {
-            return Types.NoneInstance;
+            return new GeneratorType(Types.NoneInstance);
+        }
+    }
+
+    private void recordYield(@NotNull Type yielded)
+    {
+        if (!generatorYieldTypes.isEmpty())
+        {
+            Type previous = generatorYieldTypes.pop();
+            generatorYieldTypes.push(UnionType.union(previous, yielded));
         }
     }
 
@@ -1442,8 +1661,14 @@ public class TypeInferencer implements Visitor1<Type, State>
         {
             for (Binding b : bs)
             {
-                b.addType(v);
                 Analyzer.self.putRef(node.attr, b);
+                Type existing = b.type;
+                if (!(existing instanceof FunType)
+                        || ((FunType) existing).func == null
+                        || !((FunType) existing).func.isProperty())
+                {
+                    b.addType(v);
+                }
             }
         }
         else
@@ -1459,6 +1684,12 @@ public class TypeInferencer implements Visitor1<Type, State>
             return Types.UNKNOWN;
         }
         Set<Binding> bs = targetType.table.lookupAttr(node.attr.id);
+        if (bs == null && targetType instanceof FunType
+                && ("setter".equals(node.attr.id) || "getter".equals(node.attr.id)
+                || "deleter".equals(node.attr.id)))
+        {
+            return new FunType(Types.UNKNOWN, targetType);
+        }
         if (bs == null)
         {
             addWarningToNode(node.attr, "attribute not found in type: " + targetType);
@@ -1655,8 +1886,18 @@ public class TypeInferencer implements Visitor1<Type, State>
         {
             func.addMapping(fromType, Types.UNKNOWN);
             Analyzer.self.callStack.push(new CallStackEntry(func, fromType));
-            Type toType = visit(func.func.body, callState);
-            Analyzer.self.callStack.pop();
+            generatorYieldTypes.push(Types.UNKNOWN);
+            Type toType;
+            Type yieldedType;
+            try
+            {
+                toType = visit(func.func.body, callState);
+            }
+            finally
+            {
+                yieldedType = generatorYieldTypes.pop();
+                Analyzer.self.callStack.pop();
+            }
             if (missingReturn(toType))
             {
                 addWarningToNode(func.func.name, "Function not always return a value");
@@ -1668,7 +1909,11 @@ public class TypeInferencer implements Visitor1<Type, State>
             }
 
             toType = UnionType.remove(toType, Types.CONT);
-            if (toType.isUnknownType() && func.declaredReturnType != null
+            if (!yieldedType.isUnknownType())
+            {
+                toType = new GeneratorType(yieldedType, func.func.isAsync);
+            }
+            else if (toType.isUnknownType() && func.declaredReturnType != null
                     && !func.declaredReturnType.isUnknownType())
             {
                 toType = func.declaredReturnType;
@@ -1849,6 +2094,12 @@ public class TypeInferencer implements Visitor1<Type, State>
             Set<Binding> bindings = state.lookup(name);
             return annotationValueType(bindings == null ? Types.UNKNOWN : State.makeUnion(bindings));
         }
+        if (annotation instanceof BinOp && ((BinOp) annotation).op == Op.BitOr)
+        {
+            BinOp union = (BinOp) annotation;
+            return UnionType.union(resolveAnnotation(union.left, state),
+                    resolveAnnotation(union.right, state));
+        }
         if (annotation instanceof Subscript)
         {
             Subscript subscript = (Subscript) annotation;
@@ -1869,6 +2120,15 @@ public class TypeInferencer implements Visitor1<Type, State>
             {
                 argumentTypes.add(resolveAnnotation(argument, state));
             }
+            if ("Literal".equals(genericName))
+            {
+                Type literalType = Types.UNKNOWN;
+                for (Node argument : arguments)
+                {
+                    literalType = UnionType.union(literalType, visit(argument, state));
+                }
+                return literalType;
+            }
             if ("Optional".equals(genericName) && !argumentTypes.isEmpty())
             {
                 return UnionType.union(argumentTypes.get(0), Types.NoneInstance);
@@ -1883,6 +2143,16 @@ public class TypeInferencer implements Visitor1<Type, State>
             {
                 return new ListType(argumentTypes.get(0));
             }
+            if (("set".equals(genericName) || "Set".equals(genericName)
+                    || "AbstractSet".equals(genericName)) && !argumentTypes.isEmpty())
+            {
+                return new SetType(argumentTypes.get(0));
+            }
+            if (("frozenset".equals(genericName) || "FrozenSet".equals(genericName))
+                    && !argumentTypes.isEmpty())
+            {
+                return new SetType(argumentTypes.get(0), true);
+            }
             if (("dict".equals(genericName) || "Dict".equals(genericName)
                     || "Mapping".equals(genericName)) && argumentTypes.size() >= 2)
             {
@@ -1891,6 +2161,47 @@ public class TypeInferencer implements Visitor1<Type, State>
             if ("tuple".equals(genericName) || "Tuple".equals(genericName))
             {
                 return new TupleType(argumentTypes);
+            }
+            if (("Iterator".equals(genericName) || "Generator".equals(genericName))
+                    && !argumentTypes.isEmpty())
+            {
+                return new GeneratorType(argumentTypes.get(0));
+            }
+            if (("AsyncIterator".equals(genericName) || "AsyncIterable".equals(genericName)
+                    || "AsyncGenerator".equals(genericName)) && !argumentTypes.isEmpty())
+            {
+                return new GeneratorType(argumentTypes.get(0), true);
+            }
+            if (("Awaitable".equals(genericName) || "Coroutine".equals(genericName))
+                    && !argumentTypes.isEmpty())
+            {
+                return new AwaitableType(argumentTypes.get(argumentTypes.size() - 1));
+            }
+            if (("type".equals(genericName) || "Type".equals(genericName))
+                    && !arguments.isEmpty())
+            {
+                Type classValue = visit(arguments.get(0), state);
+                if (classValue instanceof ClassType)
+                {
+                    return classValue;
+                }
+                if (classValue instanceof InstanceType)
+                {
+                    return ((InstanceType) classValue).classType;
+                }
+            }
+            if ("Callable".equals(genericName) && !argumentTypes.isEmpty())
+            {
+                Type returnType = argumentTypes.get(argumentTypes.size() - 1);
+                return new FunType(Types.UNKNOWN, returnType);
+            }
+            if (("Annotated".equals(genericName) || "ClassVar".equals(genericName)
+                    || "Final".equals(genericName) || "Required".equals(genericName)
+                    || "NotRequired".equals(genericName) || "ReadOnly".equals(genericName)
+                    || "TypeGuard".equals(genericName) || "TypeIs".equals(genericName))
+                    && !argumentTypes.isEmpty())
+            {
+                return argumentTypes.get(0);
             }
             return annotationValueType(visit(subscript.value, state));
         }
@@ -1992,6 +2303,15 @@ public class TypeInferencer implements Visitor1<Type, State>
             if (vt instanceof ListType)
             {
                 return getListSubscript(node, vt, st, s);
+            }
+            else if (vt instanceof GeneratorType)
+            {
+                return ((GeneratorType) vt).elementType;
+            }
+            else if (vt instanceof SetType)
+            {
+                addWarningToNode(node, "set values are not subscriptable");
+                return Types.UNKNOWN;
             }
             else if (vt instanceof TupleType)
             {
@@ -2196,42 +2516,83 @@ public class TypeInferencer implements Visitor1<Type, State>
     // iterator
     public void bindIter(@NotNull State s, Node target, @NotNull Node iter, Binding.Kind kind)
     {
-        Type iterType = visit(iter, s);
+        bindIter(s, target, iter, kind, false);
+    }
 
+    public void bindIter(@NotNull State s, Node target, @NotNull Node iter,
+                         Binding.Kind kind, boolean async)
+    {
+        Type iterType = visit(iter, s);
+        bind(s, target, iterElementType(iterType, async, iter), kind);
+    }
+
+    @NotNull
+    private Type iterElementType(@NotNull Type iterType, boolean async, @NotNull Node iter)
+    {
+        if (iterType instanceof UnionType)
+        {
+            Type result = Types.UNKNOWN;
+            for (Type member : ((UnionType) iterType).types)
+            {
+                result = UnionType.union(result, iterElementType(member, async, iter));
+            }
+            return result;
+        }
         if (iterType instanceof ListType)
         {
-            bind(s, target, ((ListType) iterType).eltType, kind);
+            return ((ListType) iterType).eltType;
         }
-        else if (iterType instanceof TupleType)
+        if (iterType instanceof SetType)
         {
-            bind(s, target, ((TupleType) iterType).toListType().eltType, kind);
+            return ((SetType) iterType).eltType;
         }
-        else
+        if (iterType instanceof GeneratorType)
         {
-            Set<Binding> ents = iterType.table.lookupAttr("__iter__");
-            if (ents != null)
-            {
-                for (Binding ent : ents)
-                {
-                    if (ent == null || !(ent.type instanceof FunType))
-                    {
-                        if (!iterType.isUnknownType())
-                        {
-                            addWarningToNode(iter, "not an iterable type: " + iterType);
-                        }
-                        bind(s, target, Types.UNKNOWN, kind);
-                    }
-                    else
-                    {
-                        bind(s, target, ((FunType) ent.type).getReturnType(), kind);
-                    }
-                }
-            }
-            else
-            {
-                bind(s, target, Types.UNKNOWN, kind);
-            }
+            return ((GeneratorType) iterType).elementType;
         }
+        if (iterType instanceof TupleType)
+        {
+            return ((TupleType) iterType).toListType().eltType;
+        }
+        if (iterType instanceof DictType)
+        {
+            return ((DictType) iterType).keyType;
+        }
+        if (iterType == Types.StrInstance)
+        {
+            return Types.StrInstance;
+        }
+        if (iterType == Types.BytesInstance)
+        {
+            return Types.IntInstance;
+        }
+
+        String iteratorMethod = async ? "__aiter__" : "__iter__";
+        Type iteratorFactory = iterType.table.lookupAttrType(iteratorMethod);
+        if (iteratorFactory instanceof FunType)
+        {
+            Type iterator = apply((FunType) iteratorFactory, iterType, Collections.emptyList(),
+                    Collections.emptyMap(), null, null, iter);
+            if (iterator instanceof GeneratorType)
+            {
+                return ((GeneratorType) iterator).elementType;
+            }
+            String nextMethod = async ? "__anext__" : "__next__";
+            Type next = iterator.table.lookupAttrType(nextMethod);
+            if (next instanceof FunType)
+            {
+                Type result = apply((FunType) next, iterator, Collections.emptyList(),
+                        Collections.emptyMap(), null, null, iter);
+                return result instanceof AwaitableType ? ((AwaitableType) result).resultType : result;
+            }
+            return iterator;
+        }
+
+        if (!iterType.isUnknownType())
+        {
+            addWarningToNode(iter, "not an " + (async ? "async " : "") + "iterable type: " + iterType);
+        }
+        return Types.UNKNOWN;
     }
 
     private static void reportUnpackMismatch(@NotNull List<Node> xs, int vsize)

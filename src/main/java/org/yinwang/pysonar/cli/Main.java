@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 /** Command-line interface intended for coding agents and local automation. */
 public final class Main {
 
-    public static final String VERSION = "3.3.5";
+    public static final String VERSION = "3.4.0";
     public static final int SCHEMA_VERSION = 1;
     private static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final Set<String> COMMANDS = new LinkedHashSet<>(Arrays.asList(

@@ -15,17 +15,22 @@ public class MatchPattern extends Node {
     public List<MatchPattern> patterns;
     @NotNull
     public List<Name> captures;
+    /** Attribute names aligned with keyword patterns in a MatchClass node. */
+    @NotNull
+    public List<String> keywordAttributes;
 
     public MatchPattern(@NotNull String patternKind,
                         @NotNull List<Node> valueExpressions,
                         @NotNull List<MatchPattern> patterns,
                         @NotNull List<Name> captures,
+                        @NotNull List<String> keywordAttributes,
                         String file, int start, int end, int line, int col) {
         super(NodeType.MATCHPATTERN, file, start, end, line, col);
         this.patternKind = patternKind;
         this.valueExpressions = valueExpressions;
         this.patterns = patterns;
         this.captures = captures;
+        this.keywordAttributes = keywordAttributes;
         addChildren(valueExpressions);
         addChildren(patterns);
         addChildren(captures);
