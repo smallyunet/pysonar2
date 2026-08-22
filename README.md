@@ -140,6 +140,8 @@ flowchart LR
 | Python syntax and semantic coverage | [Python support](docs/python-support.md) |
 | Product role and non-goals | [Product positioning](docs/product-positioning.md) |
 | CLI response contract | [CLI schema](skills/pysonar-code-intelligence/references/cli-schema.md) |
+| Frozen protocol v1 | [Protocol contract](protocol/v1/README.md) |
+| Rust v4 migration | [Migration contract](docs/rust-v4-migration.md) |
 | VS Code commands and settings | [VS Code extension](editors/vscode/README.md) |
 | Static and editor demo | [Demo project](demo_project/README.md) |
 | Coding-tool experiment | [Agent benchmark](docs/agent-skill-benchmark.md) |

@@ -1,0 +1,4 @@
+{"id":"inspect-user","command":"plan","symbol":"User","intent":"inspect","maxResults":8}
+{"id":"change-models","command":"plan","symbol":["User","Team"],"intent":"change","maxResults":8}
+{"id":"refresh","command":"refresh"}
+{"id":"quit","command":"quit"}
