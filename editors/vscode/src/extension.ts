@@ -1,6 +1,5 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { createHash } from "node:crypto";
 import * as vscode from "vscode";
 import {
   Executable,
@@ -63,9 +62,9 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
     return;
   }
 
-  const jar = resolveServerJar(context);
-  if (!jar) {
-    const message = "PySonar2 language server JAR was not found. Run npm run build in editors/vscode.";
+  const server = resolveServer(context);
+  if (!server) {
+    const message = "PySonar2 native language server was not found. Run npm run build in editors/vscode.";
     output.appendLine(message);
     void vscode.window.showErrorMessage(message);
     folderStatuses.set("workspace", { state: "error", message });
@@ -74,7 +73,7 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
   }
 
   for (const folder of folders) {
-    const client = createClient(context, folder, jar);
+    const client = createClient(folder, server);
     clients.push(client);
     folderStatuses.set(folder.uri.toString(), {
       state: "starting",
@@ -97,6 +96,10 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
 
     try {
       await client.start();
+      folderStatuses.set(folder.uri.toString(), {
+        state: "ready",
+        message: `Indexed ${folder.name} with the native Rust server`,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       folderStatuses.set(folder.uri.toString(), { state: "error", message });
@@ -106,47 +109,13 @@ async function startClients(context: vscode.ExtensionContext): Promise<void> {
   updateStatusBar();
 }
 
-function createClient(
-  context: vscode.ExtensionContext,
-  folder: vscode.WorkspaceFolder,
-  jar: string,
-): LanguageClient {
+function createClient(folder: vscode.WorkspaceFolder, server: string): LanguageClient {
   const configuration = vscode.workspace.getConfiguration("pysonar2", folder.uri);
-  const javaCommand = configuration.get<string>("java.command", "java");
-  const maxHeapMb = Math.max(0, Math.floor(configuration.get<number>("java.maxHeapMb", 0)));
-  const pythonPath = configuration.get<string>("python.path", "").trim();
-  const exclude = configuration.get<string[]>("analysis.exclude", []);
-  const diagnosticsMode = configuration.get<string>("diagnostics.mode", "conservative");
-  const diagnosticsMaxPerFile = Math.max(
-    0,
-    Math.floor(configuration.get<number>("diagnostics.maxPerFile", 100)),
-  );
-  const environment = { ...process.env };
-  if (pythonPath) {
-    environment.PYSONAR_PYTHON = pythonPath;
-  }
-  const cacheNamespace = createHash("sha256")
-    .update(`${folder.uri.toString()}\n${pythonPath || "python3"}\nast-v1`)
-    .digest("hex")
-    .slice(0, 24);
-  const cacheDirectory = path.join(
-    context.globalStorageUri.fsPath,
-    "ast-cache",
-    "ast-v1",
-    cacheNamespace,
-  );
-
   const serverOptions: Executable = {
-    command: javaCommand,
-    args: [
-      ...(maxHeapMb > 0 ? [`-Xmx${maxHeapMb}m`] : []),
-      "-cp",
-      jar,
-      "org.yinwang.pysonar.lsp.Main",
-    ],
+    command: server,
     options: {
       cwd: folder.uri.fsPath,
-      env: environment,
+      env: { ...process.env },
     },
   };
 
@@ -165,12 +134,6 @@ function createClient(
     synchronize: {
       fileEvents: watcher,
     },
-    initializationOptions: {
-      exclude,
-      diagnosticsMode,
-      diagnosticsMaxPerFile,
-      cacheDirectory,
-    },
   };
 
   return new LanguageClient(
@@ -181,15 +144,15 @@ function createClient(
   );
 }
 
-function resolveServerJar(context: vscode.ExtensionContext): string | undefined {
+function resolveServer(context: vscode.ExtensionContext): string | undefined {
   const configured = vscode.workspace
     .getConfiguration("pysonar2")
     .get<string>("server.path", "")
     .trim();
   const candidates = [
     configured,
-    context.asAbsolutePath(path.join("server", "pysonar-lsp.jar")),
-    path.resolve(context.extensionPath, "..", "..", "target", "pysonar-3.4.0.jar"),
+    context.asAbsolutePath(path.join("server", process.platform === "win32" ? "pysonar-lsp.exe" : "pysonar-lsp")),
+    path.resolve(context.extensionPath, "..", "..", "target", "release", process.platform === "win32" ? "pysonar-lsp.exe" : "pysonar-lsp"),
   ].filter(Boolean);
   return candidates.find((candidate) => fs.existsSync(candidate));
 }

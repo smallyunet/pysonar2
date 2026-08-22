@@ -4,34 +4,23 @@ set -eu
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 project_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
 corpus=${1:-"$project_root/demo_project"}
-iterations=${2:-5}
-change_file=${3:-}
+iterations=${2:-10}
+symbol=${3:-User}
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
 output_dir="$project_root/target/benchmarks"
-output="$output_dir/analyzer-$timestamp.json"
+binary="$project_root/target/release/pysonar"
 
-mkdir -p "$output_dir"
-
-if [ ! -f "$project_root/target/pysonar-3.4.0.jar" ]; then
-  echo "Build target/pysonar-3.4.0.jar with mvn package first." >&2
+if ! command -v hyperfine >/dev/null 2>&1; then
+  echo "hyperfine is required: https://github.com/sharkdp/hyperfine" >&2
+  exit 127
+fi
+if [ ! -x "$binary" ]; then
+  echo "Build the release CLI with 'cargo build --release -p pysonar-cli'." >&2
   exit 2
 fi
 
-if [ -n "$change_file" ]; then
-  java -cp "$project_root/target/pysonar-3.4.0.jar" \
-    org.yinwang.pysonar.bench.AnalyzerBenchmark \
-    --root "$corpus" \
-    --warmups 1 \
-    --iterations "$iterations" \
-    --cache-dir "$output_dir/cache" \
-    --change-file "$change_file" > "$output"
-else
-  java -cp "$project_root/target/pysonar-3.4.0.jar" \
-    org.yinwang.pysonar.bench.AnalyzerBenchmark \
-    --root "$corpus" \
-    --warmups 1 \
-    --iterations "$iterations" \
-    --cache-dir "$output_dir/cache" > "$output"
-fi
-
+mkdir -p "$output_dir"
+output="$output_dir/analyzer-$timestamp.json"
+hyperfine --warmup 2 --runs "$iterations" --export-json "$output" \
+  "$binary plan --root '$corpus' --symbol '$symbol' --intent inspect --format compact-json"
 echo "$output"

@@ -1,15 +1,16 @@
 @echo off
 setlocal
-set "SCRIPT_DIR=%~dp0"
-if defined PYSONAR_JAR (
-  set "JAR_PATH=%PYSONAR_JAR%"
-) else if exist "%SCRIPT_DIR%..\lib\pysonar.jar" (
-  set "JAR_PATH=%SCRIPT_DIR%..\lib\pysonar.jar"
-) else (
-  set "JAR_PATH=%SCRIPT_DIR%..\target\pysonar-3.4.0.jar"
+if defined PYSONAR_BIN (
+  "%PYSONAR_BIN%" %*
+  exit /b %ERRORLEVEL%
 )
-if not exist "%JAR_PATH%" (
-  echo PySonar2 JAR not found. Build with "mvn package" or set PYSONAR_JAR. 1>&2
-  exit /b 127
+if exist "%~dp0..\lib\pysonar.exe" (
+  "%~dp0..\lib\pysonar.exe" %*
+  exit /b %ERRORLEVEL%
 )
-java -jar "%JAR_PATH%" %*
+if exist "%~dp0..\target\release\pysonar.exe" (
+  "%~dp0..\target\release\pysonar.exe" %*
+  exit /b %ERRORLEVEL%
+)
+echo PySonar2 native binary not found. Build with cargo build --release or set PYSONAR_BIN. 1>&2
+exit /b 127

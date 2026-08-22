@@ -1,9 +1,9 @@
 {
   "name": "pysonar2-code-intelligence",
   "displayName": "PySonar2 Code Intelligence",
-  "description": "Local whole-project Python semantics for change inspection, definitions, references, inferred types, and diagnostics.",
+  "description": "Native Rust whole-project Python semantics: definitions, references, types, diagnostics, and change inspection.",
   "icon": "images/icon.png",
-  "version": "0.3.0",
+  "version": "4.0.0",
   "publisher": "smallyu",
   "license": "Apache-2.0",
   "repository": {
@@ -49,64 +49,11 @@
     "configuration": {
       "title": "PySonar2",
       "properties": {
-        "pysonar2.java.command": {
-          "type": "string",
-          "default": "java",
-          "scope": "machine-overridable",
-          "description": "Java 11+ executable used to start the bundled PySonar2 language server."
-        },
-        "pysonar2.java.maxHeapMb": {
-          "type": "number",
-          "default": 0,
-          "minimum": 0,
-          "scope": "machine-overridable",
-          "description": "Optional maximum Java heap in MB. Zero keeps the JVM default; increase this only after narrowing the indexed workspace."
-        },
-        "pysonar2.python.path": {
-          "type": "string",
-          "default": "",
-          "scope": "machine-overridable",
-          "description": "Optional Python 3.10+ executable. When empty, PySonar2 uses python3 from PATH."
-        },
         "pysonar2.server.path": {
           "type": "string",
           "default": "",
           "scope": "machine-overridable",
-          "description": "Optional path to a development PySonar2 JAR. The bundled server is used when empty."
-        },
-        "pysonar2.analysis.exclude": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "**/.venv/**",
-            "**/venv/**",
-            "**/node_modules/**",
-            "**/build/**",
-            "**/dist/**",
-            "**/target/**"
-          ],
-          "scope": "resource",
-          "description": "Workspace-relative glob patterns excluded from PySonar2 analysis."
-        },
-        "pysonar2.diagnostics.mode": {
-          "type": "string",
-          "enum": [
-            "conservative",
-            "all",
-            "off"
-          ],
-          "default": "conservative",
-          "scope": "resource",
-          "description": "Controls semantic diagnostics. Conservative shows only high-confidence findings, all exposes analyzer warnings, and off disables diagnostics while keeping navigation and hovers."
-        },
-        "pysonar2.diagnostics.maxPerFile": {
-          "type": "number",
-          "default": 100,
-          "minimum": 0,
-          "scope": "resource",
-          "description": "Maximum PySonar2 diagnostics published per file. Zero disables diagnostics."
+          "description": "Optional path to a development PySonar2 native language-server binary. The bundled server is used when empty."
         }
       }
     }

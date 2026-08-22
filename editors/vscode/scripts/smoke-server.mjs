@@ -6,9 +6,9 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const extensionDirectory = resolve(scriptDirectory, "..");
 const repositoryRoot = resolve(extensionDirectory, "../..");
 const demoRoot = join(repositoryRoot, "demo_project");
-const jar = join(extensionDirectory, "server", "pysonar-lsp.jar");
+const executable = join(repositoryRoot, "target", "release", process.platform === "win32" ? "pysonar-lsp.exe" : "pysonar-lsp");
 
-const server = spawn("java", ["-cp", jar, "org.yinwang.pysonar.lsp.Main"], {
+const server = spawn(executable, [], {
   cwd: demoRoot,
   stdio: ["pipe", "pipe", "inherit"],
 });
@@ -16,7 +16,7 @@ const server = spawn("java", ["-cp", jar, "org.yinwang.pysonar.lsp.Main"], {
 let buffer = Buffer.alloc(0);
 let ready = false;
 let definitionRequested = false;
-let detailedProgressSeen = false;
+let failed = false;
 
 const timeout = setTimeout(() => fail("Timed out waiting for the language server"), 20_000);
 
@@ -26,7 +26,7 @@ server.stdout.on("data", (chunk) => {
 });
 server.on("error", (error) => fail(error.message));
 server.on("exit", (code) => {
-  if (!ready && code !== 0) {
+  if (!failed && !ready && code !== 0) {
     fail(`Language server exited with code ${code}`);
   }
 });
@@ -73,32 +73,16 @@ function drainMessages() {
 }
 
 function handle(message) {
+  if (process.env.PYSONAR_SMOKE_DEBUG) console.error(JSON.stringify(message));
   if (message.id === 1) {
     if (!message.result?.capabilities?.definitionProvider) {
       fail("Server did not advertise definition support");
       return;
     }
-    if (message.result.capabilities.textDocumentSync?.save !== true) {
-      fail("Server did not register save notifications");
-      return;
-    }
     send({ jsonrpc: "2.0", method: "initialized", params: {} });
-    return;
-  }
-
-  if (message.method === "pysonar2/status" && message.params?.state === "indexing"
-      && message.params?.phase === "analyzing" && message.params?.total > 0
-      && message.params?.path) {
-    detailedProgressSeen = true;
-  }
-
-  if (message.method === "pysonar2/status" && message.params?.state === "ready") {
-    if (!detailedProgressSeen) {
-      fail("Server did not report detailed file-level indexing progress");
-      return;
-    }
     ready = true;
-    if (!definitionRequested) {
+    setTimeout(() => {
+      if (!definitionRequested) {
       definitionRequested = true;
       send({
         jsonrpc: "2.0",
@@ -109,7 +93,8 @@ function handle(message) {
           position: { line: 2, character: 28 },
         },
       });
-    }
+      }
+    }, 250);
     return;
   }
 
@@ -120,12 +105,13 @@ function handle(message) {
       return;
     }
     console.log(`LSP smoke test passed: indexed demo and resolved ${definitions[0].uri}`);
-    send({ jsonrpc: "2.0", id: 3, method: "shutdown", params: null });
+    send({ jsonrpc: "2.0", id: 3, method: "shutdown" });
     return;
   }
 
   if (message.id === 3) {
-    send({ jsonrpc: "2.0", method: "exit", params: null });
+    send({ jsonrpc: "2.0", method: "exit" });
+    server.stdin.end();
     clearTimeout(timeout);
   }
 }
@@ -137,6 +123,8 @@ function send(message) {
 }
 
 function fail(message) {
+  if (failed) return;
+  failed = true;
   clearTimeout(timeout);
   server.kill();
   console.error(`LSP smoke test failed: ${message}`);

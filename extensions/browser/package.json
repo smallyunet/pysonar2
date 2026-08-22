@@ -1,0 +1,11 @@
+{
+  "name": "pysonar2-browser-extension",
+  "private": true,
+  "version": "4.0.0",
+  "scripts": {
+    "build:wasm": "node scripts/build-wasm.mjs",
+    "build": "npm run build:wasm",
+    "check": "node scripts/check.mjs",
+    "package": "node scripts/package.mjs"
+  }
+}

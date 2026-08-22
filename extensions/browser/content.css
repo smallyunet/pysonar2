@@ -1,0 +1,30 @@
+.pysonar2-analyze-button {
+  position: absolute !important;
+  z-index: 2147483646 !important;
+  top: 8px !important;
+  right: 8px !important;
+  min-height: 32px !important;
+  padding: 5px 10px !important;
+  border: 1px solid rgba(148, 163, 184, .45) !important;
+  border-radius: 6px !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, .28) !important;
+  font: 600 12px/20px ui-sans-serif, system-ui, sans-serif !important;
+  cursor: pointer !important;
+  opacity: 0 !important;
+  transition: opacity 120ms ease, border-color 120ms ease, background 120ms ease !important;
+}
+
+.pysonar2-code-host:hover > .pysonar2-analyze-button,
+.pysonar2-analyze-button:focus-visible {
+  opacity: 1 !important;
+}
+
+.pysonar2-analyze-button:hover { background: #1e293b !important; border-color: #22c55e !important; }
+.pysonar2-analyze-button:active { background: #14532d !important; }
+.pysonar2-analyze-button:focus-visible { outline: 3px solid #4ade80 !important; outline-offset: 2px !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pysonar2-analyze-button { transition: none !important; }
+}

@@ -83,3 +83,7 @@
 - Rebuild saved workspace snapshots with configurable exclude patterns.
 - Add runtime discovery settings, status feedback, reindex and output commands, demo launch configuration,
   and VSIX packaging.
+# 4.0.0
+
+- Replace the Java/Python runtime with a bundled native Rust language server.
+- Keep definition, references, hover, symbols, and diagnostics fully local.

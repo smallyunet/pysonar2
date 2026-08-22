@@ -14,7 +14,7 @@ Exit codes:
 - `1`: unexpected analysis or I/O failure.
 - `2`: invalid arguments or unsupported options.
 - `3`: installation safety check refused an unmanaged overwrite or removal.
-- `127`: launcher could not locate the PySonar2 JAR.
+- `127`: launcher could not locate the native PySonar2 executable.
 
 `context` returns the query, symbol text, inferred hover text, definitions, references, truncation status, and limitations. It also reports:
 

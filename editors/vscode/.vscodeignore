@@ -7,3 +7,4 @@
 node_modules/**
 demo.code-workspace
 server/.gitkeep
+server/*.jar

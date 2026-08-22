@@ -5,6 +5,10 @@ __pycache__/
 /editors/vscode/node_modules/
 /editors/vscode/out/
 /editors/vscode/server/*.jar
+/editors/vscode/server/pysonar-lsp*
+/editors/vscode/server/pysonar-lsp*
 /editors/vscode/*.vsix
 /editors/vscode/LICENSE
+/extensions/browser/pkg/
+/extensions/browser/dist/
 .env

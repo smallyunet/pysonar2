@@ -1,0 +1,20 @@
+[package]
+name = "pysonar-lsp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "pysonar-lsp"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+pysonar-core = { path = "../pysonar-core" }
+pysonar-protocol = { path = "../pysonar-protocol" }
+tokio = { workspace = true, features = ["fs"] }
+tower-lsp.workspace = true
+url.workspace = true

@@ -2,18 +2,16 @@
 set -eu
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-
-if [ -n "${PYSONAR_JAR:-}" ]; then
-  jar_path=$PYSONAR_JAR
-elif [ -f "$script_dir/../lib/pysonar.jar" ]; then
-  jar_path=$script_dir/../lib/pysonar.jar
+if [ -n "${PYSONAR_BIN:-}" ]; then
+  engine=$PYSONAR_BIN
+elif [ -x "$script_dir/../lib/pysonar" ]; then
+  engine=$script_dir/../lib/pysonar
+elif [ -x "$script_dir/../target/release/pysonar" ]; then
+  engine=$script_dir/../target/release/pysonar
+elif [ -x "$script_dir/../target/debug/pysonar" ]; then
+  engine=$script_dir/../target/debug/pysonar
 else
-  jar_path=$script_dir/../target/pysonar-3.4.0.jar
-fi
-
-if [ ! -f "$jar_path" ]; then
-  echo "PySonar2 JAR not found. Build with 'mvn package' or set PYSONAR_JAR." >&2
+  echo "PySonar2 native binary not found. Build with 'cargo build --release' or set PYSONAR_BIN." >&2
   exit 127
 fi
-
-exec java -jar "$jar_path" "$@"
+exec "$engine" "$@"

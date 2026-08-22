@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PySonar2</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <a class="skip-link" href="#results">Skip to results</a>
+  <header>
+    <div>
+      <p class="eyebrow">PYSONAR2 / WASM</p>
+      <h1>Python intelligence</h1>
+    </div>
+    <span class="privacy"><span aria-hidden="true"></span>Local only</span>
+  </header>
+  <main id="results" tabindex="-1">
+    <section class="source-card" aria-labelledby="source-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">CAPTURED SOURCE</p>
+          <h2 id="source-heading">No Python selected</h2>
+        </div>
+        <span id="file-count" class="metric">0 files</span>
+      </div>
+      <p id="source-meta" class="muted">Hover a Python code block and choose “Analyze locally”.</p>
+    </section>
+
+    <section id="status-card" class="status-card" aria-live="polite" aria-atomic="true">
+      <div id="status-dot" class="status-dot" aria-hidden="true"></div>
+      <div>
+        <strong id="status-title">Ready</strong>
+        <p id="status-message">The analyzer runs entirely inside this extension.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="symbols-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">SEMANTIC INDEX</p>
+          <h2 id="symbols-heading">Symbols</h2>
+        </div>
+        <span id="coverage" class="metric">—</span>
+      </div>
+      <div id="symbols" class="results-list empty">No analysis yet.</div>
+    </section>
+
+    <section aria-labelledby="diagnostics-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">CHECKS</p>
+          <h2 id="diagnostics-heading">Diagnostics</h2>
+        </div>
+        <span id="diagnostic-count" class="metric">0</span>
+      </div>
+      <div id="diagnostics" class="results-list empty">No diagnostics.</div>
+    </section>
+  </main>
+  <footer><span id="runtime">Rust + WebAssembly</span><span>No network requests</span></footer>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

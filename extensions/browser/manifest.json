@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "PySonar2 Local Python Intelligence",
+  "version": "4.0.0",
+  "description": "Analyze Python code found on web pages locally with PySonar2 WebAssembly.",
+  "permissions": ["sidePanel", "storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "service-worker.js", "type": "module" },
+  "action": { "default_title": "Open PySonar2" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "css": ["content.css"],
+    "run_at": "document_idle"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["pkg/*"],
+    "matches": ["<all_urls>"]
+  }],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}
