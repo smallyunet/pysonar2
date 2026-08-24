@@ -20,6 +20,7 @@ repository = "https://github.com/smallyunet/pysonar2"
 anyhow = "1.0.98"
 clap = { version = "4.5.40", features = ["derive"] }
 console_error_panic_hook = "0.1.7"
+encoding_rs = "0.8.35"
 ignore = "0.4.23"
 indexmap = { version = "2.9.0", features = ["serde"] }
 lsp-types = "0.97.0"

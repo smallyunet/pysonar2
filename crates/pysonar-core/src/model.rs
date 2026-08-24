@@ -93,6 +93,7 @@ pub(crate) struct Symbol {
     pub qualified_name: String,
     pub kind: SymbolKind,
     pub definition: Span,
+    pub additional_definitions: Vec<Span>,
     pub inferred_type: Option<String>,
     pub alias_target: Option<String>,
     pub references: Vec<Span>,
@@ -147,6 +148,7 @@ pub(crate) struct Occurrence {
     pub start: u32,
     pub end: u32,
     pub symbol: Option<SymbolId>,
+    pub inferred_type: Option<String>,
 }
 
 impl Occurrence {
@@ -180,4 +182,7 @@ pub(crate) struct AnalyzerState<'a> {
     pub diagnostics: Vec<Diagnostic>,
     pub framework_semantics: BTreeSet<String>,
     pub unsupported_symbols: BTreeSet<String>,
+    pub star_imports: Vec<(ScopeId, String)>,
+    pub class_bases: HashMap<String, Vec<String>>,
+    pub simple_class_members: HashMap<(String, String), Option<SymbolId>>,
 }

@@ -24,6 +24,7 @@ unknown fields.
 | Command | Required response fields beyond the envelope |
 | --- | --- |
 | `doctor` | `status`, `capabilities`, `java`, `python` |
+| `analyze` | `root`, `fileCount`, `parsedFiles`, `failedFiles`, `symbolCount`, `referenceCount`, `coverageStatus`, `analysisMillis` |
 | `plan` | `queries` |
 | `context` | `query`, `symbol`, `inferredType`, `definitions`, `references`, `truncated`, `coverageStatus`, `applicable`, `confidence`, `unsupportedSemantics`, `coverage`, `limitations` |
 | `impact` | all `context` fields plus `impactKind: "reference-based"`, `affectedFiles` |

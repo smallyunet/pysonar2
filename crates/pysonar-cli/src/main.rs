@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 const CAPABILITIES: &[&str] = &[
+    "workspace-summary",
     "symbol-plan",
     "persistent-session",
     "context",
@@ -36,6 +37,7 @@ enum Command {
         #[arg(long, default_value = "json")]
         format: String,
     },
+    Analyze(RootArgs),
     Plan(PlanArgs),
     Session(RootArgs),
     Context(QueryArgs),
@@ -163,6 +165,7 @@ fn run(cli: Cli) -> Result<()> {
             insert(&mut result, "capabilities", CAPABILITIES);
             write_json(&result)?;
         }
+        Some(Command::Analyze(args)) => analyze(args)?,
         Some(Command::Plan(args)) => plan(args)?,
         Some(Command::Session(args)) => session(args)?,
         Some(Command::Context(args)) => query(args, false)?,
@@ -173,6 +176,27 @@ fn run(cli: Cli) -> Result<()> {
         None => print_help(),
     }
     Ok(())
+}
+
+fn analyze(args: RootArgs) -> Result<()> {
+    require_format(&args.format, &["json"])?;
+    let root = canonical_root(&args.root)?;
+    let started = Instant::now();
+    let mut workspace = Workspace::from_root(&root)?;
+    let summary = workspace.analyze();
+    let mut result = envelope("analyze");
+    for (key, value) in serde_json::to_value(summary)?
+        .as_object()
+        .expect("analysis summary serializes to object")
+    {
+        result.insert(key.clone(), value.clone());
+    }
+    insert(
+        &mut result,
+        "analysisMillis",
+        started.elapsed().as_millis() as u64,
+    );
+    write_json(&result)
 }
 
 fn plan(args: PlanArgs) -> Result<()> {
@@ -710,6 +734,7 @@ fn is_command(value: &str) -> bool {
         value,
         "version"
             | "doctor"
+            | "analyze"
             | "plan"
             | "session"
             | "context"
@@ -725,7 +750,7 @@ fn is_command(value: &str) -> bool {
 
 fn print_help() {
     println!(
-        "PySonar2 semantic engine CLI {CLI_VERSION}\nUsage:\n  pysonar version | --version | -V\n  pysonar doctor --format json\n  pysonar plan --root DIR --symbol NAME [--intent inspect|change]\n  pysonar session --root DIR --format json\n  pysonar context --root DIR --file FILE --line N [--character N]\n  pysonar impact --root DIR --file FILE --line N [--character N]\n  pysonar check --root DIR [--changed FILE]\n  pysonar skill <install|update|uninstall|doctor>\n  pysonar demo SOURCE OUTPUT"
+        "PySonar2 semantic engine CLI {CLI_VERSION}\nUsage:\n  pysonar version | --version | -V\n  pysonar doctor --format json\n  pysonar analyze --root DIR --format json\n  pysonar plan --root DIR --symbol NAME [--intent inspect|change]\n  pysonar session --root DIR --format json\n  pysonar context --root DIR --file FILE --line N [--character N]\n  pysonar impact --root DIR --file FILE --line N [--character N]\n  pysonar check --root DIR [--changed FILE]\n  pysonar skill <install|update|uninstall|doctor>\n  pysonar demo SOURCE OUTPUT"
     );
 }
 

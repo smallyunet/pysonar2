@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "suites": [
+    {
+      "id": "cpython-regression-corpus",
+      "authority": "Python core",
+      "url": "https://github.com/python/cpython.git",
+      "commit": "823f0323ee6ec1402088b73bce1a38473cac36dc",
+      "version": "v3.14.7",
+      "root": "Lib/test",
+      "sourceExtension": ".py",
+      "assessment": "parse-coverage",
+      "claimBoundary": "Exercises official CPython regression sources for parser coverage and robustness; runtime test success is not evaluated."
+    },
+    {
+      "id": "python-typing-conformance",
+      "authority": "Python Typing Council",
+      "url": "https://github.com/python/typing.git",
+      "commit": "44f42629df028aebb783917a393172e4234ad2e7",
+      "root": "conformance/tests",
+      "sourceExtension": ".py",
+      "assessment": "parse-coverage",
+      "claimBoundary": "PySonar2 does not implement strict type-checker diagnostics, so official Pass/Partial conformance is not scored."
+    },
+    {
+      "id": "typeshed",
+      "authority": "Python typeshed maintainers",
+      "url": "https://github.com/python/typeshed.git",
+      "commit": "008f9eba2b261540802f9fe0012cd3e267138ee2",
+      "root": ".",
+      "sourceExtension": ".pyi",
+      "assessment": "stub-parse-coverage",
+      "claimBoundary": "Native .pyi discovery and parser acceptance are measured in an isolated stdlib and third-party stub mirror; this does not establish typing conformance."
+    },
+    {
+      "id": "typeevalpy-micro",
+      "authority": "Peer-reviewed TypeEvalPy benchmark",
+      "url": "https://github.com/secure-software-engineering/TypeEvalPy.git",
+      "commit": "3719de115b54eb8da02a0b7ff7114b10d933376d",
+      "root": "micro-benchmark",
+      "sourceExtension": ".py",
+      "assessment": "type-inference-gold",
+      "claimBoundary": "Exact normalized type matches are scored against the hand-authored micro-benchmark ground truth."
+    },
+    {
+      "id": "typeevalpy-autogen",
+      "authority": "Peer-reviewed TypeEvalPy benchmark",
+      "url": "https://github.com/secure-software-engineering/TypeEvalPy.git",
+      "commit": "3719de115b54eb8da02a0b7ff7114b10d933376d",
+      "root": "autogen_typeevalpy_benchmark",
+      "sourceExtension": ".py",
+      "assessment": "parse-coverage",
+      "claimBoundary": "The generated corpus is used for parser scale and robustness only; generated volume is not treated as independent semantic proof."
+    }
+  ]
+}

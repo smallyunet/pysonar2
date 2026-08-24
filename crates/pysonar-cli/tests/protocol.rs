@@ -17,8 +17,31 @@ fn doctor_reports_the_frozen_envelope_and_native_runtime() {
     assert_eq!(value["schemaVersion"], 1);
     assert_eq!(value["cliVersion"], "4.0.0");
     assert_eq!(value["runtime"], "native-rust");
+    assert!(
+        value["capabilities"]
+            .as_array()
+            .is_some_and(|values| values.iter().any(|value| value == "workspace-summary"))
+    );
     assert_eq!(value["python"]["required"], false);
     assert_eq!(value["java"]["required"], false);
+}
+
+#[test]
+fn analyze_reports_auditable_workspace_coverage() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../demo_project");
+    let output = Command::new(binary())
+        .args(["analyze", "--root"])
+        .arg(root)
+        .args(["--format", "json"])
+        .output()
+        .expect("run analyze");
+    assert!(output.status.success());
+    let value: Value = serde_json::from_slice(&output.stdout).expect("analyze JSON");
+    assert_eq!(value["command"], "analyze");
+    assert!(value["fileCount"].as_u64().is_some_and(|count| count > 0));
+    assert_eq!(value["fileCount"], value["parsedFiles"]);
+    assert_eq!(value["coverageStatus"], "complete");
+    assert!(value["failedFiles"].as_array().is_some_and(Vec::is_empty));
 }
 
 #[test]

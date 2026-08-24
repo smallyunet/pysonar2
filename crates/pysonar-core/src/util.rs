@@ -8,10 +8,14 @@ pub(crate) fn normalize_path(path: &str) -> String {
 
 pub(crate) fn module_name(path: &str) -> String {
     let mut value = normalize_path(path);
-    if value.ends_with("/__init__.py") {
+    if value.ends_with("/__init__.pyi") {
+        value.truncate(value.len() - "/__init__.pyi".len());
+    } else if value.ends_with("/__init__.py") {
         value.truncate(value.len() - "/__init__.py".len());
-    } else if value == "__init__.py" {
+    } else if value == "__init__.py" || value == "__init__.pyi" {
         value.clear();
+    } else if value.ends_with(".pyi") {
+        value.truncate(value.len() - 4);
     } else if value.ends_with(".py") {
         value.truncate(value.len() - 3);
     }

@@ -26,6 +26,7 @@ The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=smal
 
 ```sh
 pysonar plan --root . --symbol Handler --intent change --format compact-json
+pysonar analyze --root . --format json
 pysonar context --root . --file app.py --line 42 --character 8 --format json
 pysonar impact --root . --file app.py --line 42 --character 8 --format json
 pysonar check --root . --changed app.py --format json
@@ -72,6 +73,8 @@ Rust 1.88 is pinned in `rust-toolchain.toml`. The parser is pinned to Ruff 0.11.
 - [Python support](docs/python-support.md)
 - [Product role and non-goals](docs/product-positioning.md)
 - [Agent Skill](skills/pysonar-code-intelligence/SKILL.md)
+- [Python conformance evidence](benchmarks/conformance/README.md)
+- [Current conformance results](docs/conformance-results.md)
 - [VS Code extension](editors/vscode/README.md)
 - [Browser extension](extensions/browser/README.md)
 
