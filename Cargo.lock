@@ -837,7 +837,7 @@ dependencies = [
 
 [[package]]
 name = "pysonar-cli"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -852,7 +852,7 @@ dependencies = [
 
 [[package]]
 name = "pysonar-core"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "encoding_rs",
  "ignore",
@@ -871,7 +871,7 @@ dependencies = [
 
 [[package]]
 name = "pysonar-lsp"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "anyhow",
  "pysonar-core",
@@ -883,7 +883,7 @@ dependencies = [
 
 [[package]]
 name = "pysonar-protocol"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -891,7 +891,7 @@ dependencies = [
 
 [[package]]
 name = "pysonar-wasm"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "console_error_panic_hook",
  "pysonar-core",

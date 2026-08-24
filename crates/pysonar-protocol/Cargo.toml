@@ -6,6 +6,8 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
+description = "Stable JSON protocol models for PySonar2 integrations"
 
 [dependencies]
 serde.workspace = true

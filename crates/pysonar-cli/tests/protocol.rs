@@ -15,12 +15,17 @@ fn doctor_reports_the_frozen_envelope_and_native_runtime() {
     assert!(output.status.success());
     let value: Value = serde_json::from_slice(&output.stdout).expect("doctor JSON");
     assert_eq!(value["schemaVersion"], 1);
-    assert_eq!(value["cliVersion"], "4.0.0");
+    assert_eq!(value["cliVersion"], env!("CARGO_PKG_VERSION"));
     assert_eq!(value["runtime"], "native-rust");
     assert!(
         value["capabilities"]
             .as_array()
             .is_some_and(|values| values.iter().any(|value| value == "workspace-summary"))
+    );
+    assert!(
+        value["capabilities"]
+            .as_array()
+            .is_some_and(|values| values.iter().all(|value| value != "skill-install"))
     );
     assert_eq!(value["python"]["required"], false);
     assert_eq!(value["java"]["required"], false);

@@ -1,6 +1,8 @@
-# PySonar2 Code Intelligence for VS Code
+# PySonar2 Type Inference for VS Code
 
-PySonar2 4 brings native Rust whole-project Python semantics to VS Code. The extension bundles `pysonar-lsp`; Java and Python are not runtime dependencies, and source code never leaves the workspace.
+This reference integration exposes PySonar2's whole-project type inference and semantic index in VS
+Code. It bundles `pysonar-lsp`; Java and Python are not runtime dependencies, and source code never
+leaves the workspace.
 
 Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=smallyu.pysonar2-code-intelligence) or run:
 
@@ -23,4 +25,6 @@ Commands:
 - **PySonar2: Reindex Workspace** restarts the server and rebuilds the index.
 - **PySonar2: Show Output** opens runtime and failure details.
 
-PySonar2 complements Python formatters, debuggers, strict type checkers, and environment managers; it does not replace them.
+Inference is experimental and the index covers statically resolved Python relationships. PySonar2
+complements Python formatters, debuggers, standards-focused type checkers, and environment managers; it
+does not replace them.

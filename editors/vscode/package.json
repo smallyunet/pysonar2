@@ -1,9 +1,9 @@
 {
   "name": "pysonar2-code-intelligence",
-  "displayName": "PySonar2 Code Intelligence",
-  "description": "Native Rust whole-project Python semantics: definitions, references, types, diagnostics, and change inspection.",
+  "displayName": "PySonar2 Type Inference",
+  "description": "Whole-project Python type inference and semantic indexing powered by native Rust.",
   "icon": "images/icon.png",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "publisher": "smallyu",
   "license": "Apache-2.0",
   "repository": {
@@ -21,11 +21,11 @@
     "python",
     "static analysis",
     "type inference",
-    "change impact",
-    "refactoring",
-    "legacy python",
+    "semantic index",
+    "code indexing",
     "language server",
-    "code intelligence"
+    "definitions",
+    "references"
   ],
   "extensionKind": [
     "workspace"

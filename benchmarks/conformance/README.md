@@ -30,6 +30,10 @@ Repositories are cloned at exact commits under `/private/tmp/pysonar-conformance
 Use `--cache` to select another disposable cache and repeat `--suite` for a focused run. The full JSON
 retains per-query TypeEvalPy and preserved-reference records so aggregate claims can be audited.
 
+The summary JSON keeps aggregate evidence small enough to review. Per-query TypeEvalPy and preserved
+reference records are written beside it under `results/YYYY-MM-DD/*.jsonl` and linked through each
+summary's `recordsFile` field.
+
 The historical change-safety benchmark remains separate because its gold set measures real edit
 surfaces rather than language conformance. Run its current Rust adapter with:
 

@@ -13,8 +13,8 @@ incompatible payload while emitting `schemaVersion: 1`.
 - Paths inside the analyzed root use `/`-separated root-relative names.
 - Source positions are one-based lines and one-based characters.
 - Exit code `0` means the command completed, including an empty result; `1` is an unexpected analysis
-  or I/O failure; `2` is invalid input; `3` is a managed-install safety refusal; `127` means the
-  launcher could not find its engine.
+  or I/O failure; `2` is invalid input; `3` is reserved for compatibility with older managed clients;
+  `127` means the launcher could not find its engine.
 
 Every response requires `schemaVersion`, `cliVersion`, and `command`. Version 1 consumers must ignore
 unknown fields.

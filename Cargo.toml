@@ -9,12 +9,13 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "4.0.0"
+version = "4.1.0"
 edition = "2024"
 rust-version = "1.88"
 authors = ["smallyu"]
 license = "Apache-2.0"
 repository = "https://github.com/smallyunet/pysonar2"
+homepage = "https://smallyunet.github.io/pysonar2/"
 
 [workspace.dependencies]
 anyhow = "1.0.98"

@@ -1,4 +1,4 @@
-"""Entry point for the PySonar2 code intelligence demo."""
+"""Entry point for the PySonar2 type-inference demo."""
 
 from pysonar_demo import PredictionEngine, SymbolTools, build_command_registry
 from pysonar_demo import classify_market, visible_market_names
@@ -8,7 +8,7 @@ def run_demo():
     app = PredictionEngine("Prediction Lab")
     markets = [
         {
-            "question": "Will Python remain the most popular AI language?",
+            "question": "Will Python remain a widely used programming language?",
             "yes_price": 0.72,
             "volume": 125000,
         },

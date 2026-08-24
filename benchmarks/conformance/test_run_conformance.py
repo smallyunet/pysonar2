@@ -61,6 +61,18 @@ class ConformanceRunnerTest(unittest.TestCase):
             self.assertEqual(1, BENCHMARK.create_typeshed_mirror(source, Path(output_temp)))
             self.assertTrue((Path(output_temp) / "stdlib" / "builtins.pyi").is_file())
 
+    def test_result_writer_externalizes_query_records(self):
+        payload = {
+            "suites": [{"id": "typeevalpy-micro", "typeInference": {"records": [{"status": "exact"}]}}],
+            "preservedReferenceGold": {"records": [{"destinationExact": True}]},
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "result.json"
+            BENCHMARK.write_results(payload, output)
+            summary = __import__("json").loads(output.read_text())
+            self.assertNotIn("records", summary["suites"][0]["typeInference"])
+            self.assertTrue((Path(temp) / "result" / "typeevalpy-micro-records.jsonl").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

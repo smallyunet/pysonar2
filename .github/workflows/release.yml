@@ -57,14 +57,53 @@ jobs:
           path: dist/*.zip
           if-no-files-found: ignore
 
+  integrations:
+    name: Integration packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.88.0"
+          targets: wasm32-unknown-unknown
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: cargo install wasm-bindgen-cli --version 0.2.127 --locked
+      - run: npm ci
+        working-directory: editors/vscode
+      - run: npm run package
+        working-directory: editors/vscode
+      - run: npm run build
+        working-directory: extensions/browser
+      - run: npm run check
+        working-directory: extensions/browser
+      - run: npm run package
+        working-directory: extensions/browser
+      - name: Collect packages
+        run: |
+          mkdir -p dist
+          cp editors/vscode/*.vsix dist/
+          cp extensions/browser/dist/*.zip dist/
+      - uses: actions/upload-artifact@v6
+        with:
+          name: pysonar2-integrations
+          path: dist/*
+
   publish:
-    needs: native
+    needs: [native, integrations]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v7
         with:
           path: dist
           merge-multiple: true
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

@@ -6,6 +6,8 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
+description = "Command-line interface for PySonar2 type inference and semantic indexing"
 
 [[bin]]
 name = "pysonar"

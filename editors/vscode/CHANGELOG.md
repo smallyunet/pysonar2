@@ -1,5 +1,13 @@
 # Change Log
 
+## 4.1.0
+
+- Recenter PySonar2 on whole-project Python type inference and semantic indexing.
+- Improve source-encoding, native stub, inferred-type, binding, and reference coverage.
+- Publish reproducible CPython, typing, typeshed, TypeEvalPy, preserved-oracle, and historical results.
+- Remove the coding-agent Skill and its synthetic benchmark from the product and distribution.
+- Bundle the native Rust language server with the refactored analyzer and workspace modules.
+
 ## 0.3.0
 
 - Bundle PySonar2 3.4.0 with typed sets, generators, modern annotations, and union protocols.

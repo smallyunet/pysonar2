@@ -142,7 +142,7 @@ mod tests {
         let value = serde_json::to_value(envelope("doctor")).unwrap();
         assert_eq!(value["schemaVersion"], 1);
         assert_eq!(value["command"], "doctor");
-        assert_eq!(value["cliVersion"], "4.0.0");
+        assert_eq!(value["cliVersion"], env!("CARGO_PKG_VERSION"));
     }
 
     #[test]

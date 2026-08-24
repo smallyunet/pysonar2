@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PySonar2 Local Python Intelligence",
-  "version": "4.0.0",
-  "description": "Analyze Python code found on web pages locally with PySonar2 WebAssembly.",
+  "name": "PySonar2 Python Indexer",
+  "version": "4.1.0",
+  "description": "Infer types and index Python snippets locally with PySonar2 WebAssembly.",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",

@@ -40,6 +40,8 @@ parameter injection rather than silently treated as complete static references.
 Repositories are cached under `/private/tmp/pysonar-change-safety-cache` and every case is materialized
 into a fresh temporary directory. Commits, queries, gold locations, candidates, and tool versions are
 recorded so a result can be audited without trusting the summary.
+The aggregate JSON remains compact; per-case records are stored beside it in the linked
+`records.jsonl` path reported by `recordsFile`.
 
 ## Interpretation boundary
 

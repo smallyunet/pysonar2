@@ -49,6 +49,15 @@ class ChangeSafetyBenchmarkTest(unittest.TestCase):
             {record["caseId"] for record in result["records"]},
         )
 
+    def test_result_writer_externalizes_records(self):
+        payload = {"records": [{"caseId": "sample"}], "aggregate": {}}
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "result.json"
+            BENCHMARK.write_results(payload, output)
+            summary = __import__("json").loads(output.read_text())
+            self.assertEqual(1, summary["recordCount"])
+            self.assertTrue((Path(temp) / "result" / "records.jsonl").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

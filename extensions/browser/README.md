@@ -1,6 +1,8 @@
-# PySonar2 browser extension
+# PySonar2 browser/WASM demo
 
-The Manifest V3 extension finds Python code blocks on web pages and analyzes a selected block entirely in a Web Worker with the Rust/WASM PySonar2 core. It makes no network requests and does not execute the code.
+The Manifest V3 reference extension finds Python code blocks on web pages, infers types, and builds a
+small semantic index entirely in a Web Worker with the Rust/WASM PySonar2 core. It makes no network
+requests and does not execute the code.
 
 ```bash
 cargo install wasm-bindgen-cli --version 0.2.127

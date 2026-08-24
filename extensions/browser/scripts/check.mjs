@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(readFileSync(resolve(root, "manifest.json"), "utf8"));
-if (manifest.manifest_version !== 3 || manifest.version !== "4.0.0") throw new Error("invalid manifest");
+if (manifest.manifest_version !== 3 || manifest.version !== "4.1.0") throw new Error("invalid manifest");
 const expectedIcons = Object.fromEntries([16, 32, 48, 128].map((size) => [String(size), `icons/icon-${size}.png`]));
 if (JSON.stringify(manifest.icons) !== JSON.stringify(expectedIcons)) throw new Error("invalid extension icons");
 if (manifest.action?.default_icon?.["16"] !== expectedIcons["16"] || manifest.action?.default_icon?.["32"] !== expectedIcons["32"]) {
